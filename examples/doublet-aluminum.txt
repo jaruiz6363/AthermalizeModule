@@ -1,0 +1,12 @@
+Cemented doublet, f = 122 mm (doublet.zmx), 5 surfaces
+Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+  after surface  2  SCHOTT:N-SF6             α 9.03×10⁻⁶/K
+
+Paraxial, at 0.587562 µm (0.587722 µm in vacuum):
+    T °C        EFL mm        BFL mm   focus − image plane µm   change from 20 °C µm
+   -40.0    122.409315    117.948766                 199.036                 199.015
+    20.0    122.378039    117.916721                   0.021                   0.000
+    80.0    122.344172    117.882118                -201.552                -201.573

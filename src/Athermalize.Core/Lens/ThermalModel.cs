@@ -1,0 +1,471 @@
+using AberrationCalculator.Core.Enums;
+using AberrationCalculator.Core.Glass;
+using AberrationCalculator.Core.Models;
+using AberrationCalculator.Core.RayTrace;
+using Athermalize.Core.Air;
+using Athermalize.Core.Materials;
+
+namespace Athermalize.Core.Lens;
+
+/// <summary>Settings for building a lens at a temperature.</summary>
+/// <param name="Index">The index model's conventions.</param>
+/// <param name="Substitutions">
+/// Materials to use in place of the ones the lens names, by the name on the surface (as "NAME" or "CATALOG:NAME"):
+/// a measured crystal in place of a catalog entry, say.
+/// </param>
+/// <param name="CteOverrides">Expansion coefficients, 1/K, to use in place of the data's, by material name.</param>
+public sealed record ThermalOptions(
+    IndexOptions? Index = null,
+    IReadOnlyDictionary<string, Material>? Substitutions = null,
+    IReadOnlyDictionary<string, double>? CteOverrides = null)
+{
+    public static ThermalOptions Default { get; } = new();
+}
+
+/// <summary>What set a surface's size and the thickness after it, at one temperature.</summary>
+/// <param name="Index">The surface.</param>
+/// <param name="ShapeSetBy">What the surface's radius, aspheric terms and apertures grew with.</param>
+/// <param name="ShapeScale">The factor its lengths grew by, 1 + αΔT.</param>
+/// <param name="ThicknessSetBy">What set the thickness after the surface.</param>
+/// <param name="NominalThickness">The thickness after it in the nominal design.</param>
+/// <param name="Thickness">The thickness after it at the temperature.</param>
+public readonly record struct SurfaceState(int Index, string ShapeSetBy, double ShapeScale, string ThicknessSetBy,
+    double NominalThickness, double Thickness);
+
+/// <summary>A lens at one temperature: its own copy of the prescription, and the indices to trace it with.</summary>
+public sealed class ThermalLens
+{
+    internal ThermalLens(OpticalSystem system, AirConditions air, double deltaT, double[] vacuumWavelengths,
+        double[][] indices, SurfaceState[] surfaces, List<string> notes)
+    {
+        System = system;
+        Air = air;
+        DeltaT = deltaT;
+        VacuumWavelengthsUm = vacuumWavelengths;
+        Indices = indices;
+        Surfaces = surfaces;
+        Notes = notes;
+    }
+
+    /// <summary>
+    /// The lens at the temperature. Its wavelengths are those of the same light in the air at the temperature, and
+    /// its aperture is the entrance pupil the expanded stop gives.
+    /// </summary>
+    public OpticalSystem System { get; }
+
+    /// <summary>The air around the lens; every part of the lens is at its temperature.</summary>
+    public AirConditions Air { get; }
+
+    public double TemperatureC => Air.TemperatureC;
+
+    /// <summary>The temperature less the nominal design's.</summary>
+    public double DeltaT { get; }
+
+    /// <summary>The vacuum wavelength of each of the lens's wavelengths, µm; the same at every temperature.</summary>
+    public IReadOnlyList<double> VacuumWavelengthsUm { get; }
+
+    /// <summary>
+    /// For each wavelength, the index after each surface relative to the air, as AberrationCalculator's analyses
+    /// take it: 1 in air, and a mirror keeps the index of the medium it sits in.
+    /// </summary>
+    public IReadOnlyList<double[]> Indices { get; }
+
+    public IReadOnlyList<SurfaceState> Surfaces { get; }
+
+    /// <summary>What the module assumed or could not do, in words.</summary>
+    public IReadOnlyList<string> Notes { get; }
+
+    /// <summary>The indices at the primary wavelength.</summary>
+    public double[] PrimaryIndices => Indices[Math.Max(0, System.PrimaryWavelengthIndex)];
+}
+
+/// <summary>
+/// A nominal lens with its materials and its mount, from which the lens at any temperature is built.
+///
+/// <para>The lens at a temperature is always built afresh from the nominal design, never by changing an earlier
+/// one:</para>
+/// <list type="bullet">
+/// <item>every surface's radius, aspheric terms, Zernike terms and apertures grow by 1 + αΔT with its element's
+/// expansion coefficient α, a mirror's with its substrate's; an even-asphere coefficient of r^(2p) is divided by
+/// (1 + αΔT)^(2p−1), so the surface is the same shape at the larger size;</item>
+/// <item>a glass thickness grows with its glass;</item>
+/// <item>the air spaces, the image plane among them, are set by the <see cref="Mount"/>;</item>
+/// <item>the indices are each material's at the temperature, relative to the air at the temperature and pressure,
+/// at the same vacuum wavelengths as the nominal design's.</item>
+/// </list>
+/// </summary>
+public sealed class ThermalModel
+{
+    private readonly Material?[] _after;
+    private readonly double[] _cte;
+    private readonly string[] _cteNote;
+
+    /// <param name="nominal">The design, as its file gives it. It is never changed.</param>
+    /// <param name="library">The materials to find the lens's glasses in.</param>
+    /// <param name="mount">How the lens is held.</param>
+    /// <param name="nominalAir">The conditions the design is for, its wavelengths in that air: 20 °C and one atmosphere when null.</param>
+    /// <param name="options">The index conventions, and any substitutions.</param>
+    public ThermalModel(OpticalSystem nominal, MaterialLibrary library, Mount mount, AirConditions? nominalAir = null,
+        ThermalOptions? options = null)
+    {
+        Nominal = nominal ?? throw new ArgumentNullException(nameof(nominal));
+        Mount = mount ?? throw new ArgumentNullException(nameof(mount));
+        NominalAir = nominalAir ?? AirConditions.Standard;
+        Options = options ?? ThermalOptions.Default;
+        if (nominal.Surfaces.Count < 2) throw new ArgumentException("A lens needs an object and an image surface.", nameof(nominal));
+
+        int count = nominal.Surfaces.Count;
+        _after = new Material?[count];
+        _cte = new double[count];
+        _cteNote = new string[count];
+        var unresolved = new List<string>();
+        for (int i = 0; i < count; i++)
+        {
+            var s = nominal.Surfaces[i];
+            if (s.IsMirror)
+            {
+                _after[i] = i > 0 ? _after[i - 1] : null;
+                _cte[i] = i > 0 ? _cte[i - 1] : 0;
+                _cteNote[i] = i > 0 ? _cteNote[i - 1] : "";
+                continue;
+            }
+            var m = Resolve(s, library);
+            if (m == null && !string.IsNullOrWhiteSpace(s.Material)) unresolved.Add($"surface {i}: {s.Material}");
+            _after[i] = m;
+            if (m != null) (_cte[i], _cteNote[i]) = ExpansionOf(m, s.Material);
+        }
+        if (unresolved.Count > 0)
+            throw new InvalidOperationException("No material found for " + string.Join("; ", unresolved));
+
+        ValidateSegments();
+        VacuumWavelengthsUm = nominal.Wavelengths.Select(w => VacuumWavelength(w.Value, NominalAir)).ToArray();
+    }
+
+    public OpticalSystem Nominal { get; }
+    public Mount Mount { get; }
+    public AirConditions NominalAir { get; }
+    public ThermalOptions Options { get; }
+    public double NominalTemperatureC => NominalAir.TemperatureC;
+    public IReadOnlyList<double> VacuumWavelengthsUm { get; }
+
+    private IndexOptions IndexOptions => Options.Index ?? IndexOptions.Default;
+
+    /// <summary>The material after each surface; null for air. A mirror has the material it sits in.</summary>
+    public Material? MaterialAfter(int surface) => _after[surface];
+
+    /// <summary>The expansion coefficient the material after <paramref name="surface"/> grows with, 1/K.</summary>
+    public double CteAfter(int surface) => _cte[surface];
+
+    /// <summary>The lens at <paramref name="temperatureC"/>, in the nominal air's pressure, humidity and CO₂.</summary>
+    public ThermalLens At(double temperatureC) => At(NominalAir with { TemperatureC = temperatureC });
+
+    /// <summary>The lens, every part of it at the air's temperature.</summary>
+    public ThermalLens At(AirConditions air)
+    {
+        ArgumentNullException.ThrowIfNull(air);
+        double dT = air.TemperatureC - NominalTemperatureC;
+        var notes = new List<string>();
+        var copy = LensCopy.Of(Nominal);
+        var surfaces = copy.Surfaces;
+        int count = surfaces.Count, image = count - 1;
+
+        // The surfaces' shapes.
+        var shapeBy = new string[count];
+        var scale = new double[count];
+        for (int i = 0; i < count; i++)
+        {
+            (shapeBy[i], double alpha) = ShapeCte(i);
+            scale[i] = 1.0 + alpha * dT;
+            if (i == 0 || i == image || Nominal.Surfaces[i].Type == SurfaceType.Paraxial)
+            {
+                scale[i] = 1.0;
+                shapeBy[i] = i == 0 ? "object" : i == image ? "image" : "paraxial surface";
+                if (i != 0 && i != image) notes.Add($"Surface {i} is a paraxial surface; its focal length does not change.");
+                continue;
+            }
+            Expand(surfaces[i], scale[i]);
+        }
+
+        // The thicknesses: glass with its glass, air by the housing, then the mount's parts.
+        var thicknessBy = new string[count];
+        for (int i = 0; i < image; i++)
+        {
+            double t = Nominal.Surfaces[i].Thickness;
+            if (i == 0)
+            {
+                thicknessBy[i] = "object distance, held";
+                continue;
+            }
+            if (_after[i] != null)
+            {
+                surfaces[i].Thickness = t * (1.0 + _cte[i] * dT);
+                thicknessBy[i] = _after[i]!.Name;
+            }
+            else
+            {
+                surfaces[i].Thickness = t * (1.0 + Mount.Housing.Cte * dT);
+                thicknessBy[i] = "housing " + Mount.Housing.Name;
+            }
+        }
+        foreach (var seg in Mount.Segments.OrderBy(g => g.To - g.From))
+        {
+            int free = FreeSpace(seg);
+            double s = 1.0 + seg.Material.Cte * dT;
+            var nFrom = Nominal.Surfaces[seg.From];
+            var nTo = Nominal.Surfaces[seg.To];
+            double length = 0.0, others = 0.0;
+            for (int k = seg.From; k < seg.To; k++)
+            {
+                length += Nominal.Surfaces[k].Thickness;
+                if (k != free) others += surfaces[k].Thickness;
+            }
+            length += SagAt(nTo, seg.ToHeight, seg.To) - SagAt(nFrom, seg.FromHeight, seg.From);
+            double grown = length * s
+                - SagAt(surfaces[seg.To], seg.ToHeight * s, seg.To) + SagAt(surfaces[seg.From], seg.FromHeight * s, seg.From);
+            surfaces[free].Thickness = grown - others;
+            thicknessBy[free] = FormattableString.Invariant(
+                $"mount part {seg.From}-{seg.To}, {seg.Material.Name}");
+            if (surfaces[free].Thickness * Nominal.Surfaces[free].Thickness < 0)
+                notes.Add($"The air space after surface {free} changes sign: the mount part {seg.From}-{seg.To} is shorter than what it holds.");
+        }
+
+        // A solve would refocus the lens, which is a compensator's job, not the temperature's.
+        foreach (var s in surfaces) s.HasMarginalRaySolve = false;
+        copy.Pickups.Clear();
+
+        // The indices, and the wavelengths in the air at the temperature.
+        var o = IndexOptions;
+        var indices = new double[VacuumWavelengthsUm.Count][];
+        bool outOfRange = false;
+        for (int w = 0; w < indices.Length; w++)
+        {
+            double vac = VacuumWavelengthsUm[w];
+            var n = new double[count];
+            for (int i = 0; i < count; i++)
+            {
+                if (surfaces[i].IsMirror) { n[i] = i > 0 ? n[i - 1] : 1.0; continue; }
+                var m = _after[i];
+                if (m == null) { n[i] = 1.0; continue; }
+                var index = m.IndexAtVacuumWavelength(vac, air, air.TemperatureC, o);
+                n[i] = index.Relative;
+                if (!index.InRange && !outOfRange)
+                {
+                    outOfRange = true;
+                    notes.Add(FormattableString.Invariant(
+                        $"{m.Name} is outside its data's range at {vac:F4} µm (vacuum) and {air.TemperatureC:G4} °C."));
+                }
+            }
+            indices[w] = n;
+            copy.Wavelengths[w].Value = WavelengthInAir(vac, air);
+        }
+
+        for (int i = 1; i < image; i++)
+            if (_after[i] != null && _cteNote[i] != "" && !notes.Contains(_cteNote[i])) notes.Add(_cteNote[i]);
+        foreach (var (i, _) in Mirrors().Where(m => !Mount.MirrorSubstrates.ContainsKey(m.Index)))
+            notes.Add($"Mirror {i} has no substrate given; it is taken to be {Mount.Housing.Name}, the housing's material.");
+
+        SetAperture(copy, indices, scale, notes);
+
+        var states = new SurfaceState[count];
+        for (int i = 0; i < count; i++)
+            states[i] = new SurfaceState(i, shapeBy[i], scale[i], i < image ? thicknessBy[i] : "",
+                Nominal.Surfaces[i].Thickness, surfaces[i].Thickness);
+        return new ThermalLens(copy, air, dT, VacuumWavelengthsUm.ToArray(), indices, states, notes);
+    }
+
+    /// <summary>The indices of the nominal design at its own conditions, for each wavelength.</summary>
+    public double[][] NominalIndices() => At(NominalAir).Indices.ToArray();
+
+    // ── Materials ────────────────────────────────────────────────────────────────────
+
+    private Material? Resolve(Surface s, MaterialLibrary library)
+    {
+        var subs = Options.Substitutions;
+        string? name = s.Material;
+        if (subs != null && !string.IsNullOrWhiteSpace(name))
+        {
+            if (!string.IsNullOrEmpty(s.CatalogName) && subs.TryGetValue(s.CatalogName + ":" + name, out var q)) return q;
+            if (subs.TryGetValue(name!, out var b)) return b;
+        }
+        if (s.ModelIndexEnabled && s.ModelNd > 0.0) return Tie19Material.Model(s.ModelNd, s.ModelVd, s.ModelDPgF);
+        if (string.IsNullOrWhiteSpace(name)) return null;
+
+        var found = !string.IsNullOrEmpty(s.CatalogName)
+            ? library.Find(s.CatalogName + ":" + name) ?? library.Find(name!, Nominal.GlassCatalogs)
+            : library.Find(name!, Nominal.GlassCatalogs);
+        if (found != null) return found;
+        return GlassCode.TryParse(name, out double nd, out double vd) ? Tie19Material.Model(nd, vd) : null;
+    }
+
+    private (double Cte, string Note) ExpansionOf(Material m, string? surfaceName)
+    {
+        var overrides = Options.CteOverrides;
+        if (overrides != null)
+        {
+            if (overrides.TryGetValue(m.Name, out double c)) return (c, "");
+            if (overrides.TryGetValue(m.Glass, out c)) return (c, "");
+            if (surfaceName != null && overrides.TryGetValue(surfaceName, out c)) return (c, "");
+        }
+        var e = m.Expansion;
+        if (e.IgnoreExpansion) return (0.0, $"{m.Name}: the catalog says not to expand it; it is held at its nominal size.");
+        if (e.Cte == 0.0) return (0.0, $"{m.Name} has no expansion coefficient; it is held at its nominal size.");
+        return (e.Cte, "");
+    }
+
+    /// <summary>What a surface's shape grows with: its mirror's substrate, its glass, or the housing.</summary>
+    private (string By, double Cte) ShapeCte(int i)
+    {
+        var s = Nominal.Surfaces[i];
+        if (s.IsMirror)
+        {
+            var sub = Mount.MirrorSubstrates.TryGetValue(i, out var m) ? m : Mount.Housing;
+            return ("mirror substrate " + sub.Name, sub.Cte);
+        }
+        int before = i - 1, after = i;
+        bool glassBefore = i > 0 && _after[before] != null, glassAfter = _after[after] != null;
+        if (glassBefore && glassAfter && !ReferenceEquals(_after[before], _after[after]))
+            return Mount.Cemented == CementedSurface.FollowingGlass
+                ? (_after[after]!.Name, _cte[after])
+                : (_after[before]!.Name, _cte[before]);
+        if (glassAfter) return (_after[after]!.Name, _cte[after]);
+        if (glassBefore) return (_after[before]!.Name, _cte[before]);
+        return ("housing " + Mount.Housing.Name, Mount.Housing.Cte);
+    }
+
+    private IEnumerable<(int Index, Surface Surface)> Mirrors() =>
+        Nominal.Surfaces.Select((s, i) => (i, s)).Where(p => p.s.IsMirror);
+
+    // ── Geometry ─────────────────────────────────────────────────────────────────────
+
+    /// <summary>Every length of the surface times <paramref name="s"/>: the same surface, larger.</summary>
+    internal static void Expand(Surface surface, double s)
+    {
+        if (s == 1.0) return;
+        surface.Curvature /= s;
+        var a = surface.AsphericCoefficients;
+        for (int k = 0; k < a.Length; k++) a[k] *= Math.Pow(s, -(2 * k + 1));
+        var z = surface.FringeZernike;
+        for (int j = 0; j < z.Length; j++) z[j] *= s;
+        surface.ZernikeRadius *= s;
+        surface.SemiDiameter *= s;
+        surface.ObscurationRadius *= s;
+        surface.InnerRadius *= s;
+        surface.ClapOuterRadius *= s;
+        surface.FloatingApertureRadius *= s;
+    }
+
+    private static double SagAt(Surface s, double height, int index)
+    {
+        if (height == 0.0) return 0.0;
+        double z = s.Sag(height);
+        if (double.IsNaN(z))
+            throw new InvalidOperationException(FormattableString.Invariant(
+                $"A mount part touches surface {index} at height {height:G6}, beyond the surface."));
+        return z;
+    }
+
+    private void ValidateSegments()
+    {
+        int image = Nominal.Surfaces.Count - 1;
+        var segs = Mount.Segments;
+        foreach (var g in segs)
+        {
+            if (g.From < 0 || g.To > image || g.From >= g.To)
+                throw new ArgumentException($"Mount part {g.From}-{g.To} does not run forward between two surfaces of the lens.");
+            for (int k = g.From; k < g.To; k++)
+                if (double.IsInfinity(Nominal.Surfaces[k].Thickness))
+                    throw new ArgumentException($"Mount part {g.From}-{g.To} holds an infinite distance.");
+        }
+        for (int a = 0; a < segs.Count; a++)
+            for (int b = a + 1; b < segs.Count; b++)
+            {
+                var (p, q) = (segs[a], segs[b]);
+                bool disjoint = p.To <= q.From || q.To <= p.From;
+                bool nested = (p.From >= q.From && p.To <= q.To) || (q.From >= p.From && q.To <= p.To);
+                if (p.From == q.From && p.To == q.To)
+                    throw new ArgumentException($"Two mount parts hold surfaces {p.From}-{p.To}.");
+                if (!disjoint && !nested)
+                    throw new ArgumentException($"Mount parts {p.From}-{p.To} and {q.From}-{q.To} overlap without one holding the other.");
+            }
+        foreach (var g in segs) FreeSpace(g);
+    }
+
+    /// <summary>The air space that takes up the rest of a mount part's length.</summary>
+    private int FreeSpace(MountSegment g)
+    {
+        bool Inner(int k) => Mount.Segments.Any(o => !ReferenceEquals(o, g) && o.From >= g.From && o.To <= g.To
+                                                    && k >= o.From && k < o.To);
+        bool Air(int k) => _after[k] == null;
+        if (g.FreeSpace is int f)
+        {
+            if (f < g.From || f >= g.To)
+                throw new ArgumentException($"The free space {f} is not inside mount part {g.From}-{g.To}.");
+            if (!Air(f)) throw new ArgumentException($"The free space after surface {f} is not air.");
+            if (Inner(f)) throw new ArgumentException($"The free space after surface {f} is held by a part inside {g.From}-{g.To}.");
+            return f;
+        }
+        for (int k = g.To - 1; k >= g.From; k--)
+            if (Air(k) && !Inner(k)) return k;
+        throw new ArgumentException($"Mount part {g.From}-{g.To} holds no air space of its own to take up its length.");
+    }
+
+    // ── Aperture and wavelengths ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The stop is a physical aperture, so it grows with its surface. The entrance pupil at the temperature is the one
+    /// that fills it, whatever way the file stated the aperture.
+    /// </summary>
+    private void SetAperture(OpticalSystem copy, double[][] indices, double[] scale, List<string> notes)
+    {
+        int p = Math.Max(0, Nominal.PrimaryWavelengthIndex);
+        var nominalIndices = NominalIndexTable(p);
+        var nominalTrace = ParaxialTrace.Trace(Nominal, nominalIndices, 0.0);
+        double epd = nominalTrace.Epd;
+        int stop = Nominal.StopSurfaceIndex;
+        int last = Nominal.LastOpticalSurface();
+        if (stop < 1 || stop > last) stop = last;
+
+        copy.Aperture = new Aperture(ApertureType.EPD, epd);
+        var trace = ParaxialTrace.Trace(copy, indices[p], 0.0);
+        double yNominal = nominalTrace.Y[stop], y = trace.Y[stop];
+        copy.Aperture = new Aperture(ApertureType.EPD,
+            Math.Abs(y) > 1e-15 && Math.Abs(yNominal) > 1e-15 ? epd * scale[stop] * yNominal / y : epd * scale[stop]);
+        if (Nominal.Aperture.Type != ApertureType.EPD)
+            notes.Add("The aperture is given as the entrance pupil the expanded stop admits, not as the file's "
+                      + Nominal.Aperture.Type + ".");
+    }
+
+    private double[] NominalIndexTable(int wavelength)
+    {
+        var o = IndexOptions;
+        int count = Nominal.Surfaces.Count;
+        var n = new double[count];
+        for (int i = 0; i < count; i++)
+        {
+            if (Nominal.Surfaces[i].IsMirror) { n[i] = i > 0 ? n[i - 1] : 1.0; continue; }
+            n[i] = _after[i] == null ? 1.0
+                : _after[i]!.IndexAtVacuumWavelength(VacuumWavelengthsUm[wavelength], NominalAir, NominalTemperatureC, o).Relative;
+        }
+        return n;
+    }
+
+    private double VacuumWavelength(double lambdaInAir, AirConditions air)
+    {
+        if (air.IsVacuum) return lambdaInAir;
+        var o = IndexOptions;
+        if (o.AirWavelength == AirWavelength.Input) return lambdaInAir * AirIndex.Of(o.AirModel, lambdaInAir, air);
+        double vac = lambdaInAir;
+        for (int i = 0; i < 4; i++) vac = lambdaInAir * AirIndex.Of(o.AirModel, vac, air);
+        return vac;
+    }
+
+    private double WavelengthInAir(double vacuum, AirConditions air)
+    {
+        if (air.IsVacuum) return vacuum;
+        var o = IndexOptions;
+        double lambda = vacuum;
+        if (o.AirWavelength == AirWavelength.Vacuum) return vacuum / AirIndex.Of(o.AirModel, vacuum, air);
+        for (int i = 0; i < 4; i++) lambda = vacuum / AirIndex.Of(o.AirModel, lambda, air);
+        return lambda;
+    }
+}

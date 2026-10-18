@@ -31,6 +31,22 @@ The CHARMS papers print index tables computed from the models the module carries
 - CaF₂ and Corning 7980, at 295 K (and 30 K for fused silica), 0.4 to 5 µm: every value agrees to the printed five decimals.
 - Silicon and germanium, at 295 K (and 30 K for silicon): every value agrees to 10⁻⁵. Their models cancel large terms, so the coefficients' six printed figures cost the sixth decimal. The papers give the models' fit to the measurements as 10⁻⁴ for these two.
 
-## 5. Catalog reading
+## 5. The lens at a temperature
+
+Closed forms and invariances, each on a lens written for the test. (`ThermalLensTests`)
+
+- **The nominal state.** At the design's own temperature the lens is the nominal design: every radius and thickness the same, and every index AberrationCalculator's catalog index to 10⁻¹², for a doublet at three wavelengths. Building a temperature never changes the nominal design.
+- **A lens that only grows.** With every part of the same α and no index change (model glasses without thermal data, in vacuum), a lens with an asphere, a spacer touching the glass 9 mm off the axis and a part holding the image plane grows uniformly: every radius and thickness by 1 + αΔT, the aspheric coefficients as the shape requires, the focal length by 1 + αΔT, and it stays in focus to 10⁻¹⁰ mm, at −60 and +80 °C. An afocal telescope stays afocal, with the same angular magnification to 10⁻¹².
+- **A mirror.** A concave mirror on a spacer of its own material stays in focus at −40 and +70 °C. On a spacer of another material it defocuses by exactly f·(α_mirror − α_spacer)·ΔT.
+- **An all-aluminum telescope.** Xu et al. (2019) give the back focal length of an aluminum Ritchey-Chrétien telescope in an aluminum tube (α = 23×10⁻⁶/K) as 190.1526, 190.5032 and 190.8537 mm at −60, +20 and +100 °C. A two-mirror telescope written for the test and scaled to 190.5032 mm gives 190.152674 and 190.853726 mm, within 10⁻⁴ mm of the printed values, and exactly 190.5032·(1 + αΔT).
+- **A thin singlet.** An N-BK7 singlet of 100 mm focal length, 0.01 mm thick, in an aluminum housing that holds its image plane, defocuses by −2.19133 µm/K, against f·(x_f − α_h) = −2.19140 µm/K from the glass's x_f (Jamieson 1981): within 10⁻³, the rest being the lens's thickness.
+- **A thick singlet** against the lensmaker's formula with the grown radii and thickness and the glass's index at the temperature: the index to 10⁻¹⁴, the focal length and the defocus to 10⁻⁹ mm, at −40 and +60 °C.
+- **A spacer touching off the axis** (Shi et al. 2020): the air space from the spacer's grown length and the sags of the grown surfaces at the grown contact height, written out with the sphere's sag formula, to 10⁻¹² mm. At a contact height of 8 mm the air space grows by 5.36 µm from 20 to 75 °C, against 5.19 µm measured at the vertices.
+- **A chain of barrel sections** (Liu et al. 2025, eq. 5): with three elements seated in aluminum, titanium and Invar sections, the last holding the image plane, each element and the image plane move by the sum of the sections' growths behind them, to 10⁻¹² mm.
+- **The stop** grows with its surface: the paraxial marginal ray's height at the stop grows by its glass's 1 + αΔT, to 10⁻¹².
+- **An even asphere** grown by s has, at height s·r, s times its nominal sag at r.
+- A mount whose parts overlap, a free space that is glass, two parts on the same surfaces, and a glass not in the catalogs are refused.
+
+## 6. Catalog reading
 
 Fields separated by doubled spaces or tabs, numbers under German, French and Swedish number settings, UTF-16 files, and missing, empty and short `TD` lines all read as intended, and the shipped catalogs' glasses with missing, empty or all-zero thermal lines are recognized. (`ThermalCatalogTests`)

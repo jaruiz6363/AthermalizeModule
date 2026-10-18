@@ -69,4 +69,19 @@ public class MeasuredMaterialTests
         Assert.False(si.Index(2.0, AirConditions.Vacuum(40)).InRange);    // above 300 K
         Assert.False(si.Index(0.9, AirConditions.Vacuum(0)).InRange);
     }
+
+    /// <summary>Each measured material carries an expansion coefficient with its source.</summary>
+    [Theory]
+    [InlineData("CHARMS:SI", 2.555e-6)]
+    [InlineData("CHARMS:GE", 5.67e-6)]
+    [InlineData("CHARMS:CAF2", 18.41e-6)]
+    [InlineData("CHARMS:INFRASIL_301", 0.51e-6)]
+    [InlineData("CHARMS:FS_7980", 0.52e-6)]
+    public void Measured_materials_carry_a_sourced_expansion_coefficient(string name, double cte)
+    {
+        var m = (MeasuredMaterial)Catalogs.Find(name);
+        Assert.Equal(cte, m.Expansion.Cte, 15);
+        Assert.NotEmpty(m.CteSource);
+        Assert.False(double.IsNaN(ThermoOptic.At(m, 2.0, 20.0).OptothermalExpansion));
+    }
 }

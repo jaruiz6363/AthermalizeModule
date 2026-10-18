@@ -47,10 +47,13 @@ public sealed class MaterialLibrary
     /// Finds a material by "CATALOG:NAME", or by a bare name as <see cref="GlassCatalog.Find"/> resolves it.
     /// Returns null when nothing matches.
     /// </summary>
-    public Material? Find(string name)
+    public Material? Find(string name) => Find(name, null);
+
+    /// <summary>The same, a bare name being looked up in the <paramref name="preferred"/> catalogs first.</summary>
+    public Material? Find(string name, IReadOnlyList<string>? preferred)
     {
         if (_measured.TryGetValue(name, out var m)) return m;
-        var glass = Glasses.Find(name);
+        var glass = Glasses.Find(name, preferred);
         return glass == null ? null : Tie19Material.FromCatalog(glass, Thermal);
     }
 

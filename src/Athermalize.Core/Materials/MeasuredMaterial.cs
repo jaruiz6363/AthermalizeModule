@@ -15,7 +15,8 @@ public sealed class MeasuredMaterial : Material
     private readonly double[][] _s, _lambda;
 
     public MeasuredMaterial(string catalog, string glass, string description, string source,
-        double[][] s, double[][] lambda, (double Min, double Max) temperatureRangeK, (double Min, double Max) wavelengthRangeUm)
+        double[][] s, double[][] lambda, (double Min, double Max) temperatureRangeK, (double Min, double Max) wavelengthRangeUm,
+        double cte = 0.0, string cteSource = "")
     {
         if (s.Length != lambda.Length) throw new ArgumentException("S and λ need the same number of terms.");
         Catalog = catalog;
@@ -26,13 +27,18 @@ public sealed class MeasuredMaterial : Material
         _lambda = lambda;
         TemperatureRangeC = (temperatureRangeK.Min - 273.15, temperatureRangeK.Max - 273.15);
         WavelengthRangeUm = wavelengthRangeUm;
+        Expansion = cte != 0.0 ? new ExpansionData(cte, 0, 0, 0, false, DataState.Present) : ExpansionData.None();
+        CteSource = cteSource;
     }
 
     public override string Catalog { get; }
     public override string Glass { get; }
     public string Description { get; }
     public override string Source { get; }
-    public override ExpansionData Expansion => ExpansionData.None();
+    public override ExpansionData Expansion { get; }
+
+    /// <summary>Where the expansion coefficient comes from, and what range it is for.</summary>
+    public string CteSource { get; }
     public override (double Min, double Max) WavelengthRangeUm { get; }
     public override (double Min, double Max) TemperatureRangeC { get; }
 
@@ -85,11 +91,18 @@ public sealed class MeasuredMaterial : Material
                 e.EnumerateArray().Select(r => r.EnumerateArray().Select(v => v.GetDouble()).ToArray()).ToArray();
             static (double, double) Pair(JsonElement e) => (e[0].GetDouble(), e[1].GetDouble());
 
+            double cte = 0.0;
+            string cteSource = "";
+            if (m.TryGetProperty("cte", out var c))
+            {
+                cte = c.GetProperty("value").GetDouble();
+                cteSource = c.GetProperty("source").GetString() + "; " + c.GetProperty("range").GetString();
+            }
             list.Add(new MeasuredMaterial(
                 m.GetProperty("catalog").GetString()!, m.GetProperty("name").GetString()!,
                 m.GetProperty("description").GetString()!, m.GetProperty("source").GetString()!,
                 Rows(m.GetProperty("S")), Rows(m.GetProperty("lambda")),
-                Pair(m.GetProperty("temperatureRangeK")), Pair(m.GetProperty("wavelengthRangeUm"))));
+                Pair(m.GetProperty("temperatureRangeK")), Pair(m.GetProperty("wavelengthRangeUm")), cte, cteSource));
         }
         return list;
     }

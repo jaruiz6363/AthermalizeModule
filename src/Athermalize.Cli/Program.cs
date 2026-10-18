@@ -21,7 +21,8 @@ public static class Program
         "         --thermal-wavelength reference|vacuum   the wavelength in TIE-19's E term (reference)\n" +
         "         --lambda-tk-sign agf|ignore     a negative λtk adds to λ² (agf)\n" +
         "         --air-wavelength input|vacuum   the wavelength the air formulas take (input)\n" +
-        "       atherm materials --measured        list the measured materials carried, with their sources";
+        "       atherm materials --measured        list the measured materials carried, with their sources\n" +
+        LensCommand.Usage;
 
     /// <summary>
     /// Reports carry µ, ², λ and °, which a Windows console's code page has not all of: write UTF-8 to the console
@@ -45,10 +46,16 @@ public static class Program
             return args[0] switch
             {
                 "materials" => Materials(args.Skip(1).ToArray(), output),
+                "lens" => LensCommand.Run(args.Skip(1).ToArray(), output),
                 _ => Fail($"unknown command '{args[0]}'"),
             };
         }
         catch (ArgumentException e) { return Fail(e.Message); }
+        catch (Exception e) when (e is InvalidOperationException or IOException or NotSupportedException)
+        {
+            Console.Error.WriteLine("atherm: " + e.Message);
+            return 1;
+        }
 
         int Fail(string message)
         {
@@ -81,11 +88,8 @@ public static class Program
                 case "--pressure": atmospheres = Numbers(Next(), a)[0]; break;
                 case "--humidity": humidity = Numbers(Next(), a)[0] / 100.0; break;
                 case "--co2": co2 = Numbers(Next(), a)[0]; break;
-                case "--air": o = o with { AirModel = Choose(Next(), a, ("tie19", AirModel.Tie19), ("ciddor", AirModel.Ciddor1996)) }; break;
-                case "--prefactor": o = o with { Prefactor = Choose(Next(), a, ("relative", Prefactor.Relative), ("absolute", Prefactor.Absolute)) }; break;
-                case "--thermal-wavelength": o = o with { ThermalWavelength = Choose(Next(), a, ("reference", ThermalWavelength.ReferenceAir), ("vacuum", ThermalWavelength.Vacuum)) }; break;
-                case "--lambda-tk-sign": o = o with { LambdaTkSign = Choose(Next(), a, ("agf", LambdaTkSign.Agf), ("ignore", LambdaTkSign.Ignore)) }; break;
-                case "--air-wavelength": o = o with { AirWavelength = Choose(Next(), a, ("input", AirWavelength.Input), ("vacuum", AirWavelength.Vacuum)) }; break;
+                case "--air" or "--prefactor" or "--thermal-wavelength" or "--lambda-tk-sign" or "--air-wavelength":
+                    o = IndexOption(o, a, Next()); break;
                 case "--measured": listMeasured = true; break;
                 default:
                     if (a.StartsWith("--")) throw new ArgumentException($"unknown option '{a}'");
@@ -124,6 +128,17 @@ public static class Program
         }
         return 0;
     }
+
+    /// <summary>One of the index model's convention switches.</summary>
+    internal static IndexOptions IndexOption(IndexOptions o, string option, string value) => option switch
+    {
+        "--air" => o with { AirModel = Choose(value, option, ("tie19", AirModel.Tie19), ("ciddor", AirModel.Ciddor1996)) },
+        "--prefactor" => o with { Prefactor = Choose(value, option, ("relative", Prefactor.Relative), ("absolute", Prefactor.Absolute)) },
+        "--thermal-wavelength" => o with { ThermalWavelength = Choose(value, option, ("reference", ThermalWavelength.ReferenceAir), ("vacuum", ThermalWavelength.Vacuum)) },
+        "--lambda-tk-sign" => o with { LambdaTkSign = Choose(value, option, ("agf", LambdaTkSign.Agf), ("ignore", LambdaTkSign.Ignore)) },
+        "--air-wavelength" => o with { AirWavelength = Choose(value, option, ("input", AirWavelength.Input), ("vacuum", AirWavelength.Vacuum)) },
+        _ => throw new ArgumentException($"unknown option '{option}'"),
+    };
 
     private static string Conditions(AirConditions air, IndexOptions o, bool vacuum)
     {
@@ -166,7 +181,7 @@ public static class Program
         _ => "missing",
     };
 
-    private static double[] Numbers(string text, string option)
+    internal static double[] Numbers(string text, string option)
     {
         var values = new List<double>();
         foreach (var part in text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -179,7 +194,7 @@ public static class Program
         return values.ToArray();
     }
 
-    private static T Choose<T>(string text, string option, params (string Name, T Value)[] choices)
+    internal static T Choose<T>(string text, string option, params (string Name, T Value)[] choices)
     {
         foreach (var (name, value) in choices)
             if (string.Equals(name, text, StringComparison.OrdinalIgnoreCase)) return value;

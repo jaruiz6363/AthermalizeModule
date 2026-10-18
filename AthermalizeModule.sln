@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AberrationCalculator.Core",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AberrationCalculator.Core.Series", "external\AberrationCalculator\src\AberrationCalculator.Core.Series\AberrationCalculator.Core.Series.csproj", "{8FDC2CA9-F253-4427-A12B-F8FD7086E452}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AberrationCalculator.IO", "external\AberrationCalculator\src\AberrationCalculator.IO\AberrationCalculator.IO.csproj", "{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,18 @@ Global
 		{8FDC2CA9-F253-4427-A12B-F8FD7086E452}.Release|x64.Build.0 = Release|Any CPU
 		{8FDC2CA9-F253-4427-A12B-F8FD7086E452}.Release|x86.ActiveCfg = Release|Any CPU
 		{8FDC2CA9-F253-4427-A12B-F8FD7086E452}.Release|x86.Build.0 = Release|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Debug|x64.Build.0 = Debug|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Debug|x86.Build.0 = Debug|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Release|x64.ActiveCfg = Release|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Release|x64.Build.0 = Release|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Release|x86.ActiveCfg = Release|Any CPU
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -97,5 +111,6 @@ Global
 		{82584106-F070-41BB-B45C-4624B5D20E60} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{AC7DC6C4-D77E-4926-B11C-7DEE94EAFB6A} = {A288BEE0-695A-BEEA-455C-649571D89326}
 		{8FDC2CA9-F253-4427-A12B-F8FD7086E452} = {A288BEE0-695A-BEEA-455C-649571D89326}
+		{FECFC7B6-C346-44BA-A49B-95D8AEF6AEE3} = {A288BEE0-695A-BEEA-455C-649571D89326}
 	EndGlobalSection
 EndGlobal

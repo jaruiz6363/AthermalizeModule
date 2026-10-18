@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Athermalize.Core\Athermalize.Core.csproj" />
+    <!-- AberrationCalculator's lens-file readers. -->
+    <ProjectReference Include="$(AberrationCalculatorDir)src/AberrationCalculator.IO/AberrationCalculator.IO.csproj" />
   </ItemGroup>
 
   <!-- AberrationCalculator's glass catalogs. -->

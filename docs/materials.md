@@ -52,11 +52,23 @@ For some crystals and fused silicas the module carries models fitted to measurem
 | `CHARMS:INFRASIL_301` | Infrasil 301 | 0.5-3.6 µm, 35-300 K | Same |
 | `CHARMS:FS_7980` | Corning 7980 fused silica | 0.4-2.6 µm, 30-300 K | Leviton and Frey, Proc. SPIE 6273, 62732K (2006) |
 
-The coefficients and full citations are in `src/Athermalize.Core/Materials/MeasuredMaterials.json`. These models are measured up to 300 K (27 °C); above that they are extrapolated, and the output marks it. They carry no expansion coefficient yet.
+The coefficients and full citations are in `src/Athermalize.Core/Materials/MeasuredMaterials.json`. These models are measured up to 300 K (27 °C); above that they are extrapolated, and the output marks it.
+
+Each also carries an expansion coefficient from a separate source:
+
+| Material | α, 10⁻⁶/K | For | Source |
+|---|---|---|---|
+| Silicon | 2.555 | 293 K, instantaneous | Swenson, J. Phys. Chem. Ref. Data 12, 179 (1983), doi:10.1063/1.555681 |
+| Germanium | 5.67 | 293 K, instantaneous | NBS Monograph 29 (1961), from Gibbons, Phys. Rev. 112, 136 (1958) |
+| Calcium fluoride | 18.41 | mean, −30 to +70 °C | Hellma Materials, calcium fluoride data sheet (2012) |
+| Infrasil 301 | 0.51 | mean, 0 to 100 °C | Heraeus, "Quartz Glass for Optics: Data and Properties" (2019) |
+| Corning 7980 | 0.52 | mean, 5 to 35 °C | Corning, HPFS fused silica product information (2014) |
+
+These are single values. Silicon's coefficient rises from about 2.1×10⁻⁶/K at 250 K to 2.9×10⁻⁶/K at 350 K (Okada and Tokumaru, J. Appl. Phys. 56, 314, 1984), so over a wide range a single value is an approximation, as a glass's mean coefficient is.
 
 ## Thermal constants
 
 `atherm materials` holds each wavelength's vacuum wavelength fixed, since that is what stays the same when a lens warms, and puts the material and the air at each temperature:
 
 - dn_rel/dT and dn_abs/dT, by a central difference of ±0.5 K;
-- x_f = α − (dn_rel/dT)/(n_rel − 1), the relative change per kelvin of a thin lens's focal length in air at the same temperature (Jamieson, "Thermal effects in optical systems," Opt. Eng. 20, 156-160, 1981). Positive x_f means the focal length grows. α is the `ED` line's expansion coefficient from −30 to +70 °C.
+- x_f = α − (dn_rel/dT)/(n_rel − 1), the relative change per kelvin of a thin lens's focal length in air at the same temperature (Jamieson, "Thermal effects in optical systems," Opt. Eng. 20, 156-160, 1981). Positive x_f means the focal length grows. α is the `ED` line's expansion coefficient from −30 to +70 °C, or a measured material's.
