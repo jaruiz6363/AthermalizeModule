@@ -58,8 +58,9 @@ public abstract class Material
     {
         var (wMin, wMax) = WavelengthRangeUm;
         var (tMin, tMax) = TemperatureRangeC;
-        const double slack = 1e-9;
-        return (wMax <= 0 || (lambdaUm >= wMin - slack && lambdaUm <= wMax + slack))
+        // Sources state their wavelength ranges without saying whether in air or in vacuum, which differ by 3×10⁻⁴.
+        const double slack = 1e-9, wavelengthSlack = 3e-4;
+        return (wMax <= 0 || (lambdaUm >= wMin * (1 - wavelengthSlack) && lambdaUm <= wMax * (1 + wavelengthSlack)))
             && temperatureC >= tMin - slack && temperatureC <= tMax + slack;
     }
 

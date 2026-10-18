@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="520" viewBox="0 0 720 520" font-family="sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="white"/>
+<text x="360" y="22" text-anchor="middle" font-size="14">Athermal map, 8-12 µm</text>
+<line x1="80" y1="460" x2="690" y2="460" stroke="black"/>
+<line x1="80" y1="40" x2="80" y2="460" stroke="black"/>
+<text x="80.0" y="478" text-anchor="middle">-2.619</text>
+<text x="72" y="460.0" text-anchor="end" dominant-baseline="middle">-139.25</text>
+<text x="202.0" y="478" text-anchor="middle">7.158</text>
+<text x="72" y="376.0" text-anchor="end" dominant-baseline="middle">-104.837</text>
+<text x="324.0" y="478" text-anchor="middle">16.936</text>
+<text x="72" y="292.0" text-anchor="end" dominant-baseline="middle">-70.423</text>
+<text x="446.0" y="478" text-anchor="middle">26.713</text>
+<text x="72" y="208.0" text-anchor="end" dominant-baseline="middle">-36.009</text>
+<text x="568.0" y="478" text-anchor="middle">36.49</text>
+<text x="72" y="124.0" text-anchor="end" dominant-baseline="middle">-1.596</text>
+<text x="690.0" y="478" text-anchor="middle">46.268</text>
+<text x="72" y="40.0" text-anchor="end" dominant-baseline="middle">32.818</text>
+<text x="385" y="502" text-anchor="middle">ω = 1/ν (×10⁻³)</text>
+<text x="18" y="250" text-anchor="middle" transform="rotate(-90 18 250)">x_f (10⁻⁶/K)</text>
+<circle cx="127.6" cy="437.5" r="3" fill="#1f5fa8"><title>JPCRD:GE</title></circle>
+<text x="127.6" y="437.5" dx="5" dy="-5">GE</text>
+<circle cx="330.1" cy="212.1" r="3" fill="#1f5fa8"><title>JPCRD:ZNSE</title></circle>
+<text x="330.1" y="212.1" dx="5" dy="-5">ZNSE</text>
+<circle cx="657.3" cy="190.9" r="3" fill="#1f5fa8"><title>JPCRD:ZNS</title></circle>
+<text x="657.3" y="190.9" dx="5" dy="-5">ZNS</text>
+<circle cx="225.3" cy="202.9" r="3" fill="#1f5fa8"><title>SCHOTT_IRG:IRG22</title></circle>
+<circle cx="227.3" cy="182.7" r="3" fill="#1f5fa8"><title>SCHOTT_IRG:IRG25</title></circle>
+<circle cx="190.7" cy="115.5" r="3" fill="#1f5fa8"><title>SCHOTT_IRG:IRG26</title></circle>
+<circle cx="375.1" cy="62.6" r="3" fill="#1f5fa8"><title>SCHOTT_IRG:IRG27</title></circle>
+<rect x="112.7" y="62.5" width="8" height="8" transform="translate(-4 -4)" fill="#c0392b"><title>housing</title></rect>
+<text x="112.7" y="62.5" dx="7" dy="4" fill="#c0392b">housing α 23.6×10⁻⁶/K</text>
+</svg>

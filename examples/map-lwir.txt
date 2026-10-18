@@ -1,0 +1,12 @@
+The athermal map over 8-12 µm at 20 °C: ω = (n_short − n_long)/(n_center − 1) = 1/ν, γ = (dn_rel/dT)/(n − 1) − α, x_f = −γ.
+A thin athermal achromatic doublet's two points lie on a line through the housing's point.
+  material                      n_center       ν       ω×10³    P_long   γ (10⁻⁶/K)  x_f (10⁻⁶/K)
+  JPCRD:GE                      4.002492   834.13     1.1989    0.3521     130.032     -130.032
+  SCHOTT_IRG:IRG26              2.778010   159.95     6.2518    0.5374      -1.890        1.890
+  SCHOTT_IRG:IRG22              2.496563   110.77     9.0277    0.5552      33.908      -33.908
+  SCHOTT_IRG:IRG25              2.602894   108.83     9.1891    0.5492      25.628      -25.628
+  JPCRD:ZNSE                    2.406455    57.40    17.4208    0.5564      37.703      -37.703
+  SCHOTT_IRG:IRG27              2.387276    47.55    21.0290    0.5753     -23.557       23.557
+  JPCRD:ZNS                     2.200129    22.91    43.6486    0.5678      28.998      -28.998
+  housing α 23.6×10⁻⁶/K                               0.0000               -23.600       23.600
+Plot written to examples/map-lwir.svg.

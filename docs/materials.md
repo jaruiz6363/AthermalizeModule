@@ -64,7 +64,7 @@ For the long-wave infrared and for lenses that run warm, the module also carries
 
 Li gives the index relative to air without naming the air; the module takes it as dry air at 20 °C and one atmosphere (TIE-19's formula), so the absolute index is Li's times that air's index. The choice changes dn/dT by about n·10⁻⁶/K, well inside Li's uncertainties. Li's germanium equation carries the lattice's expansion from 293 K as two cubics. The paper prints the lower cubic's constant as −0.089, a value in percent: as a fraction it is −8.9×10⁻⁴, which makes the cubic vanish at 293 K and meet the upper one with the same slope, and that is the value the module uses.
 
-Where both germanium models hold, 2.5 to 5.5 µm at room temperature, they agree to within 8×10⁻⁴ in the index and about 5 % in dn/dT. Near germanium's absorption edge they part: at 2 µm Li's index is 6.8×10⁻³ below the CHARMS measurement, so below 2.5 µm `CHARMS:GE` is the better choice, as it is for any germanium below room temperature. Above room temperature, or past 5.5 µm, only `JPCRD:GE` holds.
+Where both germanium models hold, 2.5 to 5.5 µm at room temperature, they agree to within 8×10⁻⁴ in the index and about 5 % in dn/dT. Near germanium's absorption edge they part: at 2 µm Li's index is 6.8×10⁻³ below the CHARMS measurement, so below 2.5 µm `CHARMS:GE` is the better choice, as it is for any germanium below room temperature. Above room temperature, or past 5.5 µm, only `JPCRD:GE` holds. Li gives the uncertainty of germanium's dn/dλ as 1.2×10⁻⁴/µm at 10 µm, so its Abbe number over 8-12 µm, 834, is uncertain by about 15 %.
 
 The coefficients and full citations are in `src/Athermalize.Core/Materials/MeasuredMaterials.json`.
 
@@ -84,6 +84,23 @@ Each also carries an expansion coefficient from a separate source:
 The two germanium entries take their coefficients from different sources, each matching its index model; they differ by 2 %.
 
 These are single values. Silicon's coefficient rises from about 2.1×10⁻⁶/K at 250 K to 2.9×10⁻⁶/K at 350 K (Okada and Tokumaru, J. Appl. Phys. 56, 314, 1984), so over a wide range a single value is an approximation, as a glass's mean coefficient is. The NBS table gives ZnS 5.9 and ZnSe 6.7×10⁻⁶/K at −40 °C, and 7.3 and 7.7 at +80 °C.
+
+## Glasses from makers' data sheets
+
+Some infrared glasses are in no catalog file the module reads, so it carries them from their makers' data sheets as glasses of SCHOTT's model, with the sheets' constants:
+
+| Name | Glass | Range | α, 10⁻⁶/K (20 to 100 °C) | Source |
+|---|---|---|---|---|
+| `SCHOTT_IRG:IRG22` | Ge₃₃As₁₂Se₅₅ | 1-12 µm | 12.5 | SCHOTT, IRG 22 data sheet (July 2018) |
+| `SCHOTT_IRG:IRG25` | Ge₂₈Sb₁₂Se₆₀ | 1-12 µm | 14.0 | SCHOTT, IRG 25 data sheet (July 2018) |
+| `SCHOTT_IRG:IRG26` | As₄₀Se₆₀ | 1-12 µm | 21.4 | SCHOTT, IRG 26 data sheet (July 2018) |
+| `SCHOTT_IRG:IRG27` | As₂S₃ | 0.6-12 µm | 22.5 | SCHOTT, IRG 27 data sheet (September 2018) |
+
+A bare name (`IRG26`) finds them too, and `--catalog SCHOTT_IRG` puts all four on a map. Each sheet gives a Sellmeier formula at 22 °C and TIE-19's D₀, E₀ and λtk, the absolute index's rate of change at 22 °C, without the higher terms: the model is linear in temperature. The module takes the sheet's index as relative to air at 22 °C and one atmosphere, as catalog indices are. SCHOTT's earlier (2013) sheets tabulated the change from −55 to +75 °C, and the module takes that as the range. The sheets' URLs and the constants are in `src/Athermalize.Core/Materials/DataSheetMaterials.json`.
+
+IRG 27's sheet prints its index at 10 µm as 2.3842, out of line with its neighbors; the formula gives 2.3873, as SCHOTT's product page does.
+
+Other chalcogenide glasses (Umicore's GASIR, LightPath's BD-2 and BD-6) are published as tables of the index and a dn/dT or two, with no formula. One can be used through `LinearMaterial`, from its index, one dn/dT and its expansion coefficient.
 
 ## Thermal constants
 

@@ -16,6 +16,11 @@ A maker's data sheet tabulates the mean dn/dT over 20 K intervals, which its own
 - **SCHOTT** data sheets, N-FK51A, N-BK7, N-LASF9, N-SF6 and SF57: relative and absolute, three intervals (−40/−20, +20/+40, +60/+80 °C), at 1060 nm and the e and g lines. All 90 values agree to the printed 0.1×10⁻⁶/K. With the absolute index in the prefactor instead, 88 do.
 - **HOYA** NBFD27, +20/+40 °C, relative and absolute at ten wavelengths: 19 of 20 agree to the printed rounding. The relative value at 706.52 nm, 3.7, is 0.06 from the model's 3.64.
 
+SCHOTT's IRG data sheets print the index and the absolute dn/dT at 22 °C, which the sheets' own formulas generate. (`DataSheetMaterialTests`)
+
+- IRG 22, 25, 26 and 27, from 0.6 to 12 µm, 26 values: every index agrees to within 2×10⁻⁴, the rounding of the constants' printed four or five figures; the sheets give the index's tolerance as ±0.001. Every dn/dT agrees to within 0.15×10⁻⁶/K, except two near λtk, where the E₀ term is large and the three printed figures of λtk and E₀ count: IRG 22 at 1 µm (λtk 0.996 µm), 94.2 against 94.8, and IRG 27 at 0.6 µm, 61.6 against 62.2.
+- IRG 27 at 10 µm: the sheet prints 2.3842, out of line with its neighbors; the formula gives 2.3873, as SCHOTT's product page does.
+
 ## 3. Air
 
 Against NIST's reference values (Stone and Zimmerman, Engineering Metrology Toolbox, Table 1: 14 rows, −40 to +50 °C, 60 to 120 kPa, 0 to 100 % humidity, 300 to 1700 nm). (`AirTests`)

@@ -27,9 +27,12 @@ public sealed class Tie19Material : Material
     /// <param name="expansion">The expansion data.</param>
     /// <param name="wavelengthRangeUm">The catalog's wavelength range; (0, 0) when it gives none.</param>
     /// <param name="source">Where the data come from.</param>
+    /// <param name="temperatureRangeC">The temperatures the data hold over; TIE-19's −100 to +140 °C if null.</param>
     public Tie19Material(string catalog, string glass, Func<double, double> referenceIndex, ThermalData thermal,
-        ExpansionData expansion, (double Min, double Max) wavelengthRangeUm, string source)
+        ExpansionData expansion, (double Min, double Max) wavelengthRangeUm, string source,
+        (double Min, double Max)? temperatureRangeC = null)
     {
+        TemperatureRangeC = temperatureRangeC ?? (-100.0, 140.0);
         Catalog = catalog;
         Glass = glass;
         _referenceIndex = referenceIndex;
@@ -62,8 +65,8 @@ public sealed class Tie19Material : Material
     public override ExpansionData Expansion { get; }
     public override (double Min, double Max) WavelengthRangeUm { get; }
 
-    /// <summary>The range TIE-19 states for the model, −100 to +140 °C.</summary>
-    public override (double Min, double Max) TemperatureRangeC => (-100.0, 140.0);
+    /// <summary>The range the data hold over: for a catalog glass, the range TIE-19 states for the model, −100 to +140 °C.</summary>
+    public override (double Min, double Max) TemperatureRangeC { get; }
 
     public ThermalData Thermal { get; }
 

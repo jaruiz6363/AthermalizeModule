@@ -51,7 +51,7 @@ It then gives each part's share of the rates, and the glasses' x_f, γ and ν_T.
 
 ### Choosing materials
 
-- **The map.** `atherm map N-PK51 N-BK7 N-SF6 --housing aluminum-6061-t6 --svg map.svg`, or `--catalog SCHOTT` for every glass of a catalog with thermal data. `--band mwir` or `lwir` takes 3, 4 and 5 µm or 8, 10 and 12 µm, or give three wavelengths. A doublet is athermal and achromatic when its two points and the housing's point lie on one line. [`map-visible.txt`](../examples/map-visible.txt) and [`map-visible.svg`](../examples/map-visible.svg) are twelve glasses and an aluminum housing.
+- **The map.** `atherm map N-PK51 N-BK7 N-SF6 --housing aluminum-6061-t6 --svg map.svg`, or `--catalog SCHOTT` for every glass of a catalog with thermal data. `--band mwir` or `lwir` takes 3, 4 and 5 µm or 8, 10 and 12 µm, or give three wavelengths. A doublet is athermal and achromatic when its two points and the housing's point lie on one line. [`map-visible.txt`](../examples/map-visible.txt) and [`map-visible.svg`](../examples/map-visible.svg) are twelve glasses and an aluminum housing; [`map-lwir.txt`](../examples/map-lwir.txt) and [`map-lwir.svg`](../examples/map-lwir.svg) are germanium, ZnSe, ZnS and SCHOTT's IRG glasses over 8-12 µm.
 - **Solving.**
   - `atherm solve N-BK7 N-SF6 --housing aluminum-6061-t6 --focal 122` gives the achromat's powers, and how far it is from athermal.
   - Three materials give the athermal achromatic triplet: [`solve-triplet.txt`](../examples/solve-triplet.txt) is N-PK51, N-KZFS5 and N-LAK7.

@@ -1,0 +1,141 @@
+{
+  "about": "Glasses from their makers' data sheets. The index at the reference temperature, relative to air at that temperature and one atmosphere, is the Sellmeier formula n^2 - 1 = sum B_i lambda^2 / (lambda^2 - C_i), lambda in um and C_i in um^2. Its change with temperature is TIE-19's model of the absolute index with the constants the sheet gives; SCHOTT's IRG sheets give D0, E0 and lambdaTk, the change's rate at 22 C, so the model is linear in temperature. The temperature range, -55 to +75 C, is the one SCHOTT's earlier (2013) IRG sheets tabulate the change over. cte is the mean expansion coefficient, 1/K, over the range given.",
+  "materials": [
+    {
+      "catalog": "SCHOTT_IRG",
+      "name": "IRG22",
+      "description": "SCHOTT IRG 22 chalcogenide glass, Ge33As12Se55",
+      "source": "SCHOTT, \"Infrared Chalcogenide Glass IRG 22\" data sheet, version July 2018, https://us.shop.schott.com/medias/IRG22-July-2018-US.pdf",
+      "referenceTemperatureC": 22,
+      "temperatureRangeC": [
+        -55,
+        75
+      ],
+      "wavelengthRangeUm": [
+        1,
+        12
+      ],
+      "B": [
+        2.4834,
+        2.8203,
+        0.9773
+      ],
+      "C": [
+        0,
+        0.1352,
+        1420.7
+      ],
+      "thermal": {
+        "D0": 0.0000641,
+        "E0": 1.68e-7,
+        "lambdaTk": 0.996
+      },
+      "cte": {
+        "value": 0.0000125,
+        "range": "mean from 20 to 100 C"
+      }
+    },
+    {
+      "catalog": "SCHOTT_IRG",
+      "name": "IRG25",
+      "description": "SCHOTT IRG 25 chalcogenide glass, Ge28Sb12Se60",
+      "source": "SCHOTT, \"Infrared Chalcogenide Glass IRG 25\" data sheet, version July 2018, https://us.shop.schott.com/medias/IRG25-July-2018-US.pdf",
+      "referenceTemperatureC": 22,
+      "temperatureRangeC": [
+        -55,
+        75
+      ],
+      "wavelengthRangeUm": [
+        1,
+        12
+      ],
+      "B": [
+        2.7574,
+        3.099,
+        1.666
+      ],
+      "C": [
+        0,
+        0.1596,
+        2045.5
+      ],
+      "thermal": {
+        "D0": 0.000055,
+        "E0": 0.0000121,
+        "lambdaTk": 0.0000759
+      },
+      "cte": {
+        "value": 0.000014,
+        "range": "mean from 20 to 100 C"
+      }
+    },
+    {
+      "catalog": "SCHOTT_IRG",
+      "name": "IRG26",
+      "description": "SCHOTT IRG 26 chalcogenide glass, As40Se60",
+      "source": "SCHOTT, \"Infrared Chalcogenide Glass IRG 26\" data sheet, version July 2018, https://us.shop.schott.com/medias/IRG26-July-2018-US.pdf",
+      "referenceTemperatureC": 22,
+      "temperatureRangeC": [
+        -55,
+        75
+      ],
+      "wavelengthRangeUm": [
+        1,
+        12
+      ],
+      "B": [
+        3.1934,
+        3.5854,
+        2.2337
+      ],
+      "C": [
+        0,
+        0.1852,
+        3398.08
+      ],
+      "thermal": {
+        "D0": 0.0000263,
+        "E0": 0.0000293,
+        "lambdaTk": 0.315
+      },
+      "cte": {
+        "value": 0.0000214,
+        "range": "mean from 20 to 100 C"
+      }
+    },
+    {
+      "catalog": "SCHOTT_IRG",
+      "name": "IRG27",
+      "description": "SCHOTT IRG 27 chalcogenide glass, As2S3",
+      "source": "SCHOTT, \"Infrared Chalcogenide Glass IRG 27\" data sheet, version September 2018, https://media.schott.com/api/public/content/23af1b23e5c74272bc3ed1f3fa554fbd",
+      "referenceTemperatureC": 22,
+      "temperatureRangeC": [
+        -55,
+        75
+      ],
+      "wavelengthRangeUm": [
+        0.6,
+        12
+      ],
+      "B": [
+        1.4005,
+        3.4429,
+        1.0394
+      ],
+      "C": [
+        0,
+        0.0871,
+        805.5
+      ],
+      "thermal": {
+        "D0": -0.00000389,
+        "E0": 0.0000177,
+        "lambdaTk": 0.24
+      },
+      "cte": {
+        "value": 0.0000225,
+        "range": "mean from 20 to 100 C"
+      }
+    }
+  ]
+}

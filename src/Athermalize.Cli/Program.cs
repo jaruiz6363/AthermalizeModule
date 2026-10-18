@@ -21,7 +21,7 @@ public static class Program
         "         --thermal-wavelength reference|vacuum   the wavelength in TIE-19's E term (reference)\n" +
         "         --lambda-tk-sign agf|ignore     a negative λtk adds to λ² (agf)\n" +
         "         --air-wavelength input|vacuum   the wavelength the air formulas take (input)\n" +
-        "       atherm materials --measured        list the measured materials carried, with their sources\n" +
+        "       atherm materials --measured        list the measured and data-sheet materials carried, with sources\n" +
         LensCommand.Usage + "\n" +
         AthermalCommand.Usage;
 
@@ -106,6 +106,11 @@ public static class Program
             foreach (var m in library.Measured)
                 output.WriteLine(FormattableString.Invariant(
                     $"{m.Name,-22} {m.Description}; {m.WavelengthRangeUm.Min}-{m.WavelengthRangeUm.Max} µm, {m.TemperatureRangeC.Min + 273.15:0}-{m.TemperatureRangeC.Max + 273.15:0} K\n{"",-22} {m.Source}"));
+            output.WriteLine();
+            output.WriteLine("From makers' data sheets (TIE-19 model):");
+            foreach (var g in library.DataSheet)
+                output.WriteLine(FormattableString.Invariant(
+                    $"{g.Name,-22} {g.WavelengthRangeUm.Min}-{g.WavelengthRangeUm.Max} µm, {g.TemperatureRangeC.Min:0} to {g.TemperatureRangeC.Max:0} °C\n{"",-22} {g.Source}"));
             return 0;
         }
         if (names.Count == 0) throw new ArgumentException("name at least one material");
@@ -115,7 +120,7 @@ public static class Program
 
         foreach (var name in names)
         {
-            var m = library.Find(name) ?? throw new ArgumentException($"no material '{name}' in {catalogs} or the measured materials");
+            var m = library.Find(name) ?? throw new ArgumentException($"no material '{name}' in {catalogs}, the measured materials or the data-sheet glasses");
             output.WriteLine();
             output.WriteLine(Header(m));
             output.WriteLine("    T °C      λ µm      n_rel        n_abs     dn_rel/dT  dn_abs/dT      x_f   (10⁻⁶/K)");

@@ -19,6 +19,7 @@
   <!-- Materials measured over temperature, with their sources: see Materials/MeasuredMaterials.json. -->
   <ItemGroup>
     <EmbeddedResource Include="Materials/MeasuredMaterials.json" LogicalName="Athermalize.Core.Materials.MeasuredMaterials.json" />
+    <EmbeddedResource Include="Materials/DataSheetMaterials.json" LogicalName="Athermalize.Core.Materials.DataSheetMaterials.json" />
   </ItemGroup>
 
   <ItemGroup>

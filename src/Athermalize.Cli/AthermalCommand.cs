@@ -147,7 +147,7 @@ internal static class AthermalCommand
     }
 
     private static IEnumerable<Material> CatalogGlasses(MaterialLibrary library, string catalog) =>
-        library.CatalogGlasses().Where(g => string.Equals(g.Catalog, catalog, StringComparison.OrdinalIgnoreCase)
+        library.CatalogGlasses().Concat(library.DataSheet).Where(g => string.Equals(g.Catalog, catalog, StringComparison.OrdinalIgnoreCase)
                                             && g.Thermal.HasCoefficients && g.Expansion.Cte != 0.0);
 
     private static Band BandOf(string text)

@@ -31,6 +31,7 @@ SCHOTT:N-BK7: thermal data present, Tref 20 °C; α 7.1×10⁻⁶/K
 
 - **Glasses** come from the .AGF catalogs: their dispersion formulas through AberrationCalculator, and their thermal (`TD`) and expansion (`ED`) lines read here. The index follows SCHOTT's model (TIE-19). A glass whose catalog gives no thermal coefficients changes only with the air, and the output says so.
 - **Measured materials** (`atherm materials --measured`): silicon, germanium, CaF₂, Corning 7980 fused silica and Infrasil 301, from the temperature-dependent Sellmeier models published with NASA Goddard's CHARMS measurements, which hold from about 20 K to 300 K; and germanium, ZnS and ZnSe from 0.5 to 18 µm and about 100 to 600 K, from H. H. Li's reviews in the Journal of Physical and Chemical Reference Data, for the long-wave infrared and warm lenses. The output marks values outside a model's range.
+- **Infrared glasses from data sheets:** SCHOTT's IRG 22, 25, 26 and 27 chalcogenides (`SCHOTT_IRG:IRG26`, or `IRG26`), with the constants of SCHOTT's model from their data sheets.
 - **Air:** TIE-19's dry-air formula by default, or Ciddor (1996) with humidity and CO₂ (`--air ciddor --humidity 50`).
 - **Conventions:** where published methods differ, the choice is a named option with a stated default (`atherm --help`). See [docs/materials.md](docs/materials.md).
 
@@ -107,7 +108,7 @@ The lowest diffraction MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 
 
 ## Choosing materials and mounts
 
-- `atherm map` puts materials on the athermal map, x_f against 1/ν, with the housing's point. A thin doublet is athermal and achromatic when its two points and the housing's lie on one line ([map-visible.svg](examples/map-visible.svg)).
+- `atherm map` puts materials on the athermal map, x_f against 1/ν, with the housing's point. A thin doublet is athermal and achromatic when its two points and the housing's lie on one line ([map-visible.svg](examples/map-visible.svg), and [map-lwir.svg](examples/map-lwir.svg) for 8-12 µm).
 - `atherm solve` gives the thin athermal achromatic doublet or triplet of given materials, and a glass's best partners.
 - `atherm select` tries every combination of candidate glasses and mount materials on the lens itself and ranks them:
 
