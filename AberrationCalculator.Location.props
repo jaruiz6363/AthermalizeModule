@@ -1,0 +1,6 @@
+<Project>
+  <!-- One AberrationCalculator for everything: this repository's subtree. -->
+  <PropertyGroup>
+    <AberrationCalculatorDir>$(MSBuildThisFileDirectory)external/AberrationCalculator/</AberrationCalculatorDir>
+  </PropertyGroup>
+</Project>

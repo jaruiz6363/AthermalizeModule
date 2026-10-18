@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Athermalize.Cli</RootNamespace>
+    <AssemblyName>atherm</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Athermalize.Core\Athermalize.Core.csproj" />
+  </ItemGroup>
+
+  <!-- AberrationCalculator's glass catalogs. -->
+  <ItemGroup>
+    <None Include="$(AberrationCalculatorDir)catalogs/**/*" CopyToOutputDirectory="PreserveNewest" LinkBase="catalogs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Athermalize.Tests" />
+  </ItemGroup>
+</Project>

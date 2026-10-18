@@ -1,0 +1,95 @@
+{
+  "about": "Absolute refractive indices measured over temperature with the Cryogenic High-Accuracy Refraction Measuring System (CHARMS) at NASA Goddard, as the published three-term Sellmeier models whose strengths S_i and wavelengths lambda_i (um) are 4th-order polynomials in the temperature in kelvin: n^2 - 1 = sum S_i(T) lambda^2 / (lambda^2 - lambda_i(T)^2), S_i(T) = sum_j S_ij T^j. Coefficients are listed constant term first.",
+  "materials": [
+    {
+      "catalog": "CHARMS",
+      "name": "SI",
+      "description": "Silicon",
+      "source": "B. J. Frey, D. B. Leviton and T. J. Madison, \"Temperature-dependent refractive index of silicon and germanium,\" Proc. SPIE 6273, 62732J (2006), doi:10.1117/12.672850, Table 5",
+      "temperatureRangeK": [ 20, 300 ],
+      "wavelengthRangeUm": [ 1.1, 5.6 ],
+      "S": [
+        [ 10.4907, -2.08020E-04, 4.21694E-06, -5.82298E-09, 3.44688E-12 ],
+        [ -1346.61, 29.1664, -0.278724, 1.05939E-03, -1.35089E-06 ],
+        [ 4.42827E+07, -1.76213E+06, -7.61575E+04, 678.414, 103.243 ]
+      ],
+      "lambda": [
+        [ 0.299713, -1.14234E-05, 1.67134E-07, -2.51049E-10, 2.32484E-14 ],
+        [ -3.51710E+03, 42.3892, -0.357957, 1.17504E-03, -1.13212E-06 ],
+        [ 1.71400E+06, -1.44984E+05, -6.90744E+03, -39.3699, 23.5770 ]
+      ]
+    },
+    {
+      "catalog": "CHARMS",
+      "name": "GE",
+      "description": "Germanium",
+      "source": "B. J. Frey, D. B. Leviton and T. J. Madison, \"Temperature-dependent refractive index of silicon and germanium,\" Proc. SPIE 6273, 62732J (2006), doi:10.1117/12.672850, Table 10",
+      "temperatureRangeK": [ 20, 300 ],
+      "wavelengthRangeUm": [ 1.9, 5.5 ],
+      "S": [
+        [ 13.9723, 2.52809E-03, -5.02195E-06, 2.22604E-08, -4.86238E-12 ],
+        [ 0.452096, -3.09197E-03, 2.16895E-05, -6.02290E-08, 4.12038E-11 ],
+        [ 751.447, -14.2843, -0.238093, 2.96047E-03, -7.73454E-06 ]
+      ],
+      "lambda": [
+        [ 0.386367, 2.01871E-04, -5.93448E-07, -2.27923E-10, 5.37423E-12 ],
+        [ 1.08843, 1.16510E-03, -4.97284E-06, 1.12357E-08, 9.40201E-12 ],
+        [ -2893.19, -0.967948, -0.527016, 6.49364E-03, -1.95162E-05 ]
+      ]
+    },
+    {
+      "catalog": "CHARMS",
+      "name": "CAF2",
+      "description": "Calcium fluoride",
+      "source": "D. B. Leviton, B. J. Frey and T. J. Madison, \"Temperature-dependent refractive index of CaF2 and Infrasil 301,\" Proc. SPIE 6692, 669204 (2007), doi:10.1117/12.735594, Table 5",
+      "temperatureRangeK": [ 25, 300 ],
+      "wavelengthRangeUm": [ 0.4, 5.6 ],
+      "S": [
+        [ 1.04834, -2.21666E-04, -6.73446E-06, 1.50138E-08, -2.77255E-11 ],
+        [ -3.32723E-03, 2.34683E-04, 6.55744E-06, -1.47028E-08, 2.75023E-11 ],
+        [ 3.72693, 1.49844E-02, -1.47511E-04, 5.54293E-07, -7.17298E-10 ]
+      ],
+      "lambda": [
+        [ 7.94375E-02, -2.20758E-04, 2.07862E-06, -9.60254E-09, 1.31401E-11 ],
+        [ 0.258039, -2.12833E-03, 1.20393E-05, -3.06973E-08, 2.79793E-11 ],
+        [ 34.0169, 6.26867E-02, -6.14541E-04, 2.31517E-06, -2.99638E-09 ]
+      ]
+    },
+    {
+      "catalog": "CHARMS",
+      "name": "INFRASIL_301",
+      "description": "Infrasil 301 fused quartz",
+      "source": "D. B. Leviton, B. J. Frey and T. J. Madison, \"Temperature-dependent refractive index of CaF2 and Infrasil 301,\" Proc. SPIE 6692, 669204 (2007), doi:10.1117/12.735594, Table 10",
+      "temperatureRangeK": [ 35, 300 ],
+      "wavelengthRangeUm": [ 0.5, 3.6 ],
+      "S": [
+        [ 0.105962, 9.359142E-06, 4.941067E-08, 4.890163E-11, 1.492126E-13 ],
+        [ 0.995429, -7.973196E-06, 1.006343E-09, -8.694712E-11, -1.220612E-13 ],
+        [ 0.865120, 3.731950E-04, -2.010347E-06, 2.708606E-09, 1.679976E-12 ]
+      ],
+      "lambda": [
+        [ 4.500743E-03, -2.825065E-04, 3.136868E-06, -1.121499E-08, 1.236514E-11 ],
+        [ 9.383735E-02, -1.374171E-06, 1.316037E-08, 1.252909E-11, -4.641280E-14 ],
+        [ 9.757183, 1.864621E-03, -1.058414E-05, 1.730321E-08, 1.719396E-12 ]
+      ]
+    },
+    {
+      "catalog": "CHARMS",
+      "name": "FS_7980",
+      "description": "Corning 7980 fused silica",
+      "source": "D. B. Leviton and B. J. Frey, \"Temperature-dependent absolute refractive index measurements of synthetic fused silica,\" Proc. SPIE 6273, 62732K (2006), doi:10.1117/12.672853, Table 3",
+      "temperatureRangeK": [ 30, 300 ],
+      "wavelengthRangeUm": [ 0.4, 2.6 ],
+      "S": [
+        [ 1.10127E+00, -4.94251E-05, 5.27414E-07, -1.59700E-09, 1.75949E-12 ],
+        [ 1.78752E-05, 4.76391E-05, -4.49019E-07, 1.44546E-09, -1.57223E-12 ],
+        [ 7.93552E-01, -1.27815E-03, 1.84595E-05, -9.20275E-08, 1.48829E-10 ]
+      ],
+      "lambda": [
+        [ -8.90600E-02, 9.08730E-06, -6.53638E-08, 7.77072E-11, 6.84605E-14 ],
+        [ 2.97562E-01, -8.59578E-04, 6.59069E-06, -1.09482E-08, 7.85145E-13 ],
+        [ 9.34454E+00, -7.09788E-03, 1.01968E-04, -5.07660E-07, 8.21348E-10 ]
+      ]
+    }
+  ]
+}

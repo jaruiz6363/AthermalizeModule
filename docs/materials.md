@@ -1,0 +1,62 @@
+# Materials
+
+How the module computes a material's refractive index at a temperature and pressure.
+
+## Glasses: SCHOTT's model
+
+Glass catalogs in the AGF format give each glass a dispersion formula that holds in air at a reference temperature, Tref (20 °C in every maker's catalog), and one atmosphere, and a `TD` line of six thermal coefficients, D₀, D₁, D₂, E₀, E₁ and λtk, followed by Tref. SCHOTT's technical information TIE-19, "Temperature Coefficient of the Refractive Index" (2023), gives the model the coefficients belong to. For light of wavelength λ in the system's air, with the glass at temperature T:
+
+1. The air index at the system conditions, n_sys, and at Tref and one atmosphere, n_ref (TIE-19 eqs. 8 and 9).
+2. The same light's wavelength in the reference air, λ_ref = λ·n_sys/n_ref.
+3. The catalog index there, n_rel0, and the absolute index, n_abs0 = n_rel0·n_ref.
+4. The change of the absolute index, with ΔT = T − Tref (TIE-19 eq. 3):
+   Δn_abs = (n² − 1)/(2n)·[D₀ΔT + D₁ΔT² + D₂ΔT³ + (E₀ΔT + E₁ΔT²)/(λ² − λtk²)].
+5. The index relative to the system air, n = (n_abs0 + Δn_abs)/n_sys.
+
+The model holds from −100 to +140 °C and 0.365 to 1.014 µm (TIE-19); results outside that range, or outside a glass's own wavelength range, are marked.
+
+**Glasses without thermal data.** Some catalog glasses have no `TD` line, an empty one, one without Tref, or coefficients that are all zero. The module takes Tref as 20 °C, never 0 °C, and the glass's index then changes only with the air: steps 1 to 5 with Δn_abs = 0. The output names the glass's state.
+
+**Model glasses** (nd, Vd and ΔPgF, AberrationCalculator's model) are treated the same way: they change with the air only, unless thermal coefficients are given for them.
+
+The catalogs are read with fields separated by any run of spaces or tabs, numbers in the invariant culture, and UTF-8 or UTF-16 text.
+
+## Conventions
+
+Published methods differ in a few places. Each is an option, with a stated default:
+
+| Option | Default | Alternative | Size of the difference |
+|---|---|---|---|
+| The index in the prefactor (n² − 1)/(2n) | `relative`: the catalog index, which TIE-19 says may be used, and which the makers' data-sheet tables agree with more often | `absolute`: n_abs0 | Up to about 10⁻⁵ for high-index materials far from Tref; about 10⁻⁷ for a typical glass from −40 to +80 °C |
+| The wavelength in the E term | `reference`: λ_ref, the common practice with AGF catalogs | `vacuum`: as TIE-19 defines λ | Up to about 10⁻⁶ in the blue at −40 °C; more near λtk |
+| The sign of λtk | `agf`: a negative λtk adds λtk² to λ², as AGF catalogs use it | `ignore`: λ² − λtk² as printed in TIE-19 | Only glasses with a negative λtk |
+| The wavelength in the air formulas | `input`: λ as given, the common practice with AGF catalogs | `vacuum`: as TIE-19 and Ciddor define λ | Under 10⁻⁸ up to one atmosphere; about 5×10⁻⁸ at two |
+| The air model | `tie19`: TIE-19's dry air, which the makers fit their coefficients with | `ciddor`: Ciddor (1996), with humidity and CO₂ | About 4×10⁻⁷ in the air index at 50 % humidity |
+
+## Air
+
+- **TIE-19** (eqs. 8 and 9): Edlén's 1953 dispersion of dry standard air at 15 °C, scaled to the temperature and pressure as an ideal gas. It has no humidity, CO₂ or compressibility term.
+- **Ciddor (1996)**: P. E. Ciddor, "Refractive index of air: new equations for the visible and near infrared," Appl. Opt. 35, 1566-1573, with the water-vapor terms as NIST's Engineering Metrology Toolbox states them. Valid from −40 to +100 °C, 80 to 120 kPa, 0 to 100 % humidity and about 0.3 to 1.7 µm.
+
+Pressure is absolute. One standard atmosphere is 101 325 Pa; zero is vacuum, where the relative and absolute indices are the same and wavelengths are vacuum wavelengths.
+
+## Measured materials
+
+For some crystals and fused silicas the module carries models fitted to measurements over temperature rather than catalog coefficients. Each is an absolute-index Sellmeier model whose strengths and wavelengths are polynomials in the temperature in kelvin, as published with the measurements made by the Cryogenic High-Accuracy Refraction Measuring System (CHARMS) at NASA Goddard:
+
+| Name | Material | Range | Source |
+|---|---|---|---|
+| `CHARMS:SI` | Silicon | 1.1-5.6 µm, 20-300 K | Frey, Leviton and Madison, Proc. SPIE 6273, 62732J (2006) |
+| `CHARMS:GE` | Germanium | 1.9-5.5 µm, 20-300 K | Same |
+| `CHARMS:CAF2` | Calcium fluoride | 0.4-5.6 µm, 25-300 K | Leviton, Frey and Madison, Proc. SPIE 6692, 669204 (2007) |
+| `CHARMS:INFRASIL_301` | Infrasil 301 | 0.5-3.6 µm, 35-300 K | Same |
+| `CHARMS:FS_7980` | Corning 7980 fused silica | 0.4-2.6 µm, 30-300 K | Leviton and Frey, Proc. SPIE 6273, 62732K (2006) |
+
+The coefficients and full citations are in `src/Athermalize.Core/Materials/MeasuredMaterials.json`. These models are measured up to 300 K (27 °C); above that they are extrapolated, and the output marks it. They carry no expansion coefficient yet.
+
+## Thermal constants
+
+`atherm materials` holds each wavelength's vacuum wavelength fixed, since that is what stays the same when a lens warms, and puts the material and the air at each temperature:
+
+- dn_rel/dT and dn_abs/dT, by a central difference of ±0.5 K;
+- x_f = α − (dn_rel/dT)/(n_rel − 1), the relative change per kelvin of a thin lens's focal length in air at the same temperature (Jamieson, "Thermal effects in optical systems," Opt. Eng. 20, 156-160, 1981). Positive x_f means the focal length grows. α is the `ED` line's expansion coefficient from −30 to +70 °C.

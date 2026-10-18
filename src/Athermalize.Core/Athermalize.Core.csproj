@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Athermalize.Core</RootNamespace>
+    <AssemblyName>Athermalize.Core</AssemblyName>
+  </PropertyGroup>
+
+  <!-- The glass catalogs and their dispersion formulas are AberrationCalculator's; this library adds
+       the thermal (TD) and expansion (ED) data it skips, and the index over temperature and pressure. -->
+  <ItemGroup>
+    <ProjectReference Include="$(AberrationCalculatorDir)src/AberrationCalculator.Core/AberrationCalculator.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Materials measured over temperature, with their sources: see Materials/MeasuredMaterials.json. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Materials/MeasuredMaterials.json" LogicalName="Athermalize.Core.Materials.MeasuredMaterials.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Athermalize.Tests" />
+  </ItemGroup>
+</Project>
