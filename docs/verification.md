@@ -31,6 +31,13 @@ The CHARMS papers print index tables computed from the models the module carries
 - CaF₂ and Corning 7980, at 295 K (and 30 K for fused silica), 0.4 to 5 µm: every value agrees to the printed five decimals.
 - Silicon and germanium, at 295 K (and 30 K for silicon): every value agrees to 10⁻⁵. Their models cancel large terms, so the coefficients' six printed figures cost the sixth decimal. The papers give the models' fit to the measurements as 10⁻⁴ for these two.
 
+Li's reviews print index tables, to four decimals, and dn/dT tables computed from the equations the module carries.
+
+- Germanium, ZnS and ZnSe, from 0.5 to 18 µm and from 93 to 618 K, 19 values: every one agrees to within 7×10⁻⁵.
+- dn/dT at 293 K: germanium 4.433×10⁻⁴/K at 3 µm and 4.040×10⁻⁴/K at 10 µm, against the printed 4.431 and 4.033; ZnS 4.09×10⁻⁵/K at 10 µm against 4.1; ZnSe 6.34×10⁻⁵/K at 3 µm against 6.3.
+
+Li's germanium against the CHARMS measurement, an independent one, at 295 K: from 2.5 to 5.5 µm the indices agree to within 8×10⁻⁴ and dn/dT to within 2.4×10⁻⁵/K, inside Li's stated uncertainties of 2×10⁻³ and 0.5×10⁻⁴/K. At 2 µm, near the absorption edge, Li's index is 6.8×10⁻³ low, beyond its uncertainty; [materials.md](materials.md) says which model to use where.
+
 ## 5. The lens at a temperature
 
 Closed forms and invariances, each on a lens written for the test. (`ThermalLensTests`)

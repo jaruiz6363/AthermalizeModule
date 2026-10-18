@@ -1,5 +1,5 @@
 {
-  "about": "Absolute refractive indices measured over temperature with the Cryogenic High-Accuracy Refraction Measuring System (CHARMS) at NASA Goddard, as the published three-term Sellmeier models whose strengths S_i and wavelengths lambda_i (um) are 4th-order polynomials in the temperature in kelvin: n^2 - 1 = sum S_i(T) lambda^2 / (lambda^2 - lambda_i(T)^2), S_i(T) = sum_j S_ij T^j. Coefficients are listed constant term first. Each material's expansion coefficient, cte, 1/K, is from the source it names.",
+  "about": "Refractive indices over temperature from published models fitted to measurements. CHARMS: absolute indices measured with the Cryogenic High-Accuracy Refraction Measuring System at NASA Goddard, as the published three-term Sellmeier models (model sellmeier) whose strengths S_i and wavelengths lambda_i (um) are 4th-order polynomials in the temperature in kelvin: n^2 - 1 = sum S_i(T) lambda^2 / (lambda^2 - lambda_i(T)^2), S_i(T) = sum_j S_ij T^j. JPCRD: the recommended indices of H. H. Li's critical reviews in the Journal of Physical and Chemical Reference Data, relative to air, which the module takes as dry air at 20 C and 1 atm. Germanium (model li-germanium): n^2 = epsilon(T) + exp(-3 dL/L293) (A0 + A1 T + A2 T^2) / lambda^2, with dL/L293 the lattice expansion from 293 K as two cubics meeting at 293 K, the lower one in (T - 100 K). The paper prints the lower cubic's constant as -0.089, a value in percent; as a fraction it is -8.9E-4, which makes the cubic vanish at 293 K and join the upper one with the same slope. ZnS and ZnSe (model li-zinc): n^2 = E(t) + A(t)/(lambda^2 - lambdaU(t)^2) + B(t)/(lambda^2/lambdaI(t)^2 - 1), t = T - 293 K. Coefficients are listed constant term first. Each material's expansion coefficient, cte, 1/K, is from the source it names.",
   "materials": [
     {
       "catalog": "CHARMS",
@@ -95,6 +95,54 @@
         [ 2.97562E-01, -8.59578E-04, 6.59069E-06, -1.09482E-08, 7.85145E-13 ],
         [ 9.34454E+00, -7.09788E-03, 1.01968E-04, -5.07660E-07, 8.21348E-10 ]
       ]
+    },
+    {
+      "catalog": "JPCRD",
+      "name": "GE",
+      "description": "Germanium",
+      "source": "H. H. Li, \"Refractive index of silicon and germanium and its wavelength and temperature derivatives,\" J. Phys. Chem. Ref. Data 9, 561 (1980), doi:10.1063/1.555624, eq. (28); uncertainty 2E-3 in the index",
+      "cte": { "value": 5.790E-06, "range": "the instantaneous coefficient at 293 K", "source": "the lattice expansion Li's eq. (28) carries, from Y. S. Touloukian et al., Thermal Expansion: Metallic Elements and Alloys, TPRC Data Series 12 (1975), as printed in H. H. Li, J. Phys. Chem. Ref. Data 9, 561 (1980), p. 585" },
+      "model": "li-germanium",
+      "temperatureRangeK": [ 100, 550 ],
+      "wavelengthRangeUm": [ 1.9, 18 ],
+      "epsilon": [ 15.2892, 1.4549E-03, 3.5078E-06, -1.2071E-09 ],
+      "A": [ 2.5381, 1.8260E-03, 2.8888E-06 ],
+      "expansion": {
+        "splitK": 293,
+        "belowOriginK": 100,
+        "below": [ -8.9E-04, 2.626E-06, 1.463E-08, -2.221E-11 ],
+        "above": [ 0, 5.790E-06, 1.768E-09, -4.562E-13 ]
+      }
+    },
+    {
+      "catalog": "JPCRD",
+      "name": "ZNS",
+      "description": "CVD zinc sulfide",
+      "source": "H. H. Li, \"Refractive index of ZnS, ZnSe, and ZnTe and its wavelength and temperature derivatives,\" J. Phys. Chem. Ref. Data 13, 103 (1984), doi:10.1063/1.555705, eq. (20); uncertainty 5E-4 in the index",
+      "cte": { "value": 6.800E-06, "range": "the instantaneous coefficient at 20 C; the table gives 5.9 at -40 C and 7.3 at +80 C", "source": "A. Feldman, D. Horowitz, R. M. Waxler and M. J. Dodge, \"Optical materials characterization: final technical report,\" NBS Technical Note 993 (1979), Table 3, a synthesis of the literature and the program's own measurements" },
+      "model": "li-zinc",
+      "temperatureRangeK": [ 93, 618 ],
+      "wavelengthRangeUm": [ 0.5, 14 ],
+      "E": [ 8.34096, 1.29107E-03, 4.68388E-07, -1.31683E-09, -6.64356E-12 ],
+      "A": [ 0.14540, 1.13319E-05, 1.05932E-08, 1.06004E-10, -2.27671E-13 ],
+      "B": [ 3.23924, 1.09600E-03, 4.20092E-07, -1.11350E-09, -7.29920E-12 ],
+      "lambdaU": [ 0.23979, 4.841E-05 ],
+      "lambdaI": [ 36.525, 4.75E-03 ]
+    },
+    {
+      "catalog": "JPCRD",
+      "name": "ZNSE",
+      "description": "CVD zinc selenide",
+      "source": "H. H. Li, \"Refractive index of ZnS, ZnSe, and ZnTe and its wavelength and temperature derivatives,\" J. Phys. Chem. Ref. Data 13, 103 (1984), doi:10.1063/1.555705, eq. (23); uncertainty 4E-4 in the index",
+      "cte": { "value": 7.300E-06, "range": "the instantaneous coefficient at 20 C; the table gives 6.7 at -40 C and 7.7 at +80 C", "source": "A. Feldman, D. Horowitz, R. M. Waxler and M. J. Dodge, \"Optical materials characterization: final technical report,\" NBS Technical Note 993 (1979), Table 3, a synthesis of the literature and the program's own measurements" },
+      "model": "li-zinc",
+      "temperatureRangeK": [ 93, 618 ],
+      "wavelengthRangeUm": [ 0.55, 18 ],
+      "E": [ 9.01536, 1.44190E-03, 3.32973E-07, -1.08159E-09, -3.88394E-12 ],
+      "A": [ 0.24482, 2.77806E-05, 1.01703E-08, -4.51746E-11, 4.18509E-13 ],
+      "B": [ 3.08889, 1.13495E-03, 2.89063E-07, -9.55657E-10, -4.76123E-12 ],
+      "lambdaU": [ 0.29934, 1.004E-04 ],
+      "lambdaI": [ 48.38, 6.29E-03 ]
     }
   ]
 }

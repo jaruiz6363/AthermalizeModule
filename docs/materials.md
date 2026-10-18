@@ -42,7 +42,7 @@ Pressure is absolute. One standard atmosphere is 101 325 Pa; zero is vacuum, whe
 
 ## Measured materials
 
-For some crystals and fused silicas the module carries models fitted to measurements over temperature rather than catalog coefficients. Each is an absolute-index Sellmeier model whose strengths and wavelengths are polynomials in the temperature in kelvin, as published with the measurements made by the Cryogenic High-Accuracy Refraction Measuring System (CHARMS) at NASA Goddard:
+For some crystals and fused silicas the module carries models fitted to measurements over temperature rather than catalog coefficients. Five are absolute-index Sellmeier model whose strengths and wavelengths are polynomials in the temperature in kelvin, as published with the measurements made by the Cryogenic High-Accuracy Refraction Measuring System (CHARMS) at NASA Goddard:
 
 | Name | Material | Range | Source |
 |---|---|---|---|
@@ -52,7 +52,21 @@ For some crystals and fused silicas the module carries models fitted to measurem
 | `CHARMS:INFRASIL_301` | Infrasil 301 | 0.5-3.6 µm, 35-300 K | Same |
 | `CHARMS:FS_7980` | Corning 7980 fused silica | 0.4-2.6 µm, 30-300 K | Leviton and Frey, Proc. SPIE 6273, 62732K (2006) |
 
-The coefficients and full citations are in `src/Athermalize.Core/Materials/MeasuredMaterials.json`. These models are measured up to 300 K (27 °C); above that they are extrapolated, and the output marks it.
+These models are measured up to 300 K (27 °C); above that they are extrapolated, and the output marks it.
+
+For the long-wave infrared and for lenses that run warm, the module also carries the recommended indices of H. H. Li's critical reviews in the Journal of Physical and Chemical Reference Data. Li fitted one dispersion equation, with temperature-dependent terms, to the data sets judged reliable from the whole literature on each material:
+
+| Name | Material | Range | Uncertainty in n | Source |
+|---|---|---|---|---|
+| `JPCRD:GE` | Germanium | 1.9-18 µm, 100-550 K | 2×10⁻³ | Li, J. Phys. Chem. Ref. Data 9, 561 (1980), eq. (28) |
+| `JPCRD:ZNS` | CVD zinc sulfide | 0.5-14 µm, 93-618 K | 5×10⁻⁴ | Li, J. Phys. Chem. Ref. Data 13, 103 (1984), eq. (20) |
+| `JPCRD:ZNSE` | CVD zinc selenide | 0.55-18 µm, 93-618 K | 4×10⁻⁴ | Same, eq. (23) |
+
+Li gives the index relative to air without naming the air; the module takes it as dry air at 20 °C and one atmosphere (TIE-19's formula), so the absolute index is Li's times that air's index. The choice changes dn/dT by about n·10⁻⁶/K, well inside Li's uncertainties. Li's germanium equation carries the lattice's expansion from 293 K as two cubics. The paper prints the lower cubic's constant as −0.089, a value in percent: as a fraction it is −8.9×10⁻⁴, which makes the cubic vanish at 293 K and meet the upper one with the same slope, and that is the value the module uses.
+
+Where both germanium models hold, 2.5 to 5.5 µm at room temperature, they agree to within 8×10⁻⁴ in the index and about 5 % in dn/dT. Near germanium's absorption edge they part: at 2 µm Li's index is 6.8×10⁻³ below the CHARMS measurement, so below 2.5 µm `CHARMS:GE` is the better choice, as it is for any germanium below room temperature. Above room temperature, or past 5.5 µm, only `JPCRD:GE` holds.
+
+The coefficients and full citations are in `src/Athermalize.Core/Materials/MeasuredMaterials.json`.
 
 Each also carries an expansion coefficient from a separate source:
 
@@ -63,8 +77,13 @@ Each also carries an expansion coefficient from a separate source:
 | Calcium fluoride | 18.41 | mean, −30 to +70 °C | Hellma Materials, calcium fluoride data sheet (2012) |
 | Infrasil 301 | 0.51 | mean, 0 to 100 °C | Heraeus, "Quartz Glass for Optics: Data and Properties" (2019) |
 | Corning 7980 | 0.52 | mean, 5 to 35 °C | Corning, HPFS fused silica product information (2014) |
+| Germanium (`JPCRD:GE`) | 5.790 | 293 K, instantaneous | The lattice expansion in Li's eq. (28), from Touloukian et al., TPRC Data Series 12 (1975) |
+| CVD ZnS | 6.8 | 20 °C, instantaneous | Feldman, Horowitz, Waxler and Dodge, NBS Technical Note 993 (1979), Table 3 |
+| CVD ZnSe | 7.3 | 20 °C, instantaneous | Same |
 
-These are single values. Silicon's coefficient rises from about 2.1×10⁻⁶/K at 250 K to 2.9×10⁻⁶/K at 350 K (Okada and Tokumaru, J. Appl. Phys. 56, 314, 1984), so over a wide range a single value is an approximation, as a glass's mean coefficient is.
+The two germanium entries take their coefficients from different sources, each matching its index model; they differ by 2 %.
+
+These are single values. Silicon's coefficient rises from about 2.1×10⁻⁶/K at 250 K to 2.9×10⁻⁶/K at 350 K (Okada and Tokumaru, J. Appl. Phys. 56, 314, 1984), so over a wide range a single value is an approximation, as a glass's mean coefficient is. The NBS table gives ZnS 5.9 and ZnSe 6.7×10⁻⁶/K at −40 °C, and 7.3 and 7.7 at +80 °C.
 
 ## Thermal constants
 

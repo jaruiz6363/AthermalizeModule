@@ -84,4 +84,4 @@ var image = ImageQuality.Compute(model, new[] { -20.0, 20.0, 60.0 }, frequencies
 - `ThermalModel.At(air, part => ...)` builds it with only some parts warmed; this is how the report finds each part's share.
 - `ImageQuality.Model(hot)` gives WavefrontErrorCalculator's `LensModel` of the lens at the temperature, for any of its analyses.
 - `MaterialConstants.Of(material, Band.Visible)` gives ω, ν, P, γ and x_f; `Athermal.Doublet`, `Athermal.Triplet`, `Athermal.CanAthermalize` and `JiangObjective` work on them; `MaterialSearch.Run` searches a lens.
-- `Material` and its kinds give the index directly: `Tie19Material` for catalog glasses, `MeasuredMaterial` for the CHARMS models, and `LinearMaterial` for a material known by its index, one dn/dT and α.
+- `Material` and its kinds give the index directly: `Tie19Material` for catalog glasses, `MeasuredMaterial` for the CHARMS and JPCRD models, and `LinearMaterial` for a material known by its index, one dn/dT and α.

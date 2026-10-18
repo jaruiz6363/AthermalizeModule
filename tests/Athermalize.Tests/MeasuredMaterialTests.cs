@@ -48,6 +48,74 @@ public class MeasuredMaterialTests
         Assert.InRange(n - printed, -tolerance, tolerance);
     }
 
+    // Material, kelvin, wavelength µm, printed index relative to air.
+    public static readonly TheoryData<string, double, double, double> PrintedLi = new()
+    {
+        // Li (1980), Table 4.
+        { "JPCRD:GE", 100, 10.0, 3.9365 }, { "JPCRD:GE", 293, 2.0, 4.1008 }, { "JPCRD:GE", 293, 3.0, 4.0442 },
+        { "JPCRD:GE", 293, 10.0, 4.0025 }, { "JPCRD:GE", 293, 18.0, 3.9996 }, { "JPCRD:GE", 400, 10.0, 4.0488 },
+        { "JPCRD:GE", 550, 10.0, 4.1223 },
+        // Li (1984), Table 3.
+        { "JPCRD:ZNS", 93, 10.0, 2.1928 }, { "JPCRD:ZNS", 293, 0.5, 2.4200 }, { "JPCRD:ZNS", 293, 4.0, 2.2520 },
+        { "JPCRD:ZNS", 293, 10.0, 2.2002 }, { "JPCRD:ZNS", 293, 14.0, 2.1318 }, { "JPCRD:ZNS", 618, 10.0, 2.2161 },
+        // Li (1984), Table 8.
+        { "JPCRD:ZNSE", 93, 10.0, 2.3950 }, { "JPCRD:ZNSE", 293, 0.6, 2.6137 }, { "JPCRD:ZNSE", 293, 3.0, 2.4376 },
+        { "JPCRD:ZNSE", 293, 10.0, 2.4065 }, { "JPCRD:ZNSE", 293, 18.0, 2.3305 }, { "JPCRD:ZNSE", 618, 10.0, 2.4289 },
+    };
+
+    /// <summary>
+    /// Li's models against the tables Li computed from them, printed to four decimals: within 10⁻⁴, the rounding and
+    /// the coefficients' printed figures.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(PrintedLi))]
+    public void Li_models_match_the_printed_tables(string name, double kelvin, double lambda, double printed)
+    {
+        var m = (MeasuredMaterial)Catalogs.Find(name);
+        double n = m.AbsoluteIndex(lambda, kelvin) / AirIndex.Tie19(lambda, 20, 1);
+        _out.WriteLine($"{name} {kelvin} K {lambda} µm: {n:F6} ({printed})");
+        Assert.InRange(n - printed, -1e-4, 1e-4);
+    }
+
+    /// <summary>dn/dT at 293 K against Li's tables of the models' temperature derivatives.</summary>
+    [Theory]
+    [InlineData("JPCRD:GE", 3.0, 4.431e-4)]     // Li (1980), Table 5
+    [InlineData("JPCRD:GE", 10.0, 4.033e-4)]
+    [InlineData("JPCRD:ZNS", 10.0, 4.1e-5)]     // Li (1984), Table 4
+    [InlineData("JPCRD:ZNSE", 3.0, 6.3e-5)]     // Li (1984), Table 9
+    public void Li_models_give_the_printed_dn_dT(string name, double lambda, double printed)
+    {
+        var m = (MeasuredMaterial)Catalogs.Find(name);
+        double h = 1.0;
+        double dndt = (m.AbsoluteIndex(lambda, 293 + h) - m.AbsoluteIndex(lambda, 293 - h)) / (2 * h) / AirIndex.Tie19(lambda, 20, 1);
+        _out.WriteLine($"{name} {lambda} µm: {dndt:E4} ({printed:E3})");
+        Assert.InRange(dndt / printed - 1, -0.02, 0.02);
+    }
+
+    /// <summary>
+    /// Li's germanium against the CHARMS measurement, an independent one, where both hold: within Li's stated
+    /// uncertainty of 2×10⁻³ in the index and 0.5×10⁻⁴/K in dn/dT. From 2.5 to 5.5 µm the indices differ by less
+    /// than 8×10⁻⁴ and dn/dT by about 5 %. At 2 µm, near the absorption edge at 1.87 µm, Li's index is 6.8×10⁻³
+    /// below the measurement, beyond its stated uncertainty: below 2.5 µm the CHARMS model is the one to use.
+    /// </summary>
+    [Theory]
+    [InlineData(2.5)]
+    [InlineData(3.0)]
+    [InlineData(4.0)]
+    [InlineData(5.5)]
+    public void Li_germanium_agrees_with_CHARMS(double lambda)
+    {
+        var li = (MeasuredMaterial)Catalogs.Find("JPCRD:GE");
+        var charms = (MeasuredMaterial)Catalogs.Find("CHARMS:GE");
+        double T = 295;
+        double dn = li.AbsoluteIndex(lambda, T) - charms.AbsoluteIndex(lambda, T);
+        double dLi = (li.AbsoluteIndex(lambda, T + 5) - li.AbsoluteIndex(lambda, T - 5)) / 10;
+        double dCharms = (charms.AbsoluteIndex(lambda, T) - charms.AbsoluteIndex(lambda, T - 10)) / 10;
+        _out.WriteLine($"{lambda} µm: Δn {dn:E2}; dn/dT {dLi:E3} against {dCharms:E3}");
+        Assert.InRange(dn, -2e-3, 2e-3);
+        Assert.InRange(dLi - dCharms, -0.5e-4, 0.5e-4);
+    }
+
     /// <summary>In air, the relative index is the absolute index over the air's, at the light's vacuum wavelength.</summary>
     [Fact]
     public void Relative_index_in_air()
@@ -77,6 +145,9 @@ public class MeasuredMaterialTests
     [InlineData("CHARMS:CAF2", 18.41e-6)]
     [InlineData("CHARMS:INFRASIL_301", 0.51e-6)]
     [InlineData("CHARMS:FS_7980", 0.52e-6)]
+    [InlineData("JPCRD:GE", 5.790e-6)]
+    [InlineData("JPCRD:ZNS", 6.8e-6)]
+    [InlineData("JPCRD:ZNSE", 7.3e-6)]
     public void Measured_materials_carry_a_sourced_expansion_coefficient(string name, double cte)
     {
         var m = (MeasuredMaterial)Catalogs.Find(name);

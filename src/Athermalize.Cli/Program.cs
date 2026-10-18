@@ -166,7 +166,7 @@ public static class Program
         {
             Tie19Material t => FormattableString.Invariant(
                 $"{m.Name}: thermal data {Describe(t.Thermal.State)}{(t.Thermal.State is DataState.Present or DataState.Incomplete ? $", Tref {t.Thermal.ReferenceTemperatureC:0.##} °C" : "")}{(t.Thermal.HasCoefficients ? "" : "; no thermal coefficients, so only the air changes")}"),
-            MeasuredMaterial mm => $"{m.Name}: {mm.Description}, measured absolute index; {mm.Source}",
+            MeasuredMaterial mm => $"{m.Name}: {mm.Description}, {mm.Model.Reference} from a model fitted to measurements; {mm.Source}",
             _ => m.Name,
         };
         text += m.Expansion.Cte != 0.0
