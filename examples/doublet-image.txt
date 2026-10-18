@@ -11,9 +11,9 @@ Image quality, every wavelength, by its weight; RMS wavefront error in waves ove
     20.0      0.0777            0.155          0.0777
     80.0      0.1865         -174.555          0.0779
 
-Geometric MTF, sagittal/tangential, fixed | refocused:
-  field        0     30 c/mm:  -40 °C 0.461/0.461 | 0.925/0.925  20 °C 0.924/0.924 | 0.924/0.924  80 °C 0.620/0.620 | 0.924/0.924
-  field      1.5     30 c/mm:  -40 °C 0.729/0.906 | 0.884/0.700  20 °C 0.883/0.699 | 0.883/0.699  80 °C 0.398/0.192 | 0.882/0.698
+Diffraction MTF, sagittal/tangential, fixed | refocused:
+  field        0     30 c/mm:  -40 °C 0.400/0.400 | 0.769/0.769  20 °C 0.769/0.769 | 0.769/0.769  80 °C 0.646/0.646 | 0.769/0.769
+  field      1.5     30 c/mm:  -40 °C 0.593/0.743 | 0.783/0.695  20 °C 0.783/0.694 | 0.783/0.694  80 °C 0.483/0.287 | 0.783/0.694
 
-The lowest MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -36.8 to 42.0 °C (searched -60 to 100 °C)
-The lowest MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)
+The lowest diffraction MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -27.9 to 50.9 °C (searched -60 to 100 °C)
+The lowest diffraction MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)

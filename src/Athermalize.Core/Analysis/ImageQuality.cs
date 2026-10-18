@@ -25,12 +25,21 @@ public sealed record QualityOptions
     /// <summary>
     /// A central obstruction, as a fraction of the pupil's radius: the quadrature then covers the annulus. The
     /// lens's chief ray is still traced through the pupil's center. 0 by default. It applies to the wavefront; the
-    /// geometric MTF is of the whole pupil.
+    /// MTF, diffraction or geometric, is of the whole pupil.
     /// </summary>
     public double Obscuration { get; init; }
 
     /// <summary>Every wavelength, weighted by the lens's weights; the primary alone when false.</summary>
     public bool Polychromatic { get; init; } = true;
+
+    /// <summary>Which MTF: the diffraction MTF by default, or the geometric one.</summary>
+    public MtfKind MtfKind { get; init; } = MtfKind.Diffraction;
+
+    /// <summary>
+    /// The diffraction MTF's pupil grid, n×n (WavefrontErrorCalculator's autocorrelation with traced partners).
+    /// 64 by default, within a few 10⁻³ of a converged MTF, which keeps a scan over temperature quick.
+    /// </summary>
+    public int DiffractionGrid { get; init; } = 64;
 
     /// <summary>The geometric MTF's sampling.</summary>
     public MtfOptions Mtf { get; init; } = new();
@@ -94,19 +103,33 @@ public sealed record AnnularQuadrature(int Rings, int Arms, double Obscuration) 
     }
 }
 
+/// <summary>Which MTF is computed.</summary>
+public enum MtfKind
+{
+    /// <summary>
+    /// The diffraction MTF: the autocorrelation of the pupil function in the image's spatial frequencies, each
+    /// wavelength's OTF summed by its weight (WavefrontErrorCalculator's DiffractionMtf). Needed wherever the
+    /// wavelength is long against the blur, as in the thermal infrared.
+    /// </summary>
+    Diffraction,
+
+    /// <summary>The geometric MTF, from where the rays land (Kidger): diffraction left out, so it overstates a nearly perfect lens.</summary>
+    Geometric,
+}
+
 /// <summary>The image at one temperature, at a fixed image plane and refocused.</summary>
 /// <param name="TemperatureC">The temperature.</param>
 /// <param name="RmsFixed">The RMS wavefront error at the image plane the mount holds, waves.</param>
 /// <param name="FocusShift">The move of the image plane that minimizes the RMS wavefront error, mm, along the axis.</param>
 /// <param name="RmsRefocused">The RMS wavefront error there, waves.</param>
-/// <param name="MtfFixed">For each field, the geometric MTF at the fixed plane at each frequency.</param>
+/// <param name="MtfFixed">For each field, the MTF at the fixed plane at each frequency, of the kind the options ask for.</param>
 /// <param name="MtfRefocused">The same, refocused.</param>
 public sealed record QualityState(double TemperatureC, double RmsFixed, double FocusShift, double RmsRefocused,
     IReadOnlyList<GeometricMtf.Modulation[]> MtfFixed, IReadOnlyList<GeometricMtf.Modulation[]> MtfRefocused);
 
 /// <summary>
-/// The image quality of a lens at a temperature: the polychromatic RMS wavefront error and the geometric MTF, from
-/// WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated.
+/// The image quality of a lens at a temperature: the polychromatic RMS wavefront error and the diffraction MTF
+/// (or the geometric one), from WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated.
 ///
 /// <para>The RMS over the lens's fields and wavelengths is √(Σ w_f w_λ W²_rms / Σ w_f w_λ) with the lens's own
 /// weights. The focus compensator moves the image plane along the axis to the minimum of that RMS, found by
@@ -209,14 +232,27 @@ public static class ImageQuality
         return (start, F(start));
     }
 
-    /// <summary>The geometric MTF of every field at <paramref name="frequencies"/>, cycles/mm, with the image plane moved by <paramref name="focusShift"/>.</summary>
+    /// <summary>
+    /// The MTF of every field at <paramref name="frequencies"/>, cycles/mm, with the image plane moved by
+    /// <paramref name="focusShift"/>: the diffraction MTF, or the geometric one, as <see cref="QualityOptions.MtfKind"/> says.
+    /// </summary>
     public static GeometricMtf.Modulation[][] Mtf(LensModel lens, IReadOnlyList<double> frequencies, double focusShift,
         QualityOptions? options = null)
     {
         var o = options ?? new QualityOptions();
-        var mtf = o.Polychromatic ? o.Mtf : o.Mtf with { Wavelength = lens.PrimaryWavelength };
+        var wavefront = o.Wavefront with { FocusShift = focusShift };
+        if (o.MtfKind == MtfKind.Geometric)
+        {
+            var mtf = o.Polychromatic ? o.Mtf : o.Mtf with { Wavelength = lens.PrimaryWavelength };
+            return Enumerable.Range(0, lens.System.Fields.Count)
+                .Select(f => GeometricMtf.Compute(lens, f, frequencies, wavefront, mtf).Mtf.ToArray())
+                .ToArray();
+        }
+        // The autocorrelation fixes the pupil coordinates to the stop.
+        if (wavefront.ChiefRay == ChiefRayDefinition.VignettedCenter) wavefront = wavefront with { ChiefRay = ChiefRayDefinition.StopCenter };
+        var d = new DiffractionMtfOptions { Grid = o.DiffractionGrid, Wavelength = o.Polychromatic ? null : lens.PrimaryWavelength };
         return Enumerable.Range(0, lens.System.Fields.Count)
-            .Select(f => GeometricMtf.Compute(lens, f, frequencies, o.Wavefront with { FocusShift = focusShift }, mtf).Mtf.ToArray())
+            .Select(f => DiffractionMtf.Compute(lens, f, frequencies, wavefront, d).Mtf.ToArray())
             .ToArray();
     }
 

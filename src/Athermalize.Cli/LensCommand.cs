@@ -18,7 +18,7 @@ internal static class LensCommand
         "       atherm lens <file> --housing <material|α> [options]    the lens at each temperature, paraxially\n" +
         "       atherm focus <file> --housing <material|α> [options]   the first-order report: focus against the\n" +
         "                                         depth of focus, and each part's share of the focus shift\n" +
-        "       atherm image <file> --housing <material|α> [options]   RMS wavefront error and geometric MTF,\n" +
+        "       atherm image <file> --housing <material|α> [options]   RMS wavefront error and MTF,\n" +
         "                                         at the fixed image plane and refocused\n" +
         "         --housing <material|α>          the housing, which holds every air space and the image plane;\n" +
         "                                         a name from --mount-materials, or α in 10⁻⁶/K\n" +
@@ -38,6 +38,8 @@ internal static class LensCommand
         "         --frequencies <c/mm,...>        image: the MTF's frequencies (10,30)\n" +
         "         --mtf-limit <m>                 image: the temperatures over which the lowest MTF at the first\n" +
         "                                         frequency stays above m, searched over --range (-60,100)\n" +
+        "         --mtf diffraction|geometric     image: which MTF (diffraction)\n" +
+        "         --grid <n>                      image: the diffraction MTF's n×n pupil grid (64)\n" +
         "         --monochromatic                 image: the primary wavelength only\n" +
         "         --obscuration <ε>               image: a central obstruction, a fraction of the pupil radius\n" +
         "       atherm select <file> --housing <material|α> [options]  every combination of candidate glasses\n" +
@@ -74,6 +76,8 @@ internal static class LensCommand
         var ctes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var cemented = CementedSurface.FollowingGlass;
         bool detail = false, monochromatic = false;
+        var mtfKind = MtfKind.Diffraction;
+        int grid = 64;
         var o = IndexOptions.Default;
 
         for (int i = 0; i < args.Length; i++)
@@ -117,6 +121,8 @@ internal static class LensCommand
                     if (range.Length != 2 || range[0] >= range[1]) throw new ArgumentException("--range: give <low>,<high>");
                     break;
                 case "--monochromatic": monochromatic = true; break;
+                case "--mtf": mtfKind = Program.Choose(Next(), a, ("diffraction", MtfKind.Diffraction), ("geometric", MtfKind.Geometric)); break;
+                case "--grid": grid = (int)Program.Numbers(Next(), a)[0]; break;
                 case "--obscuration": obscuration = Program.Numbers(Next(), a)[0]; break;
                 case "--glass":
                 {
@@ -201,7 +207,7 @@ internal static class LensCommand
         if (mode == "focus") Focus(model, temperatures, p, output);
         else if (mode == "image")
             Image(model, temperatures, frequencies, mtfLimit, range,
-                new QualityOptions { Polychromatic = !monochromatic, Obscuration = obscuration }, output);
+                new QualityOptions { Polychromatic = !monochromatic, Obscuration = obscuration, MtfKind = mtfKind, DiffractionGrid = grid }, output);
         else Paraxial(model, lenses, p, nominal, output);
 
         var notes = new List<string>();
@@ -302,7 +308,7 @@ internal static class LensCommand
         if (frequencies.Length > 0)
         {
             output.WriteLine();
-            output.WriteLine("Geometric MTF, sagittal/tangential, fixed | refocused:");
+            output.WriteLine($"{(options.MtfKind == MtfKind.Diffraction ? "Diffraction" : "Geometric")} MTF, sagittal/tangential, fixed | refocused:");
             for (int f = 0; f < model.Nominal.Fields.Count; f++)
                 for (int k = 0; k < frequencies.Length; k++)
                 {
@@ -320,7 +326,7 @@ internal static class LensCommand
             {
                 var r = ImageQuality.Range(model, frequencies[0], limit, range[0], range[1], 5.0, refocused, options);
                 output.WriteLine(FormattableString.Invariant(
-                    $"The lowest MTF at {frequencies[0]:0.#} c/mm stays at or above {limit:0.###} {(refocused ? "refocused" : "at the fixed plane")}: ") +
+                    $"The lowest {(options.MtfKind == MtfKind.Diffraction ? "diffraction" : "geometric")} MTF at {frequencies[0]:0.#} c/mm stays at or above {limit:0.###} {(refocused ? "refocused" : "at the fixed plane")}: ") +
                     (r is { } v ? FormattableString.Invariant($"{v.Low:0.0} to {v.High:0.0} °C (searched {range[0]:0} to {range[1]:0} °C)") : "not even at the nominal temperature"));
             }
         }

@@ -83,7 +83,13 @@ Each reproduced end to end, from the lens to the published number. (`WorkedExamp
 - **A thin singlet's shares** are the glass's f·x_f and the housing's −L·α_h, to 10⁻³ and 10⁻¹² mm/K.
 - **A pure defocus.** A paraboloid on axis at f/10, its image plane 0.05 mm from focus, has the closed-form RMS Δz/(8√12 N²) (Itek 1972, Table G-3) to 0.05%. With an obstruction of 0.5 it has that times 1 − ε², also to 0.05%. The compensator returns the plane to the focus to 10⁻⁵ mm.
 - **First order against real rays.** For the same doublet and singlet over −40 to +80 °C, the paraxial focus change and the best-focus change by the polychromatic RMS agree to 1.1% (51.2 against 51.8 µm, −52.8 against −53.1 µm). Refocusing never raises the RMS.
-- **The MTF temperature range.** A paraboloid of α = 7.1×10⁻⁶/K in an aluminum housing has a geometric MTF at a defocus of 2J₁(x)/x, x = πνΔz/N. So at 40 cycles/mm it stays above 0.8 for 20 ± 12.646 °C. The module finds 7.409 to 32.591 °C, and refocused, the whole range searched.
+- **The geometric MTF temperature range.** A paraboloid of α = 7.1×10⁻⁶/K in an aluminum housing has a geometric MTF at a defocus of 2J₁(x)/x, x = πνΔz/N. So at 40 cycles/mm it stays above 0.8 for 20 ± 12.646 °C. The module finds 7.409 to 32.591 °C, and refocused, the whole range searched.
+- **The diffraction MTF temperature range, in the infrared.** A paraboloid of 200 mm at F/8 and 10 µm, on a substrate that doesn't expand, in a housing of 100×10⁻⁶/K.
+  - In focus its diffraction MTF at 5 cycles/mm is 0.5025, against the perfect lens's 0.5042; the geometric MTF says 1.
+  - The temperatures over which it stays above 0.8 of the perfect lens's are −36.98 to 76.53 °C, against −36.99 to 76.99 °C from Hopkins's (1955) defocused OTF.
+  - The high end's 0.46 K is the image point's move, of order Δz/f, which the formula leaves out.
+
+  WavefrontErrorCalculator's own tests check the diffraction MTF against the perfect lens at several wavelengths, Hopkins's defocus, and the Fourier transform of the directly summed PSF off axis (its method.md §11).
 
 ## 8. Athermalization
 

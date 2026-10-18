@@ -9,7 +9,7 @@ AthermalizeModule is a .NET library and a command-line tool, `atherm`, for the t
 | `atherm materials <name>...` | A material's index, dn/dT and x_f over temperature ([materials.md](materials.md)) |
 | `atherm lens <file>` | The lens at each temperature, paraxially, and with `--detail` its prescription |
 | `atherm focus <file>` | The first-order report: focus against the depth of focus, and each part's share |
-| `atherm image <file>` | RMS wavefront error and geometric MTF, at the fixed image plane and refocused |
+| `atherm image <file>` | RMS wavefront error and diffraction MTF, at the fixed image plane and refocused |
 | `atherm map <material>...` | The athermal map: each material's ν, ω, γ and x_f over a band, the housing's point, and an SVG plot |
 | `atherm solve <a> <b> [<c>]` | The thin athermal achromatic doublet or triplet; `--partners` ranks a glass's best partners |
 | `atherm select <file>` | Every combination of candidate glasses and mount materials, scored on the lens |
@@ -43,9 +43,11 @@ The examples in [`../examples`](../examples) are a cemented doublet of 122 mm fo
 
 It then gives each part's share of the rates, and the glasses' x_f, γ and ν_T. In [`doublet-focus.txt`](../examples/doublet-focus.txt) the glasses nearly cancel, and the housing's growth, −2.78 µm/K, is most of the −2.89 µm/K total. Over ±60 K that is ±2.2 depths of focus.
 
-`atherm image` gives the RMS wavefront error at the fixed image plane and refocused, and how far the plane must move. It gives the geometric MTF at `--frequencies` both ways, and with `--mtf-limit` the temperatures over which the lowest MTF stays above the limit. In [`doublet-image.txt`](../examples/doublet-image.txt):
+`atherm image` gives the RMS wavefront error at the fixed image plane and refocused, and how far the plane must move. It gives the diffraction MTF at `--frequencies` both ways, and with `--mtf-limit` the temperatures over which the lowest MTF stays above the limit. In [`doublet-image.txt`](../examples/doublet-image.txt):
 - refocusing holds the RMS at 0.078 waves from −40 to +80 °C;
-- the MTF at 30 cycles/mm stays above 0.5 from −36.8 to +42 °C at the fixed image plane.
+- the diffraction MTF at 30 cycles/mm stays above 0.5 from −27.9 to +50.9 °C at the fixed image plane.
+
+`--mtf geometric` gives the geometric MTF instead: 0.924 on axis at 30 cycles/mm for this lens, against the diffraction MTF's 0.769. `--grid` sets the diffraction MTF's pupil grid (64). A range search over two fields and three wavelengths takes about a minute; `--monochromatic` or fewer fields make it quicker.
 
 ### Choosing materials
 

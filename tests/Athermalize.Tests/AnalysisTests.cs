@@ -126,7 +126,7 @@ public class AnalysisTests
     }
 
     /// <summary>
-    /// The temperatures over which the MTF stays above a limit (Schuster and Franks 2012), against a closed form. A
+    /// The temperatures over which the geometric MTF stays above a limit (Schuster and Franks 2012), against a closed form. A
     /// paraboloid is perfect on axis, so defocused by Δz at f/N its geometric MTF is that of a uniform blur circle of
     /// diameter Δz/N, 2J₁(x)/x with x = πνΔz/N. On a substrate of α_m in a housing of α_h that holds its image plane,
     /// Δz = f·(α_m − α_h)·ΔT, so the MTF at ν falls to a limit at ΔT = x₀N/(πν f |α_m − α_h|), 2J₁(x₀)/x₀ = limit.
@@ -156,12 +156,61 @@ public class AnalysisTests
         for (int i = 0; i < 60; i++) { double mid = 0.5 * (lo + hi); if (Jinc(mid) > limit) lo = mid; else hi = mid; }
         double n = f / epd, dT = lo * n / (Math.PI * frequency * f * Math.Abs(substrate.Cte - Aluminum.Cte));
 
-        var range = ImageQuality.Range(model, frequency, limit, -100, 140, 2.0);
-        var refocused = ImageQuality.Range(model, frequency, limit, -100, 140, 20.0, refocused: true);
+        var geometric = new QualityOptions { MtfKind = MtfKind.Geometric };
+        var range = ImageQuality.Range(model, frequency, limit, -100, 140, 2.0, options: geometric);
+        var refocused = ImageQuality.Range(model, frequency, limit, -100, 140, 20.0, refocused: true, options: geometric);
         _out.WriteLine($"closed form 20 ± {dT:F3} °C; fixed plane {range}; refocused {refocused}");
         Assert.NotNull(range);
         Assert.InRange(range!.Value.Low - (20.0 - dT), -0.1, 0.1);
         Assert.InRange(range.Value.High - (20.0 + dT), -0.1, 0.1);
         Assert.Equal((-100.0, 140.0), refocused);
+    }
+
+    /// <summary>
+    /// The same with the diffraction MTF, in the thermal infrared: a paraboloid of 200 mm at F/8 and 10 µm, on a
+    /// substrate that does not expand, in a housing of α_h = 100×10⁻⁶/K, so that Δz = f·α_h·ΔT is a pure defocus.
+    /// In focus its MTF is the perfect lens's, circle(ν/ν_c), ν_c = 2 sin θ/λ, while the geometric MTF says 1. At
+    /// 5 cycles/mm it falls to 0.8 of that where Hopkins's defocused OTF, with W₂₀ = Δz sin²θ/(2λ), does: the ends
+    /// of the range come within 1 K of it, the rest being the steps' linear interpolation and terms of order Δz/f.
+    /// </summary>
+    [Fact]
+    public void The_diffraction_MTF_temperature_range_in_the_infrared()
+    {
+        const double f = 200.0, epd = 25.0, lambda = 10e-3, frequency = 5.0, housing = 100e-6;
+        var system = Lenses.AtInfinity(epd, 10.0).Surface(-2 * f, -f, "MIRROR", stop: true, conic: -1.0).Image();
+        system.Fields.RemoveAt(1);
+        var model = new ThermalModel(system, Catalogs.Library,
+            new Mount(MountMaterial.OfCte(housing), mirrorSubstrates: new Dictionary<int, MountMaterial> { [1] = MountMaterial.OfCte(0.0) }));
+
+        double a = epd / 2, sine = a / (f + a * a / (4 * f)), cutoff = 2 * sine / lambda;
+        static double Circle(double v) => v >= 1 ? 0 : 2 / Math.PI * (Math.Acos(v) - v * Math.Sqrt(1 - v * v));
+        static double Hopkins(double s, double w20)
+        {
+            double h = s / 2, upper = 1 - h, sum = 0;
+            const int n = 20_000;
+            for (int k = 0; k < n; k++)
+            {
+                double x = (k + 0.5) * upper / n;
+                sum += Math.Sqrt(Math.Max(0, 1 - (x + h) * (x + h))) * Math.Cos(4 * Math.PI * w20 * s * x);
+            }
+            return Math.Abs(4 / Math.PI * sum * upper / n);
+        }
+        double s0 = 2 * frequency / cutoff, perfect = Circle(frequency / cutoff), limit = 0.8 * perfect;
+        double lo = 0, hi = 2;
+        for (int i = 0; i < 60; i++) { double w = 0.5 * (lo + hi); if (Hopkins(s0, w) > limit) lo = w; else hi = w; }
+        double dT = 2 * lambda * lo / (sine * sine) / (f * housing);
+
+        var lens = ImageQuality.Model(model.At(20.0));
+        var diffraction = ImageQuality.Mtf(lens, new[] { frequency }, 0.0)[0][0];
+        var geometric = ImageQuality.Mtf(lens, new[] { frequency }, 0.0, new QualityOptions { MtfKind = MtfKind.Geometric })[0][0];
+        var range = ImageQuality.Range(model, frequency, limit, -100, 140, 2.0);
+        _out.WriteLine($"in focus: diffraction {diffraction.Tangential:F4} against {perfect:F4}, geometric {geometric.Tangential:F4}; " +
+                       $"range {range} against 20 ± {dT:F2} °C");
+        Assert.InRange(diffraction.Sagittal - perfect, -3e-3, 3e-3);
+        Assert.InRange(diffraction.Tangential - perfect, -3e-3, 3e-3);
+        Assert.Equal(1.0, geometric.Tangential, 6);
+        Assert.NotNull(range);
+        Assert.InRange(range!.Value.Low - (20 - dT), -1.0, 1.0);
+        Assert.InRange(range.Value.High - (20 + dT), -1.0, 1.0);
     }
 }

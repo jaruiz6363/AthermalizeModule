@@ -38,11 +38,18 @@ For a thin lens the shares reduce to the classical ones: the glass's f·x_f, and
 The wavefront error is computed by WavefrontErrorCalculator, as Hopkins and Welford define it: the chief ray's optical path minus each ray's, between the entrance and exit reference spheres, with real rays aimed at the real stop. It uses the lens at the temperature and its index tables.
 
 - **The pupil integral** is Gauss quadrature (Forbes 1988): Gauss-Legendre in ρ² on 8 rings of 24 rays by default. It is exact for a wavefront polynomial up to ρ³⁰ and an azimuthal order of 23.
-- **A central obstruction** of ε turns the quadrature onto the annulus ε ≤ ρ ≤ 1. The chief ray is still the ray through the pupil's center. The obstruction applies to the wavefront only; the geometric MTF is of the whole pupil.
+- **A central obstruction** of ε turns the quadrature onto the annulus ε ≤ ρ ≤ 1. The chief ray is still the ray through the pupil's center. The obstruction applies to the wavefront only; the MTF is of the whole pupil.
 - **RMS.** For each field and wavelength the RMS is the standard deviation of W over the pupil. They combine as √(Σ w_f w_λ W²_rms / Σ w_f w_λ), with the lens's own field and wavelength weights.
 - **The RMS change** is the RMS of the difference between the wavefronts at the temperature and at the design's temperature, sample by sample. It leaves out the design's own aberrations.
 - **The focus compensator** moves the image plane along the axis to the least RMS. Brent's method finds the minimum in a bracket a few depths of focus wide around the paraxial focus, widening the bracket while the minimum sits on its edge.
-- **The geometric MTF** is WavefrontErrorCalculator's: the spot's Fourier transform along each azimuth, from Kidger's pupil pattern, weighted over the wavelengths. It is given at the fixed image plane and refocused.
+- **The MTF** is the diffraction MTF by default, WavefrontErrorCalculator's:
+  - **The method.** It is the autocorrelation of the pupil function P = J^(−1/2) e^(−2πiW) in the image's spatial frequencies q = n′u⊥/λ, from the Debye integral. Each pupil point is paired with the point whose q is q − ν, found by tracing rays onto it, and whether it transmits by tracing it through the apertures. So off-axis and vignetted pupils need no rescaling of the frequency axis.
+  - **Wavelengths.** Each wavelength's OTF is summed by its weight as complex numbers about the primary wavelength's image point, so lateral color lowers the MTF.
+  - **The grid.** The outer integral is over a 64×64 grid of the pupil by default (`--grid`). The Debye integral needs a large Fresnel number, and a result below 10 is flagged.
+  - **Why it matters.** In the thermal infrared, at 10 µm and F/1 to F/2, the blur is mostly diffraction, and the geometric MTF, which leaves diffraction out, reads near 1 where the true MTF is about half that.
+  - **The geometric MTF** (`MtfKind.Geometric`, `--mtf geometric`) is the spot's Fourier transform along each azimuth, from Kidger's pupil pattern, weighted over the wavelengths: right only when the aberrations are large against the wavelength.
+
+  Either MTF is given at the fixed image plane and refocused.
 - **The temperature range** over which the lowest MTF, over the fields and both azimuths at a frequency, stays at or above a limit (Schuster and Franks 2012). It is searched outward from the design's temperature in steps, and each end is found by linear interpolation. It is given at the fixed image plane and with the focus compensated at each temperature.
 
 ## Athermalization

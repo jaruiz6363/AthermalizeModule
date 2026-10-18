@@ -86,7 +86,7 @@ Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1),
   SCHOTT:N-SF6 after surface 2            1.805180       0.954     9.03      7.845   -7.845              -127474
 ```
 
-`atherm image` gives the RMS wavefront error and the geometric MTF from real rays, through WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated, and the temperatures over which the MTF stays above a limit:
+`atherm image` gives the RMS wavefront error and the diffraction MTF from real rays, through WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated, and the temperatures over which the MTF stays above a limit. The MTF is the pupil function's autocorrelation, traced exactly off axis and under vignetting, which matters most in the thermal infrared, where the blur is mostly diffraction; `--mtf geometric` gives the geometric MTF instead:
 
 ```
 $ atherm image examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80 --frequencies 30 --mtf-limit 0.5
@@ -97,12 +97,12 @@ Image quality, every wavelength, by its weight; RMS wavefront error in waves ove
     20.0      0.0777            0.155          0.0777
     80.0      0.1865         -174.555          0.0779
 
-Geometric MTF, sagittal/tangential, fixed | refocused:
-  field        0     30 c/mm:  -40 °C 0.461/0.461 | 0.925/0.925  20 °C 0.924/0.924 | 0.924/0.924  80 °C 0.620/0.620 | 0.924/0.924
-  field      1.5     30 c/mm:  -40 °C 0.729/0.906 | 0.884/0.700  20 °C 0.883/0.699 | 0.883/0.699  80 °C 0.398/0.192 | 0.882/0.698
+Diffraction MTF, sagittal/tangential, fixed | refocused:
+  field        0     30 c/mm:  -40 °C 0.400/0.400 | 0.769/0.769  20 °C 0.769/0.769 | 0.769/0.769  80 °C 0.646/0.646 | 0.769/0.769
+  field      1.5     30 c/mm:  -40 °C 0.593/0.743 | 0.783/0.695  20 °C 0.783/0.694 | 0.783/0.694  80 °C 0.483/0.287 | 0.783/0.694
 
-The lowest MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -36.8 to 42.0 °C (searched -60 to 100 °C)
-The lowest MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)
+The lowest diffraction MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -27.9 to 50.9 °C (searched -60 to 100 °C)
+The lowest diffraction MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)
 ```
 
 ## Choosing materials and mounts
@@ -145,7 +145,7 @@ On Windows, the subtrees nest deep enough that a clone into a folder with a long
 The optics come from libraries carried in `external/` as subtrees:
 
 - [AberrationCalculator](https://github.com/jaruiz6363/AberrationCalculator): the lens model, readers for lens files, glass catalogs, paraxial and real ray tracing.
-- [WavefrontErrorCalculator](https://github.com/jaruiz6363/WavefrontErrorCalculator): wavefront error from real rays, and the geometric MTF.
+- [WavefrontErrorCalculator](https://github.com/jaruiz6363/WavefrontErrorCalculator): wavefront error from real rays, and the diffraction and geometric MTF.
 
 ## License
 
