@@ -130,4 +130,51 @@ public class CliTests
         }
         finally { File.Delete(path); }
     }
+
+    [Fact]
+    public void Map_lists_the_materials_and_plots_them()
+    {
+        string svg = Path.Combine(Path.GetTempPath(), $"atherm-map-{Guid.NewGuid():N}.svg");
+        try
+        {
+            var (code, text) = Run("map", "N-BK7", "N-SF6", "--housing", "aluminum-6061-t6", "--svg", svg, "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("SCHOTT:N-BK7", text);
+            Assert.Contains("housing aluminum-6061-t6", text);
+            var doc = System.Xml.Linq.XDocument.Load(svg);
+            Assert.Equal(2, doc.Descendants().Count(e => e.Name.LocalName == "circle"));
+        }
+        finally { File.Delete(svg); }
+    }
+
+    [Fact]
+    public void Solve_gives_the_doublet_and_the_triplet()
+    {
+        var (code, text) = Run("solve", "N-BK7", "N-SF6", "--housing", "23.6", "--focal", "100", "--catalogs", Catalogs.Folder);
+        Assert.Equal(0, code);
+        Assert.Contains("Achromatic doublet: f_a =", text);
+        Assert.Contains("Not athermal", text);
+        (code, text) = Run("solve", "N-PK51", "N-KZFS5", "N-LAK7", "--housing", "23.6", "--catalogs", Catalogs.Folder);
+        Assert.Equal(0, code);
+        Assert.Contains("Athermal achromatic triplet: f =", text);
+        (code, text) = Run("solve", "N-BK7", "--partners", "--catalog", "SCHOTT", "--housing", "23.6", "--top", "3", "--catalogs", Catalogs.Folder);
+        Assert.Equal(0, code);
+        Assert.Contains("most nearly athermal first", text);
+    }
+
+    [Fact]
+    public void Select_ranks_the_combinations()
+    {
+        string path = DoubletFile();
+        try
+        {
+            var (code, text) = Run("select", path, "--housing", "aluminum-6061-t6", "--near", "2:0.05:4", "--catalog", "SCHOTT",
+                "--housing-candidates", "aluminum-6061-t6,ti-6al-4v", "--keep", "3", "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("combinations. Score", text);
+            Assert.Contains("design", text);
+            Assert.Contains("housing ti-6al-4v", text);
+        }
+        finally { File.Delete(path); }
+    }
 }

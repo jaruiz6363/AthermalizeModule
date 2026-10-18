@@ -1,13 +1,13 @@
 # AthermalizeModule
 
-A general-purpose module, as a .NET library and a command-line tool, for the thermal analysis and athermalization of lenses. It is under development. What works now is the first three parts: the materials, the lens at a temperature, and the analysis of focus and image quality over temperature.
+A general-purpose module, as a .NET library and a command-line tool, for the thermal analysis and athermalization of lenses. It is under development. All four parts work now: the materials, the lens at a temperature, the analysis of focus and image quality over temperature, and the choice of materials and mounts.
 
 Planned:
 
 - **Materials:** the refractive index of glasses and crystals over temperature and pressure, from catalog thermal data, with the air index at the system conditions. *Available now; see below.*
 - **The lens at a temperature:** radii, thicknesses and aspheres that grow with each element's expansion, and air spaces set by the spacers and the housing. *Available now; see below.*
 - **Analysis:** focal length, focus and image quality over a temperature range, at a fixed image plane and with a focus compensator, and each element's share of the focus shift. *Available now; see below.*
-- **Athermalization:** materials and mounts that hold focus over the range.
+- **Athermalization:** materials and mounts that hold focus over the range. *Available now; see below.*
 
 The first release covers a lens soaked at one temperature, of glass and crystal elements in metal mounts. Plastics and temperature gradients come later.
 
@@ -103,6 +103,27 @@ Geometric MTF, sagittal/tangential, fixed | refocused:
 
 The lowest MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -36.8 to 42.0 °C (searched -60 to 100 °C)
 The lowest MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)
+```
+
+## Choosing materials and mounts
+
+- `atherm map` puts materials on the athermal map, x_f against 1/ν, with the housing's point. A thin doublet is athermal and achromatic when its two points and the housing's lie on one line ([map-visible.svg](examples/map-visible.svg)).
+- `atherm solve` gives the thin athermal achromatic doublet or triplet of given materials, and a glass's best partners.
+- `atherm select` tries every combination of candidate glasses and mount materials on the lens itself and ranks them:
+
+```
+$ atherm select examples/doublet.zmx --housing aluminum-6061-t6 --near 2:0.08:6 --catalog SCHOTT \
+      --housing-candidates aluminum-6061-t6,stainless-303,ti-6al-4v --keep 5
+...
+105 combinations. Score = (|focus rate|·60 K + |axial color|)/depth of focus × (1 + 2|ΔEFL|/EFL), at the design's shapes:
+  rank     score   focus µm/K   color µm   ΔEFL mm   materials
+  design    2.677     -2.8905     -34.645     0.0000   housing aluminum-6061-t6
+  1        0.322     -0.2492      -9.937     0.3753   after 2: SCHOTT:SF6G05; housing ti-6al-4v
+  2        0.772     -0.2791     -43.272     0.0002   after 2: SCHOTT:SF6; housing ti-6al-4v
+  3        0.772     -0.2791     -43.272     0.0002   after 2: SCHOTT:SF6HT; housing ti-6al-4v
+  4        1.109     -1.2621      -9.937     0.3753   after 2: SCHOTT:SF6G05; housing stainless-303
+  5        1.313     -1.1238     -34.645     0.0000   after 2: SCHOTT:N-SF6; housing ti-6al-4v
+A glass swap changes the lens: optimize the best before taking them further.
 ```
 
 The [user guide](docs/user-guide.md) shows the options and the library, and [docs/theory.md](docs/theory.md) the definitions and signs.

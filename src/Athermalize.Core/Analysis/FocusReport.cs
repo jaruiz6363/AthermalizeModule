@@ -54,8 +54,21 @@ public sealed class FocusReport
     /// <summary>dEFL/dT of the whole lens at the nominal temperature, mm/K.</summary>
     public double EflPerK { get; }
 
-    /// <summary>The report at <paramref name="temperatures"/>, °C, the rates by central differences of ±<paramref name="stepK"/>.</summary>
-    public static FocusReport Compute(ThermalModel model, IEnumerable<double> temperatures, double stepK = 0.5)
+    /// <summary>The depth of focus at the nominal temperature, ±2λN², mm.</summary>
+    public double DepthOfFocus { get; private init; }
+
+    /// <summary>
+    /// The temperature change that moves the focus by one depth of focus at the nominal rate,
+    /// 2λN²/|d(defocus)/dT|, K: Schuster and Franks's (2012, eq. 4) first-order athermal range,
+    /// 2λN²/(f(α_H + γ_T)) for a thin lens.
+    /// </summary>
+    public double TemperatureForOneDepthK => DepthOfFocus / Math.Abs(DefocusPerK);
+
+    /// <summary>
+    /// The report at <paramref name="temperatures"/>, °C, the rates by central differences of ±<paramref name="stepK"/>;
+    /// without the parts' shares when <paramref name="shares"/> is false.
+    /// </summary>
+    public static FocusReport Compute(ThermalModel model, IEnumerable<double> temperatures, double stepK = 0.5, bool shares = true)
     {
         double t0 = model.NominalTemperatureC;
         var air = model.NominalAir;
@@ -67,7 +80,7 @@ public sealed class FocusReport
         }
 
         var (defocusRate, eflRate) = Rate(null);
-        var contributions = model.Parts().Select(p =>
+        var contributions = (shares ? model.Parts() : Array.Empty<ThermalPart>()).Select(p =>
         {
             var (d, e) = Rate(q => q == p);
             return new Contribution(p, model.Describe(p), d, e);
@@ -82,7 +95,10 @@ public sealed class FocusReport
             return new FocusState(t, p.Efl, p.Bfl, p.Defocus, p.Defocus - nominal.Defocus, defocusRate * (t - t0),
                 p.FNumber, 2.0 * lambdaMm * p.FNumber * p.FNumber);
         }).ToList();
-        return new FocusReport(states, contributions, defocusRate, eflRate);
+        var lens0 = model.At(air);
+        var p0 = Paraxial(lens0);
+        double lambda0 = lens0.System.Wavelengths[Math.Max(0, lens0.System.PrimaryWavelengthIndex)].Value * 1e-3;
+        return new FocusReport(states, contributions, defocusRate, eflRate) { DepthOfFocus = 2.0 * lambda0 * p0.FNumber * p0.FNumber };
     }
 
     /// <summary>The paraxial focus less the image plane, mm, at the primary wavelength.</summary>

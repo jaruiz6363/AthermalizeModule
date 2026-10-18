@@ -85,6 +85,22 @@ Each reproduced end to end, from the lens to the published number. (`WorkedExamp
 - **First order against real rays.** For the same doublet and singlet over −40 to +80 °C, the paraxial focus change and the best-focus change by the polychromatic RMS agree to 1.1% (51.2 against 51.8 µm, −52.8 against −53.1 µm). Refocusing never raises the RMS.
 - **The MTF temperature range.** A paraboloid of α = 7.1×10⁻⁶/K in an aluminum housing has a geometric MTF at a defocus of 2J₁(x)/x, x = πνΔz/N. So at 40 cycles/mm it stays above 0.8 for 20 ± 12.646 °C. The module finds 7.409 to 32.591 °C, and refocused, the whole range searched.
 
-## 8. Catalog reading
+## 8. Athermalization
+
+(`AthermalTests`, `SearchTests`)
+
+- **Jiang and Liu (2024), Table 3.** Their final telephoto's eight glasses, by ω, γ, φ and h in an aluminum housing of 22.5×10⁻⁶/K, give the composite point ω′ = −0.277×10⁻³ and γ′ = 0.205×10⁻⁶/K from the table as printed. The paper gives −0.26×10⁻³ and 0.22×10⁻⁶/K, computed before rounding.
+- **Jiang and Liu (2024), Table 2.** Their objective from their five best sets' normalized residuals gives 8.53, 8.79, 9.36, 9.38 and 9.96, against the printed 8.55, 8.83, 9.33, 9.36 and 9.93. The columns are rounded to 0.01.
+- **The athermal achromatic triplet** of three materials makes the residuals vanish to rounding, and three collinear points have none (Zhang et al. 2012).
+- **A doublet** whose two points lie on a line through the housing's point is athermal, and in a warmer housing defocuses by exactly −(Δα_h)/φ per kelvin.
+- **The feasibility test** accepts a set whose composite hull holds the origin and rejects two that miss it.
+- **Schuster and Franks (2012), Table 2.** γ_T for Ge, GaAs, IKS25, GASIR 1, ZnSe and ZnS from their n, dn/dT and α. All agree to the printed 0.1×10⁻⁶/K but ZnSe, printed 36.6 against the formula's 36.3.
+- **Schuster and Franks (2012), eq. 4 and Tables 1 and 3.** A GASIR 1 lens's temperature for one depth of focus, from the full model of a thin lens at f/RF, matches their values to 1.5 K: 84, 52, 36, 18 and 12 K in aluminum, and 203 and 115 K in their passive mounts.
+- **A thin doublet from the solver**, N-BK7 and N-SF6, built as thin lenses in the full model, has no axial color (to 10⁻⁵ mm) and the solver's focus rate to 2×10⁻³.
+- **The search.** Over aluminum, titanium or Invar for each of three barrel sections, its best is the least-defocus combination of all 27, each built alone, and better than all aluminum (Invar throughout: −1.48 against −3.10 µm/K). Over glasses near a doublet's flint, the best scores no worse than the design, which is among the candidates. A search beyond its limit is refused.
+
+The γ the module computes for Jiang and Liu's SCHOTT glasses, at the d line and 20 °C, relative to the air, is within 0.5×10⁻⁶/K of the values they tabulate. For example N-PK52A gives −25.68 against −25.887, and N-SK11 −1.17 against −0.825. The paper doesn't say whether its dn/dT is absolute or relative, or at which wavelength.
+
+## 9. Catalog reading
 
 Fields separated by doubled spaces or tabs, numbers under German, French and Swedish number settings, UTF-16 files, and missing, empty and short `TD` lines all read as intended, and the shipped catalogs' glasses with missing, empty or all-zero thermal lines are recognized. (`ThermalCatalogTests`)

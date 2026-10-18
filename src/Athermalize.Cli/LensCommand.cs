@@ -40,6 +40,15 @@ internal static class LensCommand
         "                                         frequency stays above m, searched over --range (-60,100)\n" +
         "         --monochromatic                 image: the primary wavelength only\n" +
         "         --obscuration <ε>               image: a central obstruction, a fraction of the pupil radius\n" +
+        "       atherm select <file> --housing <material|α> [options]  every combination of candidate glasses\n" +
+        "                                         and mount materials, scored on the lens at its shapes\n" +
+        "         --glass <s>:<material>,...      candidates for the glass after surface s\n" +
+        "         --near <s>[:<Δn>[:<Δν>]]        candidates near the glass after surface s (0.05, 5), from --catalog\n" +
+        "         --catalog <name>                the catalog for --near (all)\n" +
+        "         --housing-candidates <m>,...    candidates for the housing\n" +
+        "         --part-candidates <k>:<m>,...   candidates for mount part k, counted from 0 in the order given\n" +
+        "         --delta-t <K>                   the half-range the focus must hold over (60)\n" +
+        "         --keep <n>                      how many of the best to print (10)\n" +
         "       atherm lens --mount-materials      list the mount materials carried, with their sources";
 
     public static int Run(string mode, string[] args, TextWriter output)
@@ -51,6 +60,13 @@ internal static class LensCommand
         double[] range = { -60, 100 };
         double nominal = 20.0, atmospheres = 1.0, obscuration = 0.0;
         double? mtfLimit = null;
+        double deltaT = 60.0;
+        int keep = 10;
+        string? searchCatalog = null;
+        var glassCandidates = new Dictionary<int, List<string>>();
+        var nearGlass = new List<(int Surface, double Dn, double Dnu)>();
+        var housingCandidates = new List<MountMaterial>();
+        var partCandidates = new Dictionary<int, List<MountMaterial>>();
         MountMaterial? housing = null;
         var segments = new List<MountSegment>();
         var mirrors = new Dictionary<int, MountMaterial>();
@@ -102,6 +118,30 @@ internal static class LensCommand
                     break;
                 case "--monochromatic": monochromatic = true; break;
                 case "--obscuration": obscuration = Program.Numbers(Next(), a)[0]; break;
+                case "--glass":
+                {
+                    var (k, list) = Split(Next(), ':', a);
+                    glassCandidates[Integer(k, a)] = list.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+                    break;
+                }
+                case "--near":
+                {
+                    var f = Next().Split(':');
+                    nearGlass.Add((Integer(f[0], a), f.Length > 1 ? Program.Numbers(f[1], a)[0] : 0.05, f.Length > 2 ? Program.Numbers(f[2], a)[0] : 5.0));
+                    break;
+                }
+                case "--catalog": searchCatalog = Next(); break;
+                case "--housing-candidates":
+                    housingCandidates.AddRange(Next().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(m => Material(m, a)));
+                    break;
+                case "--part-candidates":
+                {
+                    var (k, list) = Split(Next(), ':', a);
+                    partCandidates[Integer(k, a)] = list.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(m => Material(m, a)).ToList();
+                    break;
+                }
+                case "--delta-t": deltaT = Program.Numbers(Next(), a)[0]; break;
+                case "--keep": keep = (int)Program.Numbers(Next(), a)[0]; break;
                 case "--air" or "--prefactor" or "--thermal-wavelength" or "--lambda-tk-sign" or "--air-wavelength":
                     o = Program.IndexOption(o, a, Next()); break;
                 default:
@@ -139,6 +179,25 @@ internal static class LensCommand
         }
 
         var lenses = temperatures.Select(t => model.At(air with { TemperatureC = t })).ToList();
+        if (mode == "select")
+        {
+            var glasses = new Dictionary<int, IReadOnlyList<Material>>();
+            foreach (var (k, list) in glassCandidates)
+                glasses[k] = list.Select(n => library.Find(n) ?? throw new ArgumentException($"--glass: no material '{n}'")).ToList();
+            foreach (var (k, dn, dnu) in nearGlass)
+            {
+                var own = model.MaterialAfter(k) ?? throw new ArgumentException($"--near: surface {k} is not followed by glass");
+                glasses[k] = MaterialSearch.Neighbors(library, own, dn, dnu, searchCatalog == null ? null : new[] { searchCatalog });
+            }
+            var candidates = new SearchCandidates
+            {
+                Glasses = glasses,
+                Housing = housingCandidates,
+                Parts = partCandidates.ToDictionary(p => p.Key, p => (IReadOnlyList<MountMaterial>)p.Value),
+            };
+            Select(system, library, mount, air, new ThermalOptions(o, substitutions, ctes), candidates, deltaT, keep, output);
+            return 0;
+        }
         if (mode == "focus") Focus(model, temperatures, p, output);
         else if (mode == "image")
             Image(model, temperatures, frequencies, mtfLimit, range,
@@ -282,7 +341,34 @@ internal static class LensCommand
         ? m.Name
         : FormattableString.Invariant($"{m.Name} (α {m.Cte * 1e6:0.###}×10⁻⁶/K)");
 
-    private static MountMaterial Material(string text, string option)
+    private static void Select(AberrationCalculator.Core.Models.OpticalSystem system, MaterialLibrary library, Mount mount,
+        AirConditions air, ThermalOptions thermal, SearchCandidates candidates, double deltaT, int keep, TextWriter output)
+    {
+        double count = candidates.Count(mount);
+        output.WriteLine();
+        output.WriteLine(FormattableString.Invariant(
+            $"{count:0} combinations. Score = (|focus rate|·{deltaT:0.#} K + |axial color|)/depth of focus × (1 + 2|ΔEFL|/EFL), at the design's shapes:"));
+        var results = MaterialSearch.Run(system, library, mount, candidates,
+            new SearchOptions { NominalAir = air, Thermal = thermal, TemperatureRangeK = deltaT, Keep = keep });
+        var design = MaterialSearch.Run(system, library, mount, new SearchCandidates(),
+            new SearchOptions { NominalAir = air, Thermal = thermal, TemperatureRangeK = deltaT, Keep = 1 })[0];
+        void Row(string label, SearchResult r) => output.WriteLine(FormattableString.Invariant(
+            $"  {label,-5} {r.Score,8:0.000} {r.DefocusPerK * 1e3,11:0.0000} {r.AxialColor * 1e3,11:0.000} {r.EflChange,10:0.0000}   {Choice(r)}"));
+        output.WriteLine("  rank     score   focus µm/K   color µm   ΔEFL mm   materials");
+        Row("design", design);
+        for (int i = 0; i < results.Count; i++) Row((i + 1).ToString(CultureInfo.InvariantCulture), results[i]);
+        output.WriteLine("A glass swap changes the lens: optimize the best before taking them further.");
+    }
+
+    private static string Choice(SearchResult r)
+    {
+        var parts = r.Glasses.OrderBy(g => g.Key).Select(g => $"after {g.Key}: {g.Value.Name}").ToList();
+        parts.Add($"housing {r.Housing.Name}");
+        parts.AddRange(r.Parts.Select((m, k) => $"part {k}: {m.Name}"));
+        return string.Join("; ", parts);
+    }
+
+    internal static MountMaterial Material(string text, string option)
     {
         if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double cte))
             return MountMaterial.OfCte(cte * 1e-6);

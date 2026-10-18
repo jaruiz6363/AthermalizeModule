@@ -1,0 +1,17 @@
+The athermal map over visible (F, d, C) at 20 °C: ω = (n_short − n_long)/(n_center − 1) = 1/ν, γ = (dn_rel/dT)/(n − 1) − α, x_f = −γ.
+A thin athermal achromatic doublet's two points lie on a line through the housing's point.
+  material                      n_center       ν       ω×10³    P_long   γ (10⁻⁶/K)  x_f (10⁻⁶/K)
+  CHARMS:CAF2                   1.433835    95.23    10.5012    0.3045     -41.060       41.060
+  SCHOTT:N-FK51A                1.486561    84.47    11.8388    0.3062     -24.227       24.227
+  SCHOTT:N-PK52A                1.497000    81.61    12.2534    0.3055     -25.680       25.680
+  SCHOTT:N-PK51                 1.528554    76.98    12.9911    0.3046     -24.978       24.978
+  SCHOTT:N-BK7                  1.516800    64.17    15.5843    0.3076      -1.686        1.686
+  SCHOTT:N-SK11                 1.563840    60.80    16.4477    0.3051      -1.167        1.167
+  SCHOTT:N-K5                   1.522489    59.48    16.8116    0.3044      -4.522        4.522
+  SCHOTT:N-LAK7                 1.651600    58.52    17.0888    0.3044      -6.276        6.276
+  SCHOTT:N-KZFS2                1.558360    54.01    18.5158    0.3061       4.742       -4.742
+  SCHOTT:N-BAF10                1.670030    47.11    21.2260    0.2989       0.742       -0.742
+  SCHOTT:N-KZFS5                1.654120    39.70    25.1889    0.2972       1.506       -1.506
+  SCHOTT:N-SF6                  1.805180    25.36    39.4326    0.2867      -7.845        7.845
+  housing aluminum-6061-t6                            0.0000               -23.600       23.600
+Plot written to map-visible.svg.

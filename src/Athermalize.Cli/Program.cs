@@ -22,7 +22,8 @@ public static class Program
         "         --lambda-tk-sign agf|ignore     a negative λtk adds to λ² (agf)\n" +
         "         --air-wavelength input|vacuum   the wavelength the air formulas take (input)\n" +
         "       atherm materials --measured        list the measured materials carried, with their sources\n" +
-        LensCommand.Usage;
+        LensCommand.Usage + "\n" +
+        AthermalCommand.Usage;
 
     /// <summary>
     /// Reports carry µ, ², λ and °, which a Windows console's code page has not all of: write UTF-8 to the console
@@ -46,7 +47,8 @@ public static class Program
             return args[0] switch
             {
                 "materials" => Materials(args.Skip(1).ToArray(), output),
-                "lens" or "focus" or "image" => LensCommand.Run(args[0], args.Skip(1).ToArray(), output),
+                "lens" or "focus" or "image" or "select" => LensCommand.Run(args[0], args.Skip(1).ToArray(), output),
+                "map" or "solve" => AthermalCommand.Run(args[0], args.Skip(1).ToArray(), output),
                 _ => Fail($"unknown command '{args[0]}'"),
             };
         }

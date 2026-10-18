@@ -14,10 +14,12 @@ namespace Athermalize.Core.Lens;
 /// a measured crystal in place of a catalog entry, say.
 /// </param>
 /// <param name="CteOverrides">Expansion coefficients, 1/K, to use in place of the data's, by material name.</param>
+/// <param name="SurfaceMaterials">Materials for the medium after particular surfaces, by surface, before any other rule.</param>
 public sealed record ThermalOptions(
     IndexOptions? Index = null,
     IReadOnlyDictionary<string, Material>? Substitutions = null,
-    IReadOnlyDictionary<string, double>? CteOverrides = null)
+    IReadOnlyDictionary<string, double>? CteOverrides = null,
+    IReadOnlyDictionary<int, Material>? SurfaceMaterials = null)
 {
     public static ThermalOptions Default { get; } = new();
 }
@@ -154,7 +156,7 @@ public sealed class ThermalModel
                 _cteNote[i] = i > 0 ? _cteNote[i - 1] : "";
                 continue;
             }
-            var m = Resolve(s, library);
+            var m = Options.SurfaceMaterials != null && Options.SurfaceMaterials.TryGetValue(i, out var given) ? given : Resolve(s, library);
             if (m == null && !string.IsNullOrWhiteSpace(s.Material)) unresolved.Add($"surface {i}: {s.Material}");
             _after[i] = m;
             if (m != null) (_cte[i], _cteNote[i]) = ExpansionOf(m, s.Material);

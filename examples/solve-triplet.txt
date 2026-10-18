@@ -1,0 +1,6 @@
+Thin, in contact, f = 100 mm over visible (F, d, C) at 20 °C, in a housing of α_h = 23.6×10⁻⁶/K that holds the image plane at the focal distance:
+  SCHOTT:N-PK51                ν    76.98   γ   -24.978×10⁻⁶/K
+  SCHOTT:N-KZFS5               ν    39.70   γ     1.506×10⁻⁶/K
+  SCHOTT:N-LAK7                ν    58.52   γ    -6.276×10⁻⁶/K
+Athermal achromatic triplet: f = 1629.920, -48.107 and 33.142 mm.
+The strongest element has 3.02× the triplet's power; weaker is easier to correct.

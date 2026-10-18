@@ -1,0 +1,16 @@
+Cemented doublet, f = 122 mm, f/8 (doublet.zmx), 5 surfaces
+Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+  after surface  2  SCHOTT:N-SF6             α 9.03×10⁻⁶/K
+
+105 combinations. Score = (|focus rate|·60 K + |axial color|)/depth of focus × (1 + 2|ΔEFL|/EFL), at the design's shapes:
+  rank     score   focus µm/K   color µm   ΔEFL mm   materials
+  design    2.677     -2.8905     -34.645     0.0000   housing aluminum-6061-t6
+  1        0.322     -0.2492      -9.937     0.3753   after 2: SCHOTT:SF6G05; housing ti-6al-4v
+  2        0.772     -0.2791     -43.272     0.0002   after 2: SCHOTT:SF6; housing ti-6al-4v
+  3        0.772     -0.2791     -43.272     0.0002   after 2: SCHOTT:SF6HT; housing ti-6al-4v
+  4        1.109     -1.2621      -9.937     0.3753   after 2: SCHOTT:SF6G05; housing stainless-303
+  5        1.313     -1.1238     -34.645     0.0000   after 2: SCHOTT:N-SF6; housing ti-6al-4v
+A glass swap changes the lens: optimize the best before taking them further.
