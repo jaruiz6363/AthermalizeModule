@@ -2,16 +2,24 @@ using System.Globalization;
 using AberrationCalculator.Core.IO;
 using AberrationCalculator.Core.RayTrace;
 using Athermalize.Core.Air;
+using Athermalize.Core.Analysis;
 using Athermalize.Core.Lens;
 using Athermalize.Core.Materials;
 
 namespace Athermalize.Cli;
 
-/// <summary><c>atherm lens</c>: a lens file at several temperatures, in its mount.</summary>
+/// <summary>
+/// <c>atherm lens</c>, <c>atherm focus</c> and <c>atherm image</c>: a lens file at several temperatures, in its
+/// mount, paraxially, as a first-order thermal report, and as image quality.
+/// </summary>
 internal static class LensCommand
 {
     public const string Usage =
-        "       atherm lens <file> --housing <material|α> [options]   the lens at each temperature, paraxially\n" +
+        "       atherm lens <file> --housing <material|α> [options]    the lens at each temperature, paraxially\n" +
+        "       atherm focus <file> --housing <material|α> [options]   the first-order report: focus against the\n" +
+        "                                         depth of focus, and each part's share of the focus shift\n" +
+        "       atherm image <file> --housing <material|α> [options]   RMS wavefront error and geometric MTF,\n" +
+        "                                         at the fixed image plane and refocused\n" +
         "         --housing <material|α>          the housing, which holds every air space and the image plane;\n" +
         "                                         a name from --mount-materials, or α in 10⁻⁶/K\n" +
         "         --spacer <s>:<material|α>[:<h>] a spacer in the air space after surface s, touching both\n" +
@@ -26,22 +34,30 @@ internal static class LensCommand
         "         --nominal <°C>                  the temperature the design is for (20)\n" +
         "         --pressure <atm>                the air pressure, the design's and at each temperature (1)\n" +
         "         --catalogs, --air, --prefactor, ... as for materials\n" +
-        "         --detail                        the prescription at each temperature\n" +
+        "         --detail                        lens: the prescription at each temperature\n" +
+        "         --frequencies <c/mm,...>        image: the MTF's frequencies (10,30)\n" +
+        "         --mtf-limit <m>                 image: the temperatures over which the lowest MTF at the first\n" +
+        "                                         frequency stays above m, searched over --range (-60,100)\n" +
+        "         --monochromatic                 image: the primary wavelength only\n" +
+        "         --obscuration <ε>               image: a central obstruction, a fraction of the pupil radius\n" +
         "       atherm lens --mount-materials      list the mount materials carried, with their sources";
 
-    public static int Run(string[] args, TextWriter output)
+    public static int Run(string mode, string[] args, TextWriter output)
     {
         string? file = null;
         string catalogs = Path.Combine(AppContext.BaseDirectory, "catalogs", "Glass");
         double[] temperatures = { -20, 20, 60 };
-        double nominal = 20.0, atmospheres = 1.0;
+        double[] frequencies = { 10, 30 };
+        double[] range = { -60, 100 };
+        double nominal = 20.0, atmospheres = 1.0, obscuration = 0.0;
+        double? mtfLimit = null;
         MountMaterial? housing = null;
         var segments = new List<MountSegment>();
         var mirrors = new Dictionary<int, MountMaterial>();
         var uses = new List<(string Name, string Material)>();
         var ctes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var cemented = CementedSurface.FollowingGlass;
-        bool detail = false;
+        bool detail = false, monochromatic = false;
         var o = IndexOptions.Default;
 
         for (int i = 0; i < args.Length; i++)
@@ -78,6 +94,14 @@ internal static class LensCommand
                     break;
                 }
                 case "--detail": detail = true; break;
+                case "--frequencies": frequencies = Program.Numbers(Next(), a); break;
+                case "--mtf-limit": mtfLimit = Program.Numbers(Next(), a)[0]; break;
+                case "--range":
+                    range = Program.Numbers(Next(), a);
+                    if (range.Length != 2 || range[0] >= range[1]) throw new ArgumentException("--range: give <low>,<high>");
+                    break;
+                case "--monochromatic": monochromatic = true; break;
+                case "--obscuration": obscuration = Program.Numbers(Next(), a)[0]; break;
                 case "--air" or "--prefactor" or "--thermal-wavelength" or "--lambda-tk-sign" or "--air-wavelength":
                     o = Program.IndexOption(o, a, Next()); break;
                 default:
@@ -113,30 +137,24 @@ internal static class LensCommand
             output.WriteLine(FormattableString.Invariant(
                 $"  after surface {i,2}  {m.Name,-24} α {model.CteAfter(i) * 1e6:0.###}×10⁻⁶/K"));
         }
-        output.WriteLine();
-        output.WriteLine(FormattableString.Invariant(
-            $"Paraxial, at {system.Wavelengths[p].Value:0.######} µm ({model.VacuumWavelengthsUm[p]:0.######} µm in vacuum):"));
-        output.WriteLine(FormattableString.Invariant(
-            $"    T °C        EFL mm        BFL mm   focus − image plane µm   change from {nominal:0.##} °C µm"));
+
+        var lenses = temperatures.Select(t => model.At(air with { TemperatureC = t })).ToList();
+        if (mode == "focus") Focus(model, temperatures, p, output);
+        else if (mode == "image")
+            Image(model, temperatures, frequencies, mtfLimit, range,
+                new QualityOptions { Polychromatic = !monochromatic, Obscuration = obscuration }, output);
+        else Paraxial(model, lenses, p, nominal, output);
 
         var notes = new List<string>();
-        var lenses = temperatures.Select(t => model.At(air with { TemperatureC = t })).ToList();
-        double nominalDefocus = Defocus(model.At(air));
         foreach (var lens in lenses)
-        {
-            var trace = ParaxialTrace.Trace(lens.System, lens.PrimaryIndices, 0.0);
-            double defocus = Defocus(lens);
-            output.WriteLine(FormattableString.Invariant(
-                $"  {lens.TemperatureC,6:0.0}  {trace.Efl,12:0.000000}  {trace.Bfl,12:0.000000}  {defocus * 1e3,22:0.000}  {(defocus - nominalDefocus) * 1e3,22:0.000}"));
             foreach (var n in lens.Notes) if (!notes.Contains(n)) notes.Add(n);
-        }
         if (notes.Count > 0)
         {
             output.WriteLine();
             foreach (var n in notes) output.WriteLine("Note: " + n);
         }
 
-        if (detail)
+        if (detail && mode == "lens")
             foreach (var lens in lenses)
             {
                 output.WriteLine();
@@ -155,11 +173,98 @@ internal static class LensCommand
         return 0;
     }
 
-    /// <summary>The paraxial focus at the primary wavelength less the distance to the image plane, mm.</summary>
-    private static double Defocus(ThermalLens lens)
+    private static void Paraxial(ThermalModel model, List<ThermalLens> lenses, int p, double nominal, TextWriter output)
     {
-        var trace = ParaxialTrace.Trace(lens.System, lens.PrimaryIndices, 0.0);
-        return trace.ParaxialFocusDistance - lens.System.Surfaces[lens.System.LastOpticalSurface()].Thickness;
+        var system = model.Nominal;
+        output.WriteLine();
+        output.WriteLine(FormattableString.Invariant(
+            $"Paraxial, at {system.Wavelengths[p].Value:0.######} µm ({model.VacuumWavelengthsUm[p]:0.######} µm in vacuum):"));
+        output.WriteLine(FormattableString.Invariant(
+            $"    T °C        EFL mm        BFL mm   focus − image plane µm   change from {nominal:0.##} °C µm"));
+        double nominalDefocus = FocusReport.Defocus(model.At(model.NominalAir));
+        foreach (var lens in lenses)
+        {
+            var trace = ParaxialTrace.Trace(lens.System, lens.PrimaryIndices, 0.0);
+            double defocus = FocusReport.Defocus(lens);
+            output.WriteLine(FormattableString.Invariant(
+                $"  {lens.TemperatureC,6:0.0}  {trace.Efl,12:0.000000}  {trace.Bfl,12:0.000000}  {defocus * 1e3,22:0.000}  {(defocus - nominalDefocus) * 1e3,22:0.000}"));
+        }
+    }
+
+    private static void Focus(ThermalModel model, double[] temperatures, int p, TextWriter output)
+    {
+        var system = model.Nominal;
+        var report = FocusReport.Compute(model, temperatures);
+        double t0 = model.NominalTemperatureC;
+        output.WriteLine();
+        output.WriteLine(FormattableString.Invariant(
+            $"First order, at {system.Wavelengths[p].Value:0.######} µm. Focus change from {t0:0.##} °C, positive when the image falls beyond the image plane:"));
+        output.WriteLine("    T °C        EFL mm        BFL mm   change µm   first order µm   F/#    depth of focus ±µm   in depths");
+        foreach (var s in report.States)
+            output.WriteLine(FormattableString.Invariant(
+                $"  {s.TemperatureC,6:0.0}  {s.Efl,12:0.000000}  {s.Bfl,12:0.000000}  {s.Change * 1e3,10:0.000}  {s.Linear * 1e3,15:0.000}  {s.FNumber,6:0.00}  {s.DepthOfFocus * 1e3,19:0.000}  {s.ChangeInDepths,10:0.00}"));
+
+        output.WriteLine();
+        output.WriteLine(FormattableString.Invariant($"Each part's share at {t0:0.##} °C, that part alone warmed:"));
+        output.WriteLine("  part                                     focus µm/K      EFL µm/K");
+        foreach (var c in report.Contributions)
+            output.WriteLine(FormattableString.Invariant($"  {c.Name,-38} {c.DefocusPerK * 1e3,13:0.0000} {c.EflPerK * 1e3,13:0.0000}"));
+        output.WriteLine(FormattableString.Invariant(
+            $"  {"sum of the shares",-38} {report.Contributions.Sum(c => c.DefocusPerK) * 1e3,13:0.0000} {report.Contributions.Sum(c => c.EflPerK) * 1e3,13:0.0000}"));
+        output.WriteLine(FormattableString.Invariant(
+            $"  {"whole lens",-38} {report.DefocusPerK * 1e3,13:0.0000} {report.EflPerK * 1e3,13:0.0000}"));
+
+        output.WriteLine();
+        output.WriteLine(FormattableString.Invariant(
+            $"Glasses at {t0:0.##} °C and {model.VacuumWavelengthsUm[p]:0.######} µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ = −x_f, ν_T = −1/x_f:"));
+        output.WriteLine("  part                                       n_rel   dn_rel/dT      α        x_f        γ  (10⁻⁶/K)      ν_T (K)");
+        foreach (var part in report.Contributions.Where(c => c.Part.Kind == ThermalPartKind.Glass))
+        {
+            var m = model.MaterialAfter(part.Part.Index)!;
+            var c = ThermoOptic.At(m, model.VacuumWavelengthsUm[p], t0, model.NominalAir, model.Options.Index);
+            double xf = model.CteAfter(part.Part.Index) - c.DnDtRelative / (c.Relative - 1.0);
+            output.WriteLine(FormattableString.Invariant(
+                $"  {part.Name,-38} {c.Relative,9:0.000000} {c.DnDtRelative * 1e6,11:0.000} {model.CteAfter(part.Part.Index) * 1e6,8:0.00} {xf * 1e6,10:0.000} {-xf * 1e6,8:0.000} {-1.0 / xf,20:0}"));
+        }
+    }
+
+    private static void Image(ThermalModel model, double[] temperatures, double[] frequencies, double? mtfLimit,
+        double[] range, QualityOptions options, TextWriter output)
+    {
+        var states = ImageQuality.Compute(model, temperatures, frequencies, options);
+        output.WriteLine();
+        output.WriteLine($"Image quality, {(options.Polychromatic ? "every wavelength, by its weight" : "the primary wavelength")}" +
+                         $"{(options.Obscuration > 0 ? FormattableString.Invariant($", obstruction {options.Obscuration:0.###}") : "")}; " +
+                         "RMS wavefront error in waves over the fields by their weights; refocused, the image plane moved to the least RMS:");
+        output.WriteLine("    T °C   RMS fixed   focus shift µm   RMS refocused");
+        foreach (var s in states)
+            output.WriteLine(FormattableString.Invariant(
+                $"  {s.TemperatureC,6:0.0}  {s.RmsFixed,10:0.0000}  {s.FocusShift * 1e3,15:0.000}  {s.RmsRefocused,14:0.0000}"));
+        if (frequencies.Length > 0)
+        {
+            output.WriteLine();
+            output.WriteLine("Geometric MTF, sagittal/tangential, fixed | refocused:");
+            for (int f = 0; f < model.Nominal.Fields.Count; f++)
+                for (int k = 0; k < frequencies.Length; k++)
+                {
+                    output.Write(FormattableString.Invariant($"  field {model.Nominal.Fields[f].Y,8:0.###}  {frequencies[k],5:0.#} c/mm:"));
+                    foreach (var s in states)
+                        output.Write(FormattableString.Invariant(
+                            $"  {s.TemperatureC:0.#} °C {s.MtfFixed[f][k].Sagittal:0.000}/{s.MtfFixed[f][k].Tangential:0.000} | {s.MtfRefocused[f][k].Sagittal:0.000}/{s.MtfRefocused[f][k].Tangential:0.000}"));
+                    output.WriteLine();
+                }
+        }
+        if (mtfLimit is double limit && frequencies.Length > 0)
+        {
+            output.WriteLine();
+            foreach (bool refocused in new[] { false, true })
+            {
+                var r = ImageQuality.Range(model, frequencies[0], limit, range[0], range[1], 5.0, refocused, options);
+                output.WriteLine(FormattableString.Invariant(
+                    $"The lowest MTF at {frequencies[0]:0.#} c/mm stays at or above {limit:0.###} {(refocused ? "refocused" : "at the fixed plane")}: ") +
+                    (r is { } v ? FormattableString.Invariant($"{v.Low:0.0} to {v.High:0.0} °C (searched {range[0]:0} to {range[1]:0} °C)") : "not even at the nominal temperature"));
+            }
+        }
     }
 
     private static string Describe(Mount mount)

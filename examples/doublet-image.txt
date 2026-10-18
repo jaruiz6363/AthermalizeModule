@@ -1,0 +1,19 @@
+Cemented doublet, f = 122 mm, f/8 (doublet.zmx), 5 surfaces
+Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+  after surface  2  SCHOTT:N-SF6             α 9.03×10⁻⁶/K
+
+Image quality, every wavelength, by its weight; RMS wavefront error in waves over the fields by their weights; refocused, the image plane moved to the least RMS:
+    T °C   RMS fixed   focus shift µm   RMS refocused
+   -40.0      0.1848          172.656          0.0775
+    20.0      0.0777            0.155          0.0777
+    80.0      0.1865         -174.555          0.0779
+
+Geometric MTF, sagittal/tangential, fixed | refocused:
+  field        0     30 c/mm:  -40 °C 0.461/0.461 | 0.925/0.925  20 °C 0.924/0.924 | 0.924/0.924  80 °C 0.620/0.620 | 0.924/0.924
+  field      1.5     30 c/mm:  -40 °C 0.729/0.906 | 0.884/0.700  20 °C 0.883/0.699 | 0.883/0.699  80 °C 0.398/0.192 | 0.882/0.698
+
+The lowest MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -36.8 to 42.0 °C (searched -60 to 100 °C)
+The lowest MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)

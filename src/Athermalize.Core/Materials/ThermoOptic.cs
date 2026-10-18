@@ -16,7 +16,20 @@ namespace Athermalize.Core.Materials;
 /// <param name="InRange">False when the wavelength or temperature is outside the data's stated range.</param>
 public readonly record struct ThermalConstants(
     double Relative, double Absolute, double DnDtRelative, double DnDtAbsolute, double Cte,
-    double OptothermalExpansion, bool InRange);
+    double OptothermalExpansion, bool InRange)
+{
+    /// <summary>
+    /// γ = (dn_rel/dT)/(n_rel − 1) − α = −x_f, 1/K: the relative change of a thin lens's power per kelvin, the
+    /// "thermal glass constant" of later authors (Liu et al. 2025). Positive when the power grows.
+    /// </summary>
+    public double ThermalGlassConstant => -OptothermalExpansion;
+
+    /// <summary>
+    /// ν_T = 1/γ = −1/x_f: Grey's (1948) thermal ν value, which takes the place of the Abbe number when a lens is
+    /// athermalized as it is achromatized.
+    /// </summary>
+    public double ThermalNu => -1.0 / OptothermalExpansion;
+}
 
 /// <summary>
 /// The change of a material's index with temperature. Every derivative here holds the vacuum wavelength fixed,

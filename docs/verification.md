@@ -47,6 +47,44 @@ Closed forms and invariances, each on a lens written for the test. (`ThermalLens
 - **An even asphere** grown by s has, at height s·r, s times its nominal sag at r.
 - A mount whose parts overlap, a free space that is glass, two parts on the same surfaces, and a glass not in the catalogs are refused.
 
-## 6. Catalog reading
+## 6. Worked examples from the literature
+
+Each reproduced end to end, from the lens to the published number. (`WorkedExampleTests`)
+
+- **Fischer (1985), p. 91: a germanium soak.** A germanium lens of 8 in focal length at f/2, n = 4, dn/dT = 396×10⁻⁶/K, expansion left out, is warmed by 50 °C.
+  - Fischer gives 0.0527 in closer, 16.7 depths of focus of ±2λN² at 10 µm.
+  - The module's rate times 50 K gives 0.0528 in; Fischer's df = 0.333·f·dn rounds 1/3.
+  - Its exact change is 0.0524 in, the thin-lens value, with a depth of ±0.00315 in, so 16.65 depths.
+- **Bardazzi (2008): a germanium singlet.** Germanium's x_f in the 2-5 µm band is −131×10⁻⁶/K, so a 21.7 mm lens defocuses optically by −0.142 mm over 50 K. The paper doesn't name its germanium data. From the CHARMS model and germanium's expansion coefficient, at 4 µm over −30 to +20 °C where the model holds, the module gives:
+  - x_f = −126×10⁻⁶/K;
+  - −0.137 mm over 50 K;
+  - both within 4% of the paper's values.
+- **Itek's B4 Cassegrain** (Itek Corporation for the Jet Propulsion Laboratory, 1972, NASA N72-33381). This is the 1000 mm f/4.4 Cassegrain with two BK7 correctors of the report's Table 2-7, soaked ±27.5 °C from 7.5 °C in vacuum. Its paraxial EFL and back focus match the printed 39.3046 and 5.8517 in to 2×10⁻⁴ in. The report gives the defocus, and the RMS wavefront change at 0.55 µm without refocusing over fields 0, 0.7 and 1 with its 0.52 central obstruction. The module, at its best focus by the same RMS:
+
+  | Case (Appendix G) | ΔT | Report: defocus in, RMS waves | Module |
+  |---|---|---|---|
+  | All structure α = 1.5×10⁻⁶/K, ULE mirrors (Table G-6) | +27.5 | −0.0023, 0.142 | −0.00234, 0.150 |
+  | | −27.5 | +0.0025, 0.151 | +0.00234, 0.150 |
+  | Mirrors only, BK-7, cell α = 0 (Table G-2) | +27.5 | +0.0111, 0.677 | +0.01109, 0.709 |
+  | | −27.5 | −0.0107, 0.654 | −0.01108, 0.710 |
+  | Mirrors only, ULE | +27.5 | +0.0001, 0.003 | +0.00005, 0.003 |
+  | | −27.5 | +0.0001, 0.007 | −0.00005, 0.003 |
+
+  - The warm values agree to 2×10⁻⁴ in.
+  - The module's model is linear, so its warm and cold values are equal and opposite. The report's differ by up to 4×10⁻⁴ in, and give the ULE mirrors +0.0001 in both ways, which a linear model can't.
+  - BK-7's α is taken as N-BK7's 7.1×10⁻⁶/K; the report doesn't print it.
+  - The cases with titanium (Tables G-1 and G-5) aren't tested, since the report doesn't give titanium's α.
+
+## 7. The focus report and the image quality
+
+(`AnalysisTests`)
+
+- **Each part's share.** For a doublet and a singlet with a spacer touching off the axis and a part holding the image plane, the six parts' shares of the focus and focal-length rates add up to the whole lens's rates to 10⁻¹⁴. The rate times ΔT gives the change to 3% over 60 K (2.6% warm, 0.4% cold), the rest being the rise of the glasses' dn/dT with temperature.
+- **A thin singlet's shares** are the glass's f·x_f and the housing's −L·α_h, to 10⁻³ and 10⁻¹² mm/K.
+- **A pure defocus.** A paraboloid on axis at f/10, its image plane 0.05 mm from focus, has the closed-form RMS Δz/(8√12 N²) (Itek 1972, Table G-3) to 0.05%. With an obstruction of 0.5 it has that times 1 − ε², also to 0.05%. The compensator returns the plane to the focus to 10⁻⁵ mm.
+- **First order against real rays.** For the same doublet and singlet over −40 to +80 °C, the paraxial focus change and the best-focus change by the polychromatic RMS agree to 1.1% (51.2 against 51.8 µm, −52.8 against −53.1 µm). Refocusing never raises the RMS.
+- **The MTF temperature range.** A paraboloid of α = 7.1×10⁻⁶/K in an aluminum housing has a geometric MTF at a defocus of 2J₁(x)/x, x = πνΔz/N. So at 40 cycles/mm it stays above 0.8 for 20 ± 12.646 °C. The module finds 7.409 to 32.591 °C, and refocused, the whole range searched.
+
+## 8. Catalog reading
 
 Fields separated by doubled spaces or tabs, numbers under German, French and Swedish number settings, UTF-16 files, and missing, empty and short `TD` lines all read as intended, and the shipped catalogs' glasses with missing, empty or all-zero thermal lines are recognized. (`ThermalCatalogTests`)

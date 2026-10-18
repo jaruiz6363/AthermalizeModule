@@ -46,7 +46,7 @@ public static class Program
             return args[0] switch
             {
                 "materials" => Materials(args.Skip(1).ToArray(), output),
-                "lens" => LensCommand.Run(args.Skip(1).ToArray(), output),
+                "lens" or "focus" or "image" => LensCommand.Run(args[0], args.Skip(1).ToArray(), output),
                 _ => Fail($"unknown command '{args[0]}'"),
             };
         }

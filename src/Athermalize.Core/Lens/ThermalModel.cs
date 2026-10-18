@@ -22,6 +22,31 @@ public sealed record ThermalOptions(
     public static ThermalOptions Default { get; } = new();
 }
 
+/// <summary>What a part of the lens is.</summary>
+public enum ThermalPartKind
+{
+    /// <summary>A glass: the medium after a surface, its index, its thickness and the surfaces that grow with it.</summary>
+    Glass,
+
+    /// <summary>A mirror's substrate, which sets the mirror's shape.</summary>
+    Mirror,
+
+    /// <summary>The housing: every air space no mount part holds, and the surfaces in air.</summary>
+    Housing,
+
+    /// <summary>One of the mount's parts.</summary>
+    MountPart,
+}
+
+/// <summary>
+/// A part of a lens that a temperature changes. <paramref name="Index"/> is the surface the glass follows, the
+/// mirror's surface, or the mount part's place in <see cref="Mount.Segments"/>; 0 for the housing.
+/// </summary>
+public readonly record struct ThermalPart(ThermalPartKind Kind, int Index)
+{
+    public static ThermalPart Housing { get; } = new(ThermalPartKind.Housing, 0);
+}
+
 /// <summary>What set a surface's size and the thickness after it, at one temperature.</summary>
 /// <param name="Index">The surface.</param>
 /// <param name="ShapeSetBy">What the surface's radius, aspheric terms and apertures grew with.</param>
@@ -159,11 +184,40 @@ public sealed class ThermalModel
     /// <summary>The lens at <paramref name="temperatureC"/>, in the nominal air's pressure, humidity and CO₂.</summary>
     public ThermalLens At(double temperatureC) => At(NominalAir with { TemperatureC = temperatureC });
 
+    /// <summary>Every part of the lens a temperature changes.</summary>
+    public IReadOnlyList<ThermalPart> Parts()
+    {
+        var parts = new List<ThermalPart>();
+        int image = Nominal.Surfaces.Count - 1;
+        for (int i = 1; i < image; i++)
+            if (Nominal.Surfaces[i].IsMirror) parts.Add(new ThermalPart(ThermalPartKind.Mirror, i));
+            else if (_after[i] != null) parts.Add(new ThermalPart(ThermalPartKind.Glass, i));
+        parts.Add(ThermalPart.Housing);
+        for (int k = 0; k < Mount.Segments.Count; k++) parts.Add(new ThermalPart(ThermalPartKind.MountPart, k));
+        return parts;
+    }
+
+    /// <summary>A part's name, for reports.</summary>
+    public string Describe(ThermalPart part) => part.Kind switch
+    {
+        ThermalPartKind.Glass => $"{_after[part.Index]!.Name} after surface {part.Index}",
+        ThermalPartKind.Mirror => $"mirror {part.Index} ({(Mount.MirrorSubstrates.TryGetValue(part.Index, out var m) ? m : Mount.Housing).Name})",
+        ThermalPartKind.Housing => $"housing ({Mount.Housing.Name})",
+        _ => $"mount part {Mount.Segments[part.Index].From}-{Mount.Segments[part.Index].To} ({Mount.Segments[part.Index].Material.Name})",
+    };
+
     /// <summary>The lens, every part of it at the air's temperature.</summary>
-    public ThermalLens At(AirConditions air)
+    public ThermalLens At(AirConditions air) => At(air, null);
+
+    /// <summary>
+    /// The lens with only the parts <paramref name="changes"/> accepts at the air's temperature, the rest as
+    /// designed: a glass not accepted keeps its nominal index. All of them when it is null.
+    /// </summary>
+    public ThermalLens At(AirConditions air, Func<ThermalPart, bool>? changes)
     {
         ArgumentNullException.ThrowIfNull(air);
         double dT = air.TemperatureC - NominalTemperatureC;
+        double DT(ThermalPart p) => changes == null || changes(p) ? dT : 0.0;
         var notes = new List<string>();
         var copy = LensCopy.Of(Nominal);
         var surfaces = copy.Surfaces;
@@ -174,8 +228,8 @@ public sealed class ThermalModel
         var scale = new double[count];
         for (int i = 0; i < count; i++)
         {
-            (shapeBy[i], double alpha) = ShapeCte(i);
-            scale[i] = 1.0 + alpha * dT;
+            (shapeBy[i], double alpha, var owner) = ShapeCte(i);
+            scale[i] = 1.0 + alpha * DT(owner);
             if (i == 0 || i == image || Nominal.Surfaces[i].Type == SurfaceType.Paraxial)
             {
                 scale[i] = 1.0;
@@ -198,19 +252,19 @@ public sealed class ThermalModel
             }
             if (_after[i] != null)
             {
-                surfaces[i].Thickness = t * (1.0 + _cte[i] * dT);
+                surfaces[i].Thickness = t * (1.0 + _cte[i] * DT(GlassPart(i)));
                 thicknessBy[i] = _after[i]!.Name;
             }
             else
             {
-                surfaces[i].Thickness = t * (1.0 + Mount.Housing.Cte * dT);
+                surfaces[i].Thickness = t * (1.0 + Mount.Housing.Cte * DT(ThermalPart.Housing));
                 thicknessBy[i] = "housing " + Mount.Housing.Name;
             }
         }
-        foreach (var seg in Mount.Segments.OrderBy(g => g.To - g.From))
+        foreach (var (seg, part) in Mount.Segments.Select((g, j) => (g, j)).OrderBy(p => p.g.To - p.g.From))
         {
             int free = FreeSpace(seg);
-            double s = 1.0 + seg.Material.Cte * dT;
+            double s = 1.0 + seg.Material.Cte * DT(new ThermalPart(ThermalPartKind.MountPart, part));
             var nFrom = Nominal.Surfaces[seg.From];
             var nTo = Nominal.Surfaces[seg.To];
             double length = 0.0, others = 0.0;
@@ -246,7 +300,9 @@ public sealed class ThermalModel
                 if (surfaces[i].IsMirror) { n[i] = i > 0 ? n[i - 1] : 1.0; continue; }
                 var m = _after[i];
                 if (m == null) { n[i] = 1.0; continue; }
-                var index = m.IndexAtVacuumWavelength(vac, air, air.TemperatureC, o);
+                var index = DT(GlassPart(i)) != 0.0 || dT == 0.0
+                    ? m.IndexAtVacuumWavelength(vac, air, air.TemperatureC, o)
+                    : m.IndexAtVacuumWavelength(vac, NominalAir, NominalTemperatureC, o);
                 n[i] = index.Relative;
                 if (!index.InRange && !outOfRange)
                 {
@@ -312,24 +368,32 @@ public sealed class ThermalModel
         return (e.Cte, "");
     }
 
-    /// <summary>What a surface's shape grows with: its mirror's substrate, its glass, or the housing.</summary>
-    private (string By, double Cte) ShapeCte(int i)
+    /// <summary>What a surface's shape grows with: its mirror's substrate, its glass, or the housing; and that part.</summary>
+    private (string By, double Cte, ThermalPart Owner) ShapeCte(int i)
     {
         var s = Nominal.Surfaces[i];
         if (s.IsMirror)
         {
             var sub = Mount.MirrorSubstrates.TryGetValue(i, out var m) ? m : Mount.Housing;
-            return ("mirror substrate " + sub.Name, sub.Cte);
+            return ("mirror substrate " + sub.Name, sub.Cte, new ThermalPart(ThermalPartKind.Mirror, i));
         }
         int before = i - 1, after = i;
         bool glassBefore = i > 0 && _after[before] != null, glassAfter = _after[after] != null;
         if (glassBefore && glassAfter && !ReferenceEquals(_after[before], _after[after]))
             return Mount.Cemented == CementedSurface.FollowingGlass
-                ? (_after[after]!.Name, _cte[after])
-                : (_after[before]!.Name, _cte[before]);
-        if (glassAfter) return (_after[after]!.Name, _cte[after]);
-        if (glassBefore) return (_after[before]!.Name, _cte[before]);
-        return ("housing " + Mount.Housing.Name, Mount.Housing.Cte);
+                ? (_after[after]!.Name, _cte[after], GlassPart(after))
+                : (_after[before]!.Name, _cte[before], GlassPart(before));
+        if (glassAfter) return (_after[after]!.Name, _cte[after], GlassPart(after));
+        if (glassBefore) return (_after[before]!.Name, _cte[before], GlassPart(before));
+        return ("housing " + Mount.Housing.Name, Mount.Housing.Cte, ThermalPart.Housing);
+    }
+
+    /// <summary>The glass part the medium after <paramref name="surface"/> belongs to: the glass itself, or the one a mirror continues.</summary>
+    private ThermalPart GlassPart(int surface)
+    {
+        int i = surface;
+        while (i > 0 && Nominal.Surfaces[i].IsMirror) i--;
+        return new ThermalPart(ThermalPartKind.Glass, i);
     }
 
     private IEnumerable<(int Index, Surface Surface)> Mirrors() =>

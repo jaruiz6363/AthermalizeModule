@@ -11,6 +11,11 @@
     <ProjectReference Include="$(AberrationCalculatorDir)src/AberrationCalculator.Core/AberrationCalculator.Core.csproj" />
   </ItemGroup>
 
+  <!-- The wavefront error and the geometric MTF are WavefrontErrorCalculator's. -->
+  <ItemGroup>
+    <ProjectReference Include="$(WavefrontErrorCalculatorDir)src/WavefrontErrorCalculator.Core/WavefrontErrorCalculator.Core.csproj" />
+  </ItemGroup>
+
   <!-- Materials measured over temperature, with their sources: see Materials/MeasuredMaterials.json. -->
   <ItemGroup>
     <EmbeddedResource Include="Materials/MeasuredMaterials.json" LogicalName="Athermalize.Core.Materials.MeasuredMaterials.json" />

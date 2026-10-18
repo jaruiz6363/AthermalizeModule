@@ -1,0 +1,25 @@
+Cemented doublet, f = 122 mm, f/8 (doublet.zmx), 5 surfaces
+Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+  after surface  2  SCHOTT:N-SF6             α 9.03×10⁻⁶/K
+
+First order, at 0.587562 µm. Focus change from 20 °C, positive when the image falls beyond the image plane:
+    T °C        EFL mm        BFL mm   change µm   first order µm   F/#    depth of focus ±µm   in depths
+   -40.0    122.004701    117.934178     173.016          173.432    8.14               77.803        2.22
+    20.0    121.999778    117.927941       0.000           -0.000    8.13               77.735        0.00
+    80.0    121.992352    117.919230    -175.490         -173.432    8.13               77.663       -2.26
+
+Each part's share at 20 °C, that part alone warmed:
+  part                                     focus µm/K      EFL µm/K
+  SCHOTT:N-BK7 after surface 1                 -0.3314       -0.3261
+  SCHOTT:N-SF6 after surface 2                  0.2205        0.2371
+  housing (aluminum-6061-t6)                   -2.7797        0.0000
+  sum of the shares                            -2.8905       -0.0891
+  whole lens                                   -2.8905       -0.0891
+
+Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ = −x_f, ν_T = −1/x_f:
+  part                                       n_rel   dn_rel/dT      α        x_f        γ  (10⁻⁶/K)      ν_T (K)
+  SCHOTT:N-BK7 after surface 1            1.516800       2.798     7.10      1.686   -1.686              -592996
+  SCHOTT:N-SF6 after surface 2            1.805180       0.954     9.03      7.845   -7.845              -127474

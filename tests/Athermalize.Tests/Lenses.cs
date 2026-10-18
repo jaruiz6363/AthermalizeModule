@@ -36,7 +36,7 @@ internal sealed class Lenses
             Material = material,
             IsStop = stop,
             SemiDiameter = semiDiameter,
-            SemiDiameterMode = SemiDiameterMode.Fixed,
+            SemiDiameterMode = SemiDiameterMode.Auto,
             Conic = conic,
         };
         if (aspheric != null)

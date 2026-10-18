@@ -1,12 +1,12 @@
 # AthermalizeModule
 
-A general-purpose module, as a .NET library and a command-line tool, for the thermal analysis and athermalization of lenses. It is under development. What works now is the first two parts: the materials, and the lens at a temperature.
+A general-purpose module, as a .NET library and a command-line tool, for the thermal analysis and athermalization of lenses. It is under development. What works now is the first three parts: the materials, the lens at a temperature, and the analysis of focus and image quality over temperature.
 
 Planned:
 
 - **Materials:** the refractive index of glasses and crystals over temperature and pressure, from catalog thermal data, with the air index at the system conditions. *Available now; see below.*
 - **The lens at a temperature:** radii, thicknesses and aspheres that grow with each element's expansion, and air spaces set by the spacers and the housing. *Available now; see below.*
-- **Analysis:** focal length, focus and image quality over a temperature range, at a fixed image plane and with a focus compensator, and each element's share of the focus shift.
+- **Analysis:** focal length, focus and image quality over a temperature range, at a fixed image plane and with a focus compensator, and each element's share of the focus shift. *Available now; see below.*
 - **Athermalization:** materials and mounts that hold focus over the range.
 
 The first release covers a lens soaked at one temperature, of glass and crystal elements in metal mounts. Plastics and temperature gradients come later.
@@ -40,7 +40,7 @@ SCHOTT:N-BK7: thermal data present, Tref 20 °C; α 7.1×10⁻⁶/K
 
 ```
 $ atherm lens examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80
-Cemented doublet, f = 122 mm (doublet.zmx), 5 surfaces
+Cemented doublet, f = 122 mm, f/8 (doublet.zmx), 5 surfaces
 Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
 Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
 Materials:
@@ -49,9 +49,9 @@ Materials:
 
 Paraxial, at 0.587562 µm (0.587722 µm in vacuum):
     T °C        EFL mm        BFL mm   focus − image plane µm   change from 20 °C µm
-   -40.0    122.409315    117.948766                 199.036                 199.015
-    20.0    122.378039    117.916721                   0.021                   0.000
-    80.0    122.344172    117.882118                -201.552                -201.573
+   -40.0    122.004701    117.934178                 318.957                 173.016
+    20.0    121.999778    117.927941                 145.941                   0.000
+    80.0    121.992352    117.919230                 -29.549                -175.490
 ```
 
 - **Elements** grow with their own expansion coefficients: radii, thicknesses, aspheric terms and apertures, each surface keeping its shape. A mirror grows with its substrate.
@@ -59,11 +59,59 @@ Paraxial, at 0.587562 µm (0.587722 µm in vacuum):
 - **The indices** are each material's at the temperature, relative to the air at the temperature, at the design's vacuum wavelengths; the stop grows with its surface.
 - The lens at a temperature is a copy of AberrationCalculator's lens model with its index tables, so AberrationCalculator's analyses run on it unchanged. See [docs/lens-at-temperature.md](docs/lens-at-temperature.md).
 
-How it is checked: [docs/verification.md](docs/verification.md).
+## Focus and image quality over temperature
+
+`atherm focus` gives the first-order report: the focus against the depth of focus at each temperature, and each part's share of the focus shift, with that part alone warmed:
+
+```
+$ atherm focus examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80
+...
+First order, at 0.587562 µm. Focus change from 20 °C, positive when the image falls beyond the image plane:
+    T °C        EFL mm        BFL mm   change µm   first order µm   F/#    depth of focus ±µm   in depths
+   -40.0    122.004701    117.934178     173.016          173.432    8.14               77.803        2.22
+    20.0    121.999778    117.927941       0.000           -0.000    8.13               77.735        0.00
+    80.0    121.992352    117.919230    -175.490         -173.432    8.13               77.663       -2.26
+
+Each part's share at 20 °C, that part alone warmed:
+  part                                     focus µm/K      EFL µm/K
+  SCHOTT:N-BK7 after surface 1                 -0.3314       -0.3261
+  SCHOTT:N-SF6 after surface 2                  0.2205        0.2371
+  housing (aluminum-6061-t6)                   -2.7797        0.0000
+  sum of the shares                            -2.8905       -0.0891
+  whole lens                                   -2.8905       -0.0891
+
+Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ = −x_f, ν_T = −1/x_f:
+  part                                       n_rel   dn_rel/dT      α        x_f        γ  (10⁻⁶/K)      ν_T (K)
+  SCHOTT:N-BK7 after surface 1            1.516800       2.798     7.10      1.686   -1.686              -592996
+  SCHOTT:N-SF6 after surface 2            1.805180       0.954     9.03      7.845   -7.845              -127474
+```
+
+`atherm image` gives the RMS wavefront error and the geometric MTF from real rays, through WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated, and the temperatures over which the MTF stays above a limit:
+
+```
+$ atherm image examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80 --frequencies 30 --mtf-limit 0.5
+...
+Image quality, every wavelength, by its weight; RMS wavefront error in waves over the fields by their weights; refocused, the image plane moved to the least RMS:
+    T °C   RMS fixed   focus shift µm   RMS refocused
+   -40.0      0.1848          172.656          0.0775
+    20.0      0.0777            0.155          0.0777
+    80.0      0.1865         -174.555          0.0779
+
+Geometric MTF, sagittal/tangential, fixed | refocused:
+  field        0     30 c/mm:  -40 °C 0.461/0.461 | 0.925/0.925  20 °C 0.924/0.924 | 0.924/0.924  80 °C 0.620/0.620 | 0.924/0.924
+  field      1.5     30 c/mm:  -40 °C 0.729/0.906 | 0.884/0.700  20 °C 0.883/0.699 | 0.883/0.699  80 °C 0.398/0.192 | 0.882/0.698
+
+The lowest MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -36.8 to 42.0 °C (searched -60 to 100 °C)
+The lowest MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)
+```
+
+The [user guide](docs/user-guide.md) shows the options and the library, and [docs/theory.md](docs/theory.md) the definitions and signs.
+
+How it is checked: [docs/verification.md](docs/verification.md). Besides closed forms, it reproduces worked examples from the literature: Fischer's (1985) germanium soak, Bardazzi's (2008) germanium singlet, and the soak tables of a 1972 Itek study of a Cassegrain for the Jet Propulsion Laboratory.
 
 ## Building
 
-.NET 8 or later. AberrationCalculator is carried in `external/` as a git subtree, so a plain clone builds:
+.NET 8 or later. AberrationCalculator and WavefrontErrorCalculator are carried in `external/` as git subtrees, so a plain clone builds:
 
 ```
 dotnet build
@@ -71,10 +119,12 @@ dotnet test
 dotnet run --project src/Athermalize.Cli -- materials N-BK7
 ```
 
+On Windows, the subtrees nest deep enough that a clone into a folder with a long path can pass the 260-character limit: clone to a short path, such as `C:\src`, or set `git config --global core.longpaths true` first.
+
 The optics come from libraries carried in `external/` as subtrees:
 
 - [AberrationCalculator](https://github.com/jaruiz6363/AberrationCalculator): the lens model, readers for lens files, glass catalogs, paraxial and real ray tracing.
-- [WavefrontErrorCalculator](https://github.com/jaruiz6363/WavefrontErrorCalculator), for wavefront error and the geometric MTF, joins it when image quality is added.
+- [WavefrontErrorCalculator](https://github.com/jaruiz6363/WavefrontErrorCalculator): wavefront error from real rays, and the geometric MTF.
 
 ## License
 

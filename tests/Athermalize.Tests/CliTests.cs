@@ -97,4 +97,37 @@ public class CliTests
         Assert.Equal(0, listed);
         Assert.Contains("invar-36", list);
     }
+
+    [Fact]
+    public void Focus_prints_the_first_order_report()
+    {
+        string path = DoubletFile();
+        try
+        {
+            var (code, text) = Run("focus", path, "--housing", "aluminum-6061-t6", "--temperatures", "0,20,40",
+                "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("Each part's share at 20 °C", text);
+            Assert.Contains("housing (aluminum-6061-t6)", text);
+            Assert.Contains("whole lens", text);
+            Assert.Contains("ν_T (K)", text);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void Image_prints_the_wavefront_and_the_MTF()
+    {
+        string path = DoubletFile();
+        try
+        {
+            var (code, text) = Run("image", path, "--housing", "23.6", "--temperatures", "20,60",
+                "--frequencies", "20", "--mtf-limit", "0.2", "--range", "0,60", "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("RMS refocused", text);
+            Assert.Contains("20 c/mm", text);
+            Assert.Contains("refocused:", text);
+        }
+        finally { File.Delete(path); }
+    }
 }
