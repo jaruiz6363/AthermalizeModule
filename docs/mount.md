@@ -50,6 +50,8 @@ A spacer fills one air space. `--spacer 2:ti-6al-4v:12` has three fields:
 
 The spacer sets the axial distance between its two contact points, L in the diagram. Leave out the height, or give 0, and it holds the vertex distance on the axis instead.
 
+At a temperature, h grows with the spacer, not with the barrel: the contact is the ring's own edge, and that circle grows with the ring. When the glass rests instead on a seat machined into the barrel, the barrel is the part touching it. Give that seat as a `--part` of the barrel's material, and its h grows with the barrel.
+
 The height matters because the air space on the axis, d₂, is not the spacer's length L. The two differ by the surfaces' sags at the contact, L = d₂ + sag₃(h) − sag₂(h). At a temperature, the spacer grows, and so do the lenses and their sags, so d₂ changes by both. Give the real contact height for a spacer that touches steep surfaces near their edge.
 
 Every other air space still grows with the housing: here d₄, to the image.

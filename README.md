@@ -1,74 +1,29 @@
 # AthermalizeModule
 
-A general-purpose module, as a .NET library and a command-line tool, for the thermal analysis and athermalization of lenses. It is under development. All four parts work now: the materials, the lens at a temperature, the analysis of focus and image quality over temperature, and the choice of materials and mounts.
+A .NET library and a command-line tool, `atherm`, for the thermal analysis and athermalization of lenses: how a lens behaves when its temperature changes, why, and which materials and mounts would keep it in focus. It is under development, and everything below works now.
 
-Planned:
+## What it is for
 
-- **Materials:** the refractive index of glasses and crystals over temperature and pressure, from catalog thermal data, with the air index at the system conditions. *Available now; see below.*
-- **The lens at a temperature:** radii, thicknesses and aspheres that grow with each element's expansion, and air spaces set by the spacers and the housing. *Available now; see below.*
-- **Analysis:** focal length, focus and image quality over a temperature range, at a fixed image plane and with a focus compensator, and each element's contribution to the focus shift. *Available now; see below.*
-- **Athermalization:** materials and mounts that hold focus over the range. *Available now; see below.*
+A lens is designed at one temperature, usually 20 °C, but it is used over a range, often −40 to +70 °C or wider. When the temperature changes, each glass element grows and its refractive index changes. The barrel and spacers grow too, which moves the elements and the detector. The air's index changes with temperature and pressure, and a lens designed in air may be used in vacuum. So the focus moves, and the image at the detector blurs. When the focus stays within the depth of focus over the whole range, the lens is *athermal*.
 
-The first release covers a lens soaked at one temperature, of glass and crystal elements in metal mounts. Plastics and temperature gradients come later.
+The module answers four questions about a lens:
 
-It is meant for rotationally symmetric designs of spheres and even aspheres, refractive and reflective.
+| Question | Command |
+|---|---|
+| How far does the focus move over temperature, and is that within the depth of focus? | `atherm focus` |
+| What does that do to the image: the wavefront error and the MTF, with and without refocusing? | `atherm image` |
+| Which part moves the focus: which glass, the housing, a spacer? | `atherm focus` |
+| Which materials and mount would hold the focus? | `atherm select`, `atherm map`, `atherm solve` |
 
-## Materials
+It also gives the data behind the answers. `atherm materials` gives a material's index over temperature. `atherm lens` gives the lens itself at each temperature, surface by surface, and can write it to a lens file for another program to analyze unchanged.
 
-`atherm materials` prints a material's index and thermal constants over temperature:
+## A quick look
 
-```
-$ atherm materials N-BK7 --temperatures 20,60 --wavelengths 0.5875618
-Air at 1 atm, dry, TIE-19 air; material and air at each temperature. Wavelengths in standard air (20 °C, 1 atm); each is held at its vacuum wavelength.
-Prefactor relative; E-term wavelength in reference air; λtk sign agf; air formulas at the input wavelength.
-x_f = α − (dn_rel/dT)/(n_rel − 1), the relative change of a thin lens's focal length per kelvin.
-
-SCHOTT:N-BK7: thermal data present, Tref 20 °C; α 7.1×10⁻⁶/K
-    T °C      λ µm      n_rel        n_abs     dn_rel/dT  dn_abs/dT      x_f   (10⁻⁶/K)
-    20.0  0.587562   1.5168000   1.5172132      2.798      1.386     1.686
-    60.0  0.587562   1.5169151   1.5172786      2.968      1.875     1.359
-```
-
-- **Glasses** come from the .AGF catalogs: their dispersion formulas through AberrationCalculator, and their thermal (`TD`) and expansion (`ED`) lines read here. The index follows SCHOTT's model (TIE-19). A glass whose catalog gives no thermal coefficients changes only with the air, and the output says so.
-- **Measured materials** (`atherm materials --measured`): silicon, germanium, CaF₂, Corning 7980 fused silica and Infrasil 301, from the temperature-dependent Sellmeier models published with NASA Goddard's CHARMS measurements, which hold from about 20 K to 300 K; and germanium, ZnS and ZnSe from 0.5 to 18 µm and about 100 to 600 K, from H. H. Li's reviews in the Journal of Physical and Chemical Reference Data, for the long-wave infrared and warm lenses. The output marks values outside a model's range.
-- **Infrared glasses from data sheets:** SCHOTT's IRG 22, 25, 26 and 27 chalcogenides (`SCHOTT_IRG:IRG26`, or `IRG26`), with the constants of SCHOTT's model from their data sheets.
-- **Air:** TIE-19's dry-air formula by default, or Ciddor (1996) with humidity and CO₂ (`--air ciddor --humidity 50`).
-- **Conventions:** where published methods differ, the choice is a named option with a stated default (`atherm --help`). See [docs/materials.md](docs/materials.md).
-
-## The lens at a temperature
-
-`atherm lens` builds a lens file at each temperature, in its mount, and prints it paraxially:
-
-```
-$ atherm lens examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80
-Cemented doublet, f = 122 mm, f/8 (doublet.zmx), 5 surfaces
-Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
-Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
-Materials:
-  after surface  1  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
-  after surface  2  SCHOTT:N-SF6             α 9.03×10⁻⁶/K
-
-Paraxial, at 0.587562 µm (0.587722 µm in vacuum):
-    T °C        EFL mm        BFL mm   focus − image plane µm   change from 20 °C µm
-   -40.0    122.004701    117.934178                 318.957                 173.016
-    20.0    121.999778    117.927941                 145.941                   0.000
-    80.0    121.992352    117.919230                 -29.549                -175.490
-```
-
-- **Elements** grow with their own expansion coefficients: radii, thicknesses, aspheric terms and apertures, each surface keeping its shape, its conic unchanged ([the table](docs/lens-at-temperature.md#in-short)). A mirror grows with its substrate. Silicon, germanium, CaF₂, ZnS and ZnSe, and the `-cryo` mount metals, grow by their measured length over temperature, which matters most for a lens that works cold.
-- **The mount** sets the air spaces. The housing holds every air space and the image plane, vertex to vertex. Spacers and barrel sections, each of its own material, hold particular surfaces (`--spacer`, `--part`), and may touch the glass away from the axis, so the change of the surfaces' sags at the contact counts too. Common mount metals are listed by `atherm lens --mount-materials`, each with its source. `--save-mount` keeps the mount in a file beside the lens, `doublet.mount.json`, which later runs read. [docs/mount.md](docs/mount.md) shows each kind of part in a diagram.
-- **The indices** are each material's at the temperature, relative to the air at the temperature, at the design's vacuum wavelengths; the stop grows with its surface. `--at-pressure` puts the lens in another air, 0 for vacuum, and `atherm lens --detail` lists the air's absolute index, each material's relative and absolute index, and the radii and thicknesses surface by surface, at the design's conditions and at each temperature.
-- The lens at a temperature is a copy of AberrationCalculator's lens model with its index tables, so AberrationCalculator's analyses run on it unchanged. See [docs/lens-at-temperature.md](docs/lens-at-temperature.md).
-- **In another program:** `atherm lens --write` writes the lens at a temperature, its glasses frozen into a catalog beside it, so another program traces exactly that lens at its default conditions; [docs/other-programs.md](docs/other-programs.md) says why that is valid and how to use it.
-
-## Focus and image quality over temperature
-
-`atherm focus` gives the first-order report: the focus against the depth of focus at each temperature, and each part's contribution to the focus shift, with that part alone warmed:
+A cemented doublet of 122 mm focal length at f/8, in an aluminum housing, from −40 to +80 °C:
 
 ```
 $ atherm focus examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80
 ...
-First order, at 0.587562 µm. Focus change from 20 °C, positive when the image falls beyond the image plane:
     T °C        EFL mm        BFL mm   change µm   first order µm   F/#    depth of focus ±µm   in depths
    -40.0    122.004701    117.934178     173.016          173.432    8.14               77.803        2.22
     20.0    121.999778    117.927941       0.000           -0.000    8.13               77.735        0.00
@@ -81,73 +36,72 @@ Each part's contribution at 20 °C, that part alone warmed:
   housing (aluminum-6061-t6)                   -2.7797        0.0000
   sum of the contributions                     -2.8905       -0.0891
   whole lens                                   -2.8905       -0.0891
-
-Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ = −x_f, ν_T = −1/x_f:
-  part                                       n_rel   dn_rel/dT      α        x_f        γ  (10⁻⁶/K)      ν_T (K)
-  SCHOTT:N-BK7 after surface 1            1.516800       2.798     7.10      1.686   -1.686              -592996
-  SCHOTT:N-SF6 after surface 2            1.805180       0.954     9.03      7.845   -7.845              -127474
 ```
 
-`--svg focus.svg` plots it:
+- **The problem:** at −40 °C the focus has moved 173 µm, 2.2 depths of focus.
+- **The cause:** the two glasses nearly cancel, and the aluminum housing's growth is most of the drift.
+- **What image shows:** at the fixed image plane, the MTF at 30 cycles/mm stays above 0.5 only from −27.9 to +50.9 °C. Refocused, it holds over the whole range.
+- **The fix:** `atherm select` tries other flint glasses and housings on the lens. A titanium housing with SF6G05 or SF6 for the flint cuts the drift from −2.89 to about −0.26 µm/K.
+
+`--svg` plots it: the focus against temperature, the depth of focus, and each part's contribution.
 
 ![The doublet's focus over temperature, and each part's contribution](examples/doublet-focus.svg)
 
-`atherm image` gives the RMS wavefront error and the diffraction MTF from real rays, through WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated, and the temperatures over which the MTF stays above a limit. The MTF is the pupil function's autocorrelation, traced exactly off axis and under vignetting, which matters most in the thermal infrared, where the blur is mostly diffraction; `--mtf geometric` gives the geometric MTF instead:
+## What you give it
 
-```
-$ atherm image examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80 --frequencies 30 --mtf-limit 0.5
-...
-Image quality, every wavelength, by its weight; RMS wavefront error in waves over the fields by their weights; refocused, the image plane moved to the least RMS:
-    T °C   RMS fixed   focus shift µm   RMS refocused
-   -40.0      0.1848          172.656          0.0775
-    20.0      0.0777            0.155          0.0777
-    80.0      0.1865         -174.555          0.0779
+- **A lens file,** in any format AberrationCalculator reads (.zmx, .seq, .otx, .len, .json, .lhlt), with its glasses in .AGF catalogs.
+- **The mount:** the housing, and any spacers and barrel parts, each of its own material. A lens file says nothing about its mount. `--save-mount` keeps it in a file beside the lens, so later runs need no mount options. [docs/mount.md](docs/mount.md) shows each kind of part in a diagram.
+- **The temperatures,** and the design's own temperature and air pressure.
 
-Diffraction MTF, sagittal/tangential, fixed | refocused:
-  field        0     30 c/mm:  -40 °C 0.400/0.400 | 0.769/0.769  20 °C 0.769/0.769 | 0.769/0.769  80 °C 0.646/0.646 | 0.769/0.769
-  field      1.5     30 c/mm:  -40 °C 0.593/0.743 | 0.783/0.695  20 °C 0.783/0.694 | 0.783/0.694  80 °C 0.483/0.287 | 0.783/0.694
+## What it covers
 
-The lowest diffraction MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -27.9 to 50.9 °C (searched -60 to 100 °C)
-The lowest diffraction MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)
-```
+- **Materials:**
+  - **catalog glasses** over temperature, by SCHOTT's thermal model (TIE-19), from the catalogs' thermal data;
+  - **measured models for crystals:** silicon, germanium, CaF₂ and fused silicas from about 20 to 300 K, and germanium, ZnS and ZnSe to about 600 K;
+  - **SCHOTT's IRG chalcogenide glasses,** from their data sheets;
+  - **the air,** at any temperature and pressure, vacuum included.
+- **The lens at a temperature:**
+  - each element grows with its own expansion: radii, thicknesses, aspheric terms and apertures;
+  - the housing, spacers and barrel parts set the air spaces, including where they touch the glass off the axis;
+  - the crystals and the cryogenic mount metals grow by their measured length over temperature, which matters most for a lens that works cold.
+- **Analysis:**
+  - the focus and focal length over temperature against the depth of focus, and each part's contribution;
+  - the RMS wavefront error and the diffraction or geometric MTF from real rays, at the fixed image plane and refocused;
+  - the temperature range over which the MTF stays above a limit.
+- **Athermalization:**
+  - the athermal map of materials and housings;
+  - the thin athermal achromatic doublet or triplet of given materials;
+  - a search over candidate glasses and mount materials on the lens itself.
+- **Other programs:** the lens at a temperature and pressure, written as a lens file with a glass catalog of its materials at those conditions, so another program traces exactly that lens at its default 20 °C and 1 atm.
 
-With `--svg`, it plots the RMS and the lowest MTF against temperature, fixed and refocused ([doublet-image.svg](examples/doublet-image.svg)).
+The first release covers a lens soaked at one temperature, of glass and crystal elements in metal mounts, in rotationally symmetric designs of spheres and even aspheres, refractive and reflective. Plastics and temperature gradients come later.
 
-## Choosing materials and mounts
+## Documentation
 
-- `atherm map` puts materials on the athermal map, x_f against 1/ν, with the housing's point. A thin doublet is athermal and achromatic when its two points and the housing's lie on one line ([map-visible.svg](examples/map-visible.svg), and [map-lwir.svg](examples/map-lwir.svg) for 8-12 µm).
-- `atherm solve` gives the thin athermal achromatic doublet or triplet of given materials, and a glass's best partners.
-- `atherm select` tries every combination of candidate glasses and mount materials on the lens itself and ranks them:
+| Page | What it covers |
+|---|---|
+| [User guide](docs/user-guide.md) | Start here: a typical session, then each command, what it is for and how to read its output, with worked examples from the literature |
+| [Describing the mount](docs/mount.md) | Housings, spacers and barrel parts, with diagrams, and the mount file |
+| [The lens at a temperature](docs/lens-at-temperature.md) | Exactly what changes in the lens, and how |
+| [Materials](docs/materials.md) | The material data, which source to use where, and the index conventions |
+| [Using the lens in other programs](docs/other-programs.md) | Writing the lens at new conditions, and why another program can trace it unchanged |
+| [Theory](docs/theory.md) | The definitions and signs |
+| [Verification](docs/verification.md) | How the module is checked |
+| [References](docs/references.md) | Every source of data, method and check |
+| [Building](docs/building.md) | Visual Studio, the tests, and an `atherm` to use outside the repository |
 
-```
-$ atherm select examples/doublet.zmx --housing aluminum-6061-t6 --near 2:0.08:6 --catalog SCHOTT \
-      --housing-candidates aluminum-6061-t6,stainless-303,ti-6al-4v --keep 5
-...
-105 combinations. Score = (|focus rate|·60 K + |axial color|)/depth of focus × (1 + 2|ΔEFL|/EFL), at the design's shapes:
-  rank     score   focus µm/K   color µm   ΔEFL mm   materials
-  design    2.677     -2.8905     -34.645     0.0000   housing aluminum-6061-t6
-  1        0.322     -0.2492      -9.937     0.3753   after 2: SCHOTT:SF6G05; housing ti-6al-4v
-  2        0.772     -0.2791     -43.272     0.0002   after 2: SCHOTT:SF6; housing ti-6al-4v
-  3        0.772     -0.2791     -43.272     0.0002   after 2: SCHOTT:SF6HT; housing ti-6al-4v
-  4        1.109     -1.2621      -9.937     0.3753   after 2: SCHOTT:SF6G05; housing stainless-303
-  5        1.313     -1.1238     -34.645     0.0000   after 2: SCHOTT:N-SF6; housing ti-6al-4v
-A glass swap changes the lens: optimize the best before taking them further.
-```
+## How it is checked
 
-The [user guide](docs/user-guide.md) shows the options and the library, and [docs/theory.md](docs/theory.md) the definitions and signs. [docs/references.md](docs/references.md) lists every source of data, method and check.
-
-How it is checked: [docs/verification.md](docs/verification.md). Besides closed forms, it reproduces worked examples from the literature: Fischer's (1985) germanium soak, Bardazzi's (2008) germanium singlet, and the soak tables of a 1972 Itek study of a Cassegrain for the Jet Propulsion Laboratory. Its index over temperature agrees with Optiland's, an independent implementation of the same model, for the 1,300 glasses Optiland carries thermal data for.
+Besides closed forms, it reproduces worked examples from the literature: Fischer's (1985) germanium soak, Bardazzi's (2008) germanium singlet, and the soak tables of a 1972 Itek study of a Cassegrain for the Jet Propulsion Laboratory. Its index over temperature agrees with Optiland's, an independent implementation of the same model, for the 1,300 glasses Optiland carries thermal data for. [docs/verification.md](docs/verification.md) has the details.
 
 ## Building
-
-[docs/building.md](docs/building.md) has the details: Visual Studio, the tests, and an `atherm` to use outside the repository.
 
 .NET 8 or later. AberrationCalculator and WavefrontErrorCalculator are carried in `external/` as git subtrees, so a plain clone builds:
 
 ```
 dotnet build
 dotnet test
-dotnet run --project src/Athermalize.Cli -- materials N-BK7
+dotnet run --project src/Athermalize.Cli -- focus examples/doublet.zmx --housing aluminum-6061-t6
 ```
 
 The cross-check against Optiland needs an embedded Python with Optiland: `.\tools\setup-python.ps1` installs one into `python-embed\` (ignored by git). Without it those tests are reported as skipped.
