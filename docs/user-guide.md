@@ -362,6 +362,24 @@ atherm image examples/itek-cassegrain.zmx --temperatures -20,7.5,35 --obscuratio
 
 ![The Cassegrain's RMS wavefront error and MTF over temperature](../examples/itek-image.svg)
 
+**Taking it to another program.** The telescope is designed for 7.5 °C in vacuum, not for 20 °C and 1 atm, which is what most programs assume when they open a lens file. Its mount file gives the module the design's conditions, so `--write` produces the lens as it is at 35 °C in vacuum. Any program then opens that file at its own defaults, with nothing to set:
+
+```
+atherm lens examples/itek-cassegrain.zmx --temperatures 35 --detail --write itek-warm.zmx
+```
+
+| Where | Temperature | Pressure |
+|---|---|---|
+| The design, in its mount file | 7.5 °C | vacuum |
+| The lens written out, [`itek-warm.zmx`](../examples/itek-warm.zmx) with [`itek-warm.agf`](../examples/itek-warm.agf) | 35 °C | vacuum |
+| The other program, opening it | its default, 20 °C | its default, 1 atm |
+
+- The written lens has the correctors grown with BK7, the mirror spacing grown with the structure, and its glass, `N-BK7_35C_VAC`, at 35 °C relative to vacuum. [`itek-warm.txt`](../examples/itek-warm.txt) lists it beside the design.
+- Opened in Optiland at its defaults, it has the module's focal length, back focus and focus to 1 nm, and its RMS wavefront error at each field within 0.04 %. The focus is 60 µm before the image plane, at 0.19 waves RMS; refocused, it is back to 0.02 waves.
+- To see the design itself in another program as it was intended, at 7.5 °C in vacuum, freeze it at its own conditions: `--temperatures 7.5`.
+
+[other-programs.md](other-programs.md#a-design-not-for-20-c-and-1-atm-the-cassegrain-at-35-c) has the whole walk-through, with the Optiland script and its output.
+
 ### A germanium doublet for 8-12 µm
 
 [`fischer-ge-znse.zmx`](../examples/fischer-ge-znse.zmx) is one of the infrared doublets Fischer (1985) gives: germanium then ZnSe, 50.8 mm at f/2, ±2.5°, at 8, 10 and 12 µm. Its mount file holds an aluminum housing:
