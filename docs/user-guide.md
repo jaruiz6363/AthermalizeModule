@@ -57,6 +57,39 @@ atherm focus lens.zmx --housing aluminum-6061-t6
 
 `--use CAF2=CHARMS:CAF2` uses another material in place of one the file names, and `--cte N-BK7=7.1` another expansion coefficient. The design's temperature is `--nominal` (20 °C), and the air pressure `--pressure` (1 atm; 0 is vacuum). The index conventions are the options of `atherm materials`.
 
+### Keeping the mount: the mount file
+
+A lens file says nothing about its housing, so the mount is kept in a file of its own beside the lens: `doublet.mount.json` beside `doublet.zmx`. Lens files are left as they are; only `atherm` reads and writes the mount file.
+
+- **Saving.** `--save-mount` on `lens`, `focus` or `image` writes the mount and the design's conditions as the run used them. On `select` it writes the best combination's housing and mount parts; the glasses it chose are not saved, since a glass swap changes the lens, and the lens file holds that.
+- **Using.** `lens`, `focus`, `image` and `select` read the mount file beside the lens when there is one, and say so in their output. `--mount <file>` names another; `--no-mount` ignores it.
+- **Overriding.** Options given on the command line win, and the output says they did. `--housing`, `--nominal`, `--pressure` and `--cemented` replace the file's; any `--spacer` or `--part` replaces all of its spacers and parts; `--mirror`, `--use` and `--cte` replace its entries for the same surface or material and keep the rest.
+
+```
+atherm focus doublet.zmx --housing ti-6al-4v --spacer 3:invar-36:9 --save-mount
+atherm image doublet.zmx --frequencies 30          # the same mount, from doublet.mount.json
+```
+
+The file is plain JSON, to edit by hand and keep with the lens. A material is a name from `--mount-materials` or a number, α in 10⁻⁶/K; comments are allowed, and any field may be left out:
+
+```json
+{
+  "format": "athermalize-mount",
+  "version": 1,
+  "nominalTemperatureC": 20,
+  "pressureAtm": 1,
+  "housing": "ti-6al-4v",
+  "spacers": [ { "after": 3, "material": "invar-36", "height": 9 } ],
+  "parts": [ { "from": 1, "to": 4, "material": 22.5, "fromHeight": 0, "toHeight": 0 } ],
+  "mirrors": { "6": "aluminum-6061-t6" },
+  "cemented": "following",
+  "use": { "GERMANIUM": "JPCRD:GE" },
+  "cte": { "N-BK7": 7.2 }
+}
+```
+
+The file doesn't keep the index conventions or the temperatures to analyze: those are choices of each run, not of the lens.
+
 ### Expansion over temperature
 
 Most materials grow by one expansion coefficient: a catalog glass by its `ED` line's mean from −30 to +70 °C, a mount metal by its mean near room temperature. Some carry their length over temperature instead, and grow by it ([lens-at-temperature.md](lens-at-temperature.md)):
@@ -122,6 +155,7 @@ var image = ImageQuality.Compute(model, new[] { -20.0, 20.0, 60.0 }, frequencies
 
 - `ThermalModel.At(t)` builds the lens at a temperature. It is a copy of AberrationCalculator's `OpticalSystem` with `Indices[w]`, the index after each surface at each wavelength, so any AberrationCalculator analysis runs on it: `ParaxialTrace.Trace(hot.System, hot.PrimaryIndices, field)`.
 - `ThermalModel.At(air, part => ...)` builds it with only some parts warmed; this is how the report finds each part's share.
+- `MountFile.Read(MountFile.PathFor("doublet.zmx")).ToMount()` gives the mount kept beside a lens, and `MountFile.From(mount, nominal, pressure).Write(path)` keeps one.
 - `ImageQuality.Model(hot)` gives WavefrontErrorCalculator's `LensModel` of the lens at the temperature, for any of its analyses.
 - `MaterialConstants.Of(material, Band.Visible)` gives ω, ν, P, γ and x_f; `Athermal.Doublet`, `Athermal.Triplet`, `Athermal.CanAthermalize` and `JiangObjective` work on them; `MaterialSearch.Run` searches a lens.
 - `Material` and its kinds give the index directly: `Tie19Material` for catalog and data-sheet glasses, `MeasuredMaterial` for the CHARMS and JPCRD models, and `LinearMaterial` for a material known by its index, one dn/dT and α. `material.Index(λ, air, t, options)` takes the conventions as an `IndexOptions`, and `ThermoOptic.At(material, λ, t)` gives dn/dT and x_f.

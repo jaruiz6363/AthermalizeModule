@@ -177,4 +177,59 @@ public class CliTests
         }
         finally { File.Delete(path); }
     }
+
+    // ── The mount file ───────────────────────────────────────────────────────────────
+
+    /// <summary>A run with --save-mount writes the mount beside the lens; a later run without the options reads it and gives the same report.</summary>
+    [Fact]
+    public void A_saved_mount_is_used_by_the_next_run()
+    {
+        string path = DoubletFile();
+        string mount = Athermalize.Core.Lens.MountFile.PathFor(path);
+        try
+        {
+            string[] options = { "--housing", "aluminum-6061-t6", "--spacer", "3:ti-6al-4v:9", "--cte", "N-BK7=7.2",
+                "--nominal", "22", "--temperatures", "-20,22,60", "--catalogs", Catalogs.Folder };
+            var (code, first) = Run(new[] { "focus", path }.Concat(options).Append("--save-mount").ToArray());
+            Assert.Equal(0, code);
+            Assert.True(File.Exists(mount));
+            Assert.Contains("Saved the mount to", first);
+
+            var (code2, second) = Run("focus", path, "--temperatures", "-20,22,60", "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code2);
+            Assert.Contains("Mount file: " + mount + ".", second);
+            Assert.Contains("Designed for 22 °C", second);
+            string Report(string text) => string.Join("\n", text.Split('\n')
+                .Where(l => !l.StartsWith("Mount file") && !l.StartsWith("Saved") && l.Trim().Length > 0));
+            Assert.Equal(Report(first), Report(second));
+
+            // The options given override the file, and say so.
+            var (_, third) = Run("lens", path, "--housing", "invar-36", "--catalogs", Catalogs.Folder);
+            Assert.Contains("with the options given here over it", third);
+            Assert.Contains("Mount: housing, invar-36 (α 1.3×10⁻⁶/K); spacer after surface 3, ti-6al-4v", third);
+
+            // --no-mount ignores it, so the housing is missing.
+            Assert.Equal(1, Run("lens", path, "--no-mount", "--catalogs", Catalogs.Folder).Code);
+        }
+        finally { File.Delete(path); File.Delete(mount); }
+    }
+
+    /// <summary>select --save-mount keeps the best combination's housing, not its glasses.</summary>
+    [Fact]
+    public void Select_saves_the_best_mount()
+    {
+        string path = DoubletFile();
+        string mount = Athermalize.Core.Lens.MountFile.PathFor(path);
+        try
+        {
+            var (code, text) = Run("select", path, "--housing", "aluminum-6061-t6", "--glass", "2:N-SF6,SF6",
+                "--housing-candidates", "aluminum-6061-t6,ti-6al-4v", "--keep", "2", "--catalogs", Catalogs.Folder, "--save-mount");
+            Assert.Equal(0, code);
+            Assert.Contains("The glasses it chose are not saved", text);
+            var saved = Athermalize.Core.Lens.MountFile.Read(mount);
+            Assert.Equal("ti-6al-4v", saved.Housing);
+            Assert.Empty(saved.Use);
+        }
+        finally { File.Delete(path); File.Delete(mount); }
+    }
 }

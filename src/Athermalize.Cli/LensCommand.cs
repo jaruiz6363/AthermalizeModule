@@ -32,6 +32,11 @@ internal static class LensCommand
         "         --cte <name>=<α>                an expansion coefficient, 10⁻⁶/K, in place of the data's\n" +
         "         --temperatures <°C,...>         (-20,20,60)\n" +
         "         --nominal <°C>                  the temperature the design is for (20)\n" +
+        "         --mount <file>                  the mount file (<lens>.mount.json beside the lens, read when it is\n" +
+        "                                         there); the options given here override it\n" +
+        "         --save-mount                    write the mount and the design conditions to the mount file\n" +
+        "                                         (select: the best combination's housing and mount parts)\n" +
+        "         --no-mount                      ignore the mount file\n" +
         "         --pressure <atm>                the air pressure, the design's and at each temperature (1)\n" +
         "         --catalogs, --air, --prefactor, ... as for materials\n" +
         "         --detail                        lens: the prescription at each temperature\n" +
@@ -60,7 +65,10 @@ internal static class LensCommand
         double[] temperatures = { -20, 20, 60 };
         double[] frequencies = { 10, 30 };
         double[] range = { -60, 100 };
-        double nominal = 20.0, atmospheres = 1.0, obscuration = 0.0;
+        double obscuration = 0.0;
+        double? nominalGiven = null, atmospheresGiven = null;
+        string? mountPath = null;
+        bool noMount = false, saveMount = false;
         double? mtfLimit = null;
         double deltaT = 60.0;
         int keep = 10;
@@ -74,7 +82,7 @@ internal static class LensCommand
         var mirrors = new Dictionary<int, MountMaterial>();
         var uses = new List<(string Name, string Material)>();
         var ctes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        var cemented = CementedSurface.FollowingGlass;
+        CementedSurface? cementedGiven = null;
         bool detail = false, monochromatic = false;
         var mtfKind = MtfKind.Diffraction;
         int grid = 64;
@@ -92,8 +100,11 @@ internal static class LensCommand
                     return 0;
                 case "--catalogs": catalogs = Next(); break;
                 case "--temperatures": temperatures = Program.Numbers(Next(), a); break;
-                case "--nominal": nominal = Program.Numbers(Next(), a)[0]; break;
-                case "--pressure": atmospheres = Program.Numbers(Next(), a)[0]; break;
+                case "--nominal": nominalGiven = Program.Numbers(Next(), a)[0]; break;
+                case "--pressure": atmospheresGiven = Program.Numbers(Next(), a)[0]; break;
+                case "--mount": mountPath = Next(); break;
+                case "--no-mount": noMount = true; break;
+                case "--save-mount": saveMount = true; break;
                 case "--housing": housing = Material(Next(), a); break;
                 case "--spacer": segments.Add(Spacer(Next(), a)); break;
                 case "--part": segments.Add(Part(Next(), a)); break;
@@ -104,7 +115,7 @@ internal static class LensCommand
                     break;
                 }
                 case "--cemented":
-                    cemented = Program.Choose(Next(), a, ("following", CementedSurface.FollowingGlass), ("preceding", CementedSurface.PrecedingGlass));
+                    cementedGiven = Program.Choose(Next(), a, ("following", CementedSurface.FollowingGlass), ("preceding", CementedSurface.PrecedingGlass));
                     break;
                 case "--use": uses.Add(Split(Next(), '=', a)); break;
                 case "--cte":
@@ -158,7 +169,40 @@ internal static class LensCommand
             }
         }
         if (file == null) throw new ArgumentException("name a lens file");
-        if (housing == null) throw new ArgumentException("give the housing's material with --housing");
+
+        bool overrides = housing != null || segments.Count > 0 || mirrors.Count > 0 || uses.Count > 0 || ctes.Count > 0
+                         || nominalGiven != null || atmospheresGiven != null || cementedGiven != null;
+        bool HasOverrides() => overrides;
+
+        // The mount file beside the lens, or the one named; the options given here override it.
+        string mountFile = mountPath ?? MountFile.PathFor(file);
+        MountFile? saved = null;
+        if (!noMount && File.Exists(mountFile)) saved = MountFile.Read(mountFile);
+        else if (!noMount && mountPath != null && !saveMount) throw new ArgumentException($"--mount: no file '{mountPath}'");
+        var fromFile = saved?.ToMount();
+        housing ??= fromFile?.Housing;
+        if (segments.Count == 0 && fromFile != null) segments.AddRange(fromFile.Segments);
+        if (fromFile != null)
+            foreach (var (k, m) in fromFile.MirrorSubstrates) mirrors.TryAdd(k, m);
+        var cemented = cementedGiven ?? saved?.CementedRule ?? CementedSurface.FollowingGlass;
+        double nominal = nominalGiven ?? saved?.NominalTemperatureC ?? 20.0;
+        double atmospheres = atmospheresGiven ?? saved?.PressureAtm ?? 1.0;
+        if (saved != null)
+        {
+            foreach (var (k, v) in saved.Use) if (!uses.Any(u => string.Equals(u.Name, k, StringComparison.OrdinalIgnoreCase))) uses.Add((k, v));
+            foreach (var (k, v) in saved.Cte) ctes.TryAdd(k, v * 1e-6);
+        }
+        void Save(Mount m)
+        {
+            var use = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (name, material) in uses) use[name] = material;
+            MountFile.From(m, nominal, atmospheres, use, ctes.ToDictionary(c => c.Key, c => c.Value * 1e6, StringComparer.OrdinalIgnoreCase))
+                .Write(mountFile);
+            output.WriteLine();
+            output.WriteLine($"Saved the mount to {mountFile}.");
+        }
+        if (housing == null)
+            throw new ArgumentException($"give the housing's material with --housing, or in a mount file ({Path.GetFileName(mountFile)} beside the lens, or --mount)");
 
         var library = MaterialLibrary.FromFolder(catalogs);
         var substitutions = new Dictionary<string, Material>(StringComparer.OrdinalIgnoreCase);
@@ -174,6 +218,7 @@ internal static class LensCommand
         output.WriteLine($"{(string.IsNullOrWhiteSpace(system.Title) ? Path.GetFileName(file) : system.Title)} ({Path.GetFileName(file)}), {system.Surfaces.Count} surfaces");
         output.WriteLine(FormattableString.Invariant(
             $"Designed for {nominal:0.##} °C in {(air.IsVacuum ? "vacuum" : $"air at {atmospheres:0.####} atm")}; every part of the lens and the air at each temperature, the pressure held."));
+        if (saved != null) output.WriteLine($"Mount file: {mountFile}{(HasOverrides() ? ", with the options given here over it" : "")}.");
         output.WriteLine(Describe(mount));
         output.WriteLine("Materials:");
         for (int i = 1; i < system.Surfaces.Count - 1; i++)
@@ -201,7 +246,15 @@ internal static class LensCommand
                 Housing = housingCandidates,
                 Parts = partCandidates.ToDictionary(p => p.Key, p => (IReadOnlyList<MountMaterial>)p.Value),
             };
-            Select(system, library, mount, air, new ThermalOptions(o, substitutions, ctes), candidates, deltaT, keep, output);
+            var best = Select(system, library, mount, air, new ThermalOptions(o, substitutions, ctes), candidates, deltaT, keep, output);
+            if (saveMount)
+            {
+                var winner = new Mount(best.Housing, mount.Segments.Select((g, k) => g with { Material = best.Parts[k] }),
+                    mount.MirrorSubstrates, mount.Cemented);
+                Save(winner);
+                if (best.Glasses.Count > 0)
+                    output.WriteLine("The glasses it chose are not saved: a glass swap changes the lens, which the lens file holds.");
+            }
             return 0;
         }
         if (mode == "focus") Focus(model, temperatures, p, output);
@@ -218,6 +271,8 @@ internal static class LensCommand
             output.WriteLine();
             foreach (var n in notes) output.WriteLine("Note: " + n);
         }
+
+        if (saveMount) Save(mount);
 
         if (detail && mode == "lens")
             foreach (var lens in lenses)
@@ -347,7 +402,7 @@ internal static class LensCommand
         ? m.Name
         : FormattableString.Invariant($"{m.Name} (α {m.Cte * 1e6:0.###}×10⁻⁶/K)");
 
-    private static void Select(AberrationCalculator.Core.Models.OpticalSystem system, MaterialLibrary library, Mount mount,
+    private static SearchResult Select(AberrationCalculator.Core.Models.OpticalSystem system, MaterialLibrary library, Mount mount,
         AirConditions air, ThermalOptions thermal, SearchCandidates candidates, double deltaT, int keep, TextWriter output)
     {
         double count = candidates.Count(mount);
@@ -364,6 +419,7 @@ internal static class LensCommand
         Row("design", design);
         for (int i = 0; i < results.Count; i++) Row((i + 1).ToString(CultureInfo.InvariantCulture), results[i]);
         output.WriteLine("A glass swap changes the lens: optimize the best before taking them further.");
+        return results.Count > 0 ? results[0] : design;
     }
 
     private static string Choice(SearchResult r)
@@ -376,10 +432,8 @@ internal static class LensCommand
 
     internal static MountMaterial Material(string text, string option)
     {
-        if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double cte))
-            return MountMaterial.OfCte(cte * 1e-6);
-        return MountMaterials.Find(text)
-               ?? throw new ArgumentException($"{option}: '{text}' is neither a number nor a mount material (atherm lens --mount-materials)");
+        try { return MountFile.Material(text); }
+        catch (ArgumentException e) { throw new ArgumentException($"{option}: {e.Message}"); }
     }
 
     private static MountSegment Spacer(string text, string option)
