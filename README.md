@@ -87,6 +87,10 @@ Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1),
   SCHOTT:N-SF6 after surface 2            1.805180       0.954     9.03      7.845   -7.845              -127474
 ```
 
+`--svg focus.svg` plots it:
+
+![The doublet's focus over temperature, and each part's share](examples/doublet-focus.svg)
+
 `atherm image` gives the RMS wavefront error and the diffraction MTF from real rays, through WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated, and the temperatures over which the MTF stays above a limit. The MTF is the pupil function's autocorrelation, traced exactly off axis and under vignetting, which matters most in the thermal infrared, where the blur is mostly diffraction; `--mtf geometric` gives the geometric MTF instead:
 
 ```
@@ -105,6 +109,8 @@ Diffraction MTF, sagittal/tangential, fixed | refocused:
 The lowest diffraction MTF at 30 c/mm stays at or above 0.5 at the fixed plane: -27.9 to 50.9 °C (searched -60 to 100 °C)
 The lowest diffraction MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 100.0 °C (searched -60 to 100 °C)
 ```
+
+With `--svg`, it plots the RMS and the lowest MTF against temperature, fixed and refocused ([doublet-image.svg](examples/doublet-image.svg)).
 
 ## Choosing materials and mounts
 

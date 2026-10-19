@@ -1,5 +1,6 @@
 Ge/ZnSe doublet, 50.8 mm f/2, 8-12 um (Fischer 1985) (fischer-ge-znse.zmx), 6 surfaces
 Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
+Mount file: fischer-ge-znse.mount.json.
 Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
 Materials:
   after surface  1  MISC:GERMANIUM           α 5.74×10⁻⁶/K
@@ -24,4 +25,4 @@ Glasses at 20 °C and 10.00268 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1),
   MISC:GERMANIUM after surface 1          4.004312     407.923     5.74   -130.039  130.039                 7690
   MISC:ZNSE after surface 3               2.406533      63.165     7.10    -37.808   37.808                26449
 
-Saved the mount to fischer-ge-znse.mount.json.
+Plot written to fischer-focus.svg.

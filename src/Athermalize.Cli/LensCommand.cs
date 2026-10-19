@@ -1,5 +1,6 @@
 using System.Globalization;
 using AberrationCalculator.Core.IO;
+using AberrationCalculator.Core.Models;
 using AberrationCalculator.Core.RayTrace;
 using Athermalize.Core.Air;
 using Athermalize.Core.Analysis;
@@ -47,6 +48,10 @@ internal static class LensCommand
         "         --grid <n>                      image: the diffraction MTF's n×n pupil grid (64)\n" +
         "         --monochromatic                 image: the primary wavelength only\n" +
         "         --obscuration <ε>               image: a central obstruction, a fraction of the pupil radius\n" +
+        "         --svg <file>                    focus: plot the focus change against temperature, with the depth\n" +
+        "                                         of focus, and each part's share; image: plot the RMS and the lowest\n" +
+        "                                         MTF at each frequency against temperature, fixed and refocused\n" +
+        "         --plot-points <n>               image: the plot's temperatures, evenly over --temperatures (13)\n" +
         "       atherm select <file> --housing <material|α> [options]  every combination of candidate glasses\n" +
         "                                         and mount materials, scored on the lens at its shapes\n" +
         "         --glass <s>:<material>,...      candidates for the glass after surface s\n" +
@@ -85,7 +90,8 @@ internal static class LensCommand
         CementedSurface? cementedGiven = null;
         bool detail = false, monochromatic = false;
         var mtfKind = MtfKind.Diffraction;
-        int grid = 64;
+        int grid = 64, plotPoints = 13;
+        string? svg = null;
         var o = IndexOptions.Default;
 
         for (int i = 0; i < args.Length; i++)
@@ -135,6 +141,8 @@ internal static class LensCommand
                 case "--mtf": mtfKind = Program.Choose(Next(), a, ("diffraction", MtfKind.Diffraction), ("geometric", MtfKind.Geometric)); break;
                 case "--grid": grid = (int)Program.Numbers(Next(), a)[0]; break;
                 case "--obscuration": obscuration = Program.Numbers(Next(), a)[0]; break;
+                case "--svg": svg = Next(); break;
+                case "--plot-points": plotPoints = (int)Program.Numbers(Next(), a)[0]; break;
                 case "--glass":
                 {
                     var (k, list) = Split(Next(), ':', a);
@@ -170,6 +178,8 @@ internal static class LensCommand
         }
         if (file == null) throw new ArgumentException("name a lens file");
 
+        if (svg != null && mode is not ("focus" or "image")) throw new ArgumentException("--svg: only focus and image plot");
+        if (plotPoints < 2) throw new ArgumentException("--plot-points: give at least 2");
         bool overrides = housing != null || segments.Count > 0 || mirrors.Count > 0 || uses.Count > 0 || ctes.Count > 0
                          || nominalGiven != null || atmospheresGiven != null || cementedGiven != null;
         bool HasOverrides() => overrides;
@@ -257,10 +267,11 @@ internal static class LensCommand
             }
             return 0;
         }
-        if (mode == "focus") Focus(model, temperatures, p, output);
+        if (mode == "focus") Focus(model, temperatures, p, svg, output);
         else if (mode == "image")
             Image(model, temperatures, frequencies, mtfLimit, range,
-                new QualityOptions { Polychromatic = !monochromatic, Obscuration = obscuration, MtfKind = mtfKind, DiffractionGrid = grid }, output);
+                new QualityOptions { Polychromatic = !monochromatic, Obscuration = obscuration, MtfKind = mtfKind, DiffractionGrid = grid },
+                svg, plotPoints, output);
         else Paraxial(model, lenses, p, nominal, output);
 
         var notes = new List<string>();
@@ -311,7 +322,7 @@ internal static class LensCommand
         }
     }
 
-    private static void Focus(ThermalModel model, double[] temperatures, int p, TextWriter output)
+    private static void Focus(ThermalModel model, double[] temperatures, int p, string? svg, TextWriter output)
     {
         var system = model.Nominal;
         var report = FocusReport.Compute(model, temperatures);
@@ -346,12 +357,92 @@ internal static class LensCommand
             output.WriteLine(FormattableString.Invariant(
                 $"  {part.Name,-38} {c.Relative,9:0.000000} {c.DnDtRelative * 1e6,11:0.000} {model.CteAfter(part.Part.Index) * 1e6,8:0.00} {xf * 1e6,10:0.000} {-xf * 1e6,8:0.000} {-1.0 / xf,20:0}"));
         }
+
+        if (svg == null) return;
+        // The focus over the whole span, paraxially, which is quick: 60 steps.
+        double lo = temperatures.Append(t0).Min(), hi = temperatures.Append(t0).Max();
+        var curve = FocusReport.Compute(model, Enumerable.Range(0, 61).Select(i => lo + (hi - lo) * i / 60.0), shares: false).States;
+        var focus = new SvgChart
+        {
+            Title = FormattableString.Invariant($"{Name(system)}: focus change from {t0:0.##} °C"),
+            XLabel = "temperature (°C)",
+            YLabel = "focus change (µm), + beyond the image plane",
+        };
+        focus.Bands.Add(new SvgChart.Band("± depth of focus", curve.Select(s => (s.TemperatureC, -s.DepthOfFocus * 1e3, s.DepthOfFocus * 1e3)).ToList(), SvgChart.Green));
+        focus.Lines.Add(new SvgChart.Line("first order", curve.Select(s => (s.TemperatureC, s.Linear * 1e3)).ToList(), SvgChart.Gray, Dashed: true));
+        focus.Lines.Add(new SvgChart.Line("focus change", curve.Select(s => (s.TemperatureC, s.Change * 1e3)).ToList(), SvgChart.Blue));
+        focus.Lines.Add(new SvgChart.Line("", report.States.Select(s => (s.TemperatureC, s.Change * 1e3)).ToList(), SvgChart.Blue, Markers: true));
+        var shares = new SvgChart { Title = FormattableString.Invariant($"Each part's share of the focus drift at {t0:0.##} °C"), XLabel = "µm/K" };
+        foreach (var c in report.Contributions)
+            shares.Bars.Add((c.Name, c.DefocusPerK * 1e3, c.Part.Kind switch
+            {
+                ThermalPartKind.Glass => SvgChart.Blue,
+                ThermalPartKind.Mirror => SvgChart.Purple,
+                ThermalPartKind.Housing => SvgChart.Red,
+                _ => SvgChart.Orange,
+            }));
+        shares.Bars.Add(("whole lens", report.DefocusPerK * 1e3, "#333333"));
+        File.WriteAllText(svg, SvgChart.Document(focus, shares));
+        output.WriteLine();
+        output.WriteLine($"Plot written to {svg}.");
+    }
+
+    /// <summary>The lens's title, or its file's name when it has none.</summary>
+    private static string Name(OpticalSystem system) => string.IsNullOrWhiteSpace(system.Title) ? "The lens" : system.Title.Trim();
+
+    /// <summary>
+    /// <paramref name="points"/> temperatures evenly over the span of <paramref name="temperatures"/> and the nominal,
+    /// with those themselves, in order.
+    /// </summary>
+    private static double[] PlotTemperatures(ThermalModel model, double[] temperatures, int points)
+    {
+        double lo = temperatures.Append(model.NominalTemperatureC).Min(), hi = temperatures.Append(model.NominalTemperatureC).Max();
+        return Enumerable.Range(0, points).Select(i => lo + (hi - lo) * i / (points - 1))
+            .Concat(temperatures).Append(model.NominalTemperatureC).Distinct().OrderBy(t => t).ToArray();
+    }
+
+    /// <summary>The RMS wavefront error and the lowest MTF at each frequency against temperature, fixed and refocused.</summary>
+    private static string ImagePlot(ThermalModel model, IReadOnlyList<QualityState> states, double[] frequencies, double? mtfLimit,
+        QualityOptions options)
+    {
+        var rms = new SvgChart
+        {
+            Title = $"{Name(model.Nominal)}: RMS wavefront error",
+            XLabel = "temperature (°C)",
+            YLabel = "RMS wavefront error (waves)",
+            YMin = 0.0,
+        };
+        rms.Lines.Add(new SvgChart.Line("fixed image plane", states.Select(s => (s.TemperatureC, s.RmsFixed)).ToList(), SvgChart.Blue, Markers: true));
+        rms.Lines.Add(new SvgChart.Line("refocused", states.Select(s => (s.TemperatureC, s.RmsRefocused)).ToList(), SvgChart.Green, Dashed: true, Markers: true));
+        if (frequencies.Length == 0) return SvgChart.Document(rms);
+
+        string kind = options.MtfKind == MtfKind.Diffraction ? "diffraction" : "geometric";
+        var mtf = new SvgChart
+        {
+            Title = $"Lowest {kind} MTF over the fields and both azimuths",
+            XLabel = "temperature (°C)",
+            YLabel = "MTF",
+            YMin = 0.0,
+            YMax = 1.0,
+        };
+        static double Lowest(IReadOnlyList<WavefrontErrorCalculator.Core.GeometricMtf.Modulation[]> m, int k) => m.Min(f => Math.Min(f[k].Sagittal, f[k].Tangential));
+        for (int k = 0; k < frequencies.Length; k++)
+        {
+            string color = SvgChart.Palette[k % SvgChart.Palette.Length];
+            string at = FormattableString.Invariant($"{frequencies[k]:0.#} c/mm");
+            mtf.Lines.Add(new SvgChart.Line(at + ", fixed", states.Select(s => (s.TemperatureC, Lowest(s.MtfFixed, k))).ToList(), color, Markers: true));
+            mtf.Lines.Add(new SvgChart.Line(at + ", refocused", states.Select(s => (s.TemperatureC, Lowest(s.MtfRefocused, k))).ToList(), color, Dashed: true));
+        }
+        if (mtfLimit is double limit) mtf.Levels.Add(new SvgChart.Level(FormattableString.Invariant($"limit {limit:0.###}"), limit, "#000000"));
+        return SvgChart.Document(rms, mtf);
     }
 
     private static void Image(ThermalModel model, double[] temperatures, double[] frequencies, double? mtfLimit,
-        double[] range, QualityOptions options, TextWriter output)
+        double[] range, QualityOptions options, string? svg, int plotPoints, TextWriter output)
     {
-        var states = ImageQuality.Compute(model, temperatures, frequencies, options);
+        // With a plot, the report's temperatures are among the plotted ones, computed once.
+        var sampled = ImageQuality.Compute(model, svg != null ? PlotTemperatures(model, temperatures, plotPoints) : temperatures, frequencies, options);
+        var states = temperatures.Select(t => sampled.First(s => s.TemperatureC == t)).ToList();
         output.WriteLine();
         output.WriteLine($"Image quality, {(options.Polychromatic ? "every wavelength, by its weight" : "the primary wavelength")}" +
                          $"{(options.Obscuration > 0 ? FormattableString.Invariant($", obstruction {options.Obscuration:0.###}") : "")}; " +
@@ -384,6 +475,12 @@ internal static class LensCommand
                     $"The lowest {(options.MtfKind == MtfKind.Diffraction ? "diffraction" : "geometric")} MTF at {frequencies[0]:0.#} c/mm stays at or above {limit:0.###} {(refocused ? "refocused" : "at the fixed plane")}: ") +
                     (r is { } v ? FormattableString.Invariant($"{v.Low:0.0} to {v.High:0.0} °C (searched {range[0]:0} to {range[1]:0} °C)") : "not even at the nominal temperature"));
             }
+        }
+        if (svg != null)
+        {
+            File.WriteAllText(svg, ImagePlot(model, sampled, frequencies, mtfLimit, options));
+            output.WriteLine();
+            output.WriteLine(FormattableString.Invariant($"Plot written to {svg}, at {sampled.Count} temperatures."));
         }
     }
 

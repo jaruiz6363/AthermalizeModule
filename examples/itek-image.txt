@@ -19,3 +19,5 @@ Diffraction MTF, sagittal/tangential, fixed | refocused:
 
 The lowest diffraction MTF at 50 c/mm stays at or above 0.8 at the fixed plane: 5.2 to 17.6 °C (searched -20 to 35 °C)
 The lowest diffraction MTF at 50 c/mm stays at or above 0.8 refocused: -20.0 to 35.0 °C (searched -20 to 35 °C)
+
+Plot written to itek-image.svg, at 13 temperatures.

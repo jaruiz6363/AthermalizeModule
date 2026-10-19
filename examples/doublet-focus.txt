@@ -23,3 +23,5 @@ Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1),
   part                                       n_rel   dn_rel/dT      α        x_f        γ  (10⁻⁶/K)      ν_T (K)
   SCHOTT:N-BK7 after surface 1            1.516800       2.798     7.10      1.686   -1.686              -592996
   SCHOTT:N-SF6 after surface 2            1.805180       0.954     9.03      7.845   -7.845              -127474
+
+Plot written to doublet-focus.svg.

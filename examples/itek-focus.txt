@@ -26,3 +26,5 @@ Glasses at 7.5 °C and 0.55 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ
   part                                       n_rel   dn_rel/dT      α        x_f        γ  (10⁻⁶/K)      ν_T (K)
   SCHOTT:N-BK7 after surface 5            1.518927       1.314     7.10      4.568   -4.568              -218927
   SCHOTT:N-BK7 after surface 7            1.518927       1.314     7.10      4.568   -4.568              -218927
+
+Plot written to itek-focus.svg.

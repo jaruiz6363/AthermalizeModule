@@ -178,6 +178,35 @@ public class CliTests
         finally { File.Delete(path); }
     }
 
+    /// <summary>focus --svg and image --svg write SVG: the focus curve and the shares, the RMS and the MTF.</summary>
+    [Fact]
+    public void Focus_and_image_plot()
+    {
+        string path = DoubletFile();
+        string svg = Path.Combine(Path.GetTempPath(), $"atherm-plot-{Guid.NewGuid():N}.svg");
+        try
+        {
+            var (code, text) = Run("focus", path, "--housing", "aluminum-6061-t6", "--temperatures", "0,20,40", "--svg", svg,
+                "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("Plot written to", text);
+            var doc = System.Xml.Linq.XDocument.Load(svg);
+            Assert.Equal(3, doc.Descendants().Count(e => e.Name.LocalName == "polyline"));
+            Assert.Equal(4, doc.Descendants().Count(e => e.Name.LocalName == "rect" && e.Attribute("height")?.Value == "18"));
+            Assert.Contains(doc.Descendants(), e => e.Value == "housing (aluminum-6061-t6)");
+
+            (code, text) = Run("image", path, "--housing", "23.6", "--temperatures", "20,60", "--frequencies", "20",
+                "--mtf-limit", "0.2", "--monochromatic", "--plot-points", "3", "--svg", svg, "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("at 3 temperatures", text);   // 20, 40 and 60: the report's and the nominal among them
+            doc = System.Xml.Linq.XDocument.Load(svg);
+            Assert.Equal(4, doc.Descendants().Count(e => e.Name.LocalName == "polyline"));
+            Assert.Contains(doc.Descendants(), e => e.Value == "limit 0.2");
+        }
+        finally { File.Delete(path); File.Delete(svg); }
+        Assert.Equal(1, Run("lens", "x.zmx", "--housing", "1", "--svg", svg).Code);
+    }
+
     // ── The mount file ───────────────────────────────────────────────────────────────
 
     /// <summary>A run with --save-mount writes the mount beside the lens; a later run without the options reads it and gives the same report.</summary>
