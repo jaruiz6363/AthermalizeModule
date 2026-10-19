@@ -15,7 +15,19 @@ The module answers four questions about a lens:
 | Which part moves the focus: which glass, the housing, a spacer? | `atherm focus` |
 | Which materials and mount would hold the focus? | `atherm select`, `atherm map`, `atherm solve` |
 
-It also gives the data behind the answers. `atherm materials` gives a material's index over temperature. `atherm lens` gives the lens itself at each temperature, surface by surface, and can write it to a lens file for another program to analyze unchanged.
+It also gives the data behind the answers.
+
+## Why another thermal analysis
+
+A lens that drifts out of focus over temperature is often found late, in a thermal chamber, when a measurement disagrees with the simulation. Then the question is whether the simulation can be trusted. Answering it means knowing exactly what the model did: which thermal model of the glass it used, whether the index was taken relative to air or to vacuum and at what temperature, how the air spaces grew and with which material, and which expansion coefficient each part got. Published implementations of the same glass model differ in several of these choices ([docs/materials.md](docs/materials.md#conventions)).
+
+This module is written so that nothing about its result is hidden:
+
+- **The model is documented and open.** The code is MIT-licensed, and [docs/lens-at-temperature.md](docs/lens-at-temperature.md) states what changes in the lens and how, with the sources for each step.
+- **Every convention is a named option** with a stated default. You can match another implementation's choices and see how much each one matters.
+- **Every result can be traced.** The focus report splits the drift into each part's contribution, and `atherm lens --detail` prints every radius, thickness and index the analysis used.
+- **It is checked against more than itself:** closed-form results, worked examples from the literature, and an independent open-source implementation of the same index model ([docs/verification.md](docs/verification.md)).
+- **Its lens can be checked elsewhere.** It writes the lens as it is at any temperature and pressure, so another program can trace exactly the same lens and compare. `atherm materials` gives a material's index over temperature. `atherm lens` gives the lens itself at each temperature, surface by surface, and can write it to a lens file for another program to analyze unchanged.
 
 ## A quick look
 
