@@ -1,0 +1,18 @@
+Ge/ZnSe doublet, 50.8 mm f/2, 8-12 um (Fischer 1985) (fischer-ge-znse.zmx), 6 surfaces
+Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
+Mount file: fischer-ge-znse.mount.json.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  MISC:GERMANIUM           α 5.74×10⁻⁶/K
+  after surface  3  MISC:ZNSE                α 7.1×10⁻⁶/K
+
+24 combinations. Score = (|focus rate|·60 K + |axial color|)/depth of focus × (1 + 2|ΔEFL|/EFL), at the design's shapes:
+  rank     score   focus µm/K   color µm   ΔEFL mm   materials
+  design    6.561     -7.8515     -53.379     0.0000   housing aluminum-6061-t6
+  1        5.333     -6.7694     -18.895     0.0760   after 3: JPCRD:ZNS; housing invar-36
+  2        5.604     -7.1288     -18.895     0.0760   after 3: JPCRD:ZNS; housing ti-6al-4v
+  3        5.733     -6.8024     -49.970     0.0089   after 3: SCHOTT_IRG:IRG27; housing invar-36
+  4        5.737     -6.7539     -53.379     0.0000   after 3: MISC:ZNSE; housing invar-36
+  5        5.836     -6.7511     -60.636    -0.0460   after 3: SCHOTT_IRG:IRG22; housing invar-36
+  6        5.865     -6.7449     -62.169    -0.1088   after 3: SCHOTT_IRG:IRG25; housing invar-36
+A glass swap changes the lens: optimize the best before taking them further.

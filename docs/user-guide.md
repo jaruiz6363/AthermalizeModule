@@ -145,18 +145,37 @@ atherm image examples/fischer-ge-znse.zmx --temperatures -40,20,60 --frequencies
 ```
 
 - In [`fischer-focus.txt`](../examples/fischer-focus.txt) the focus moves −7.85 µm/K: −6.72 from the germanium, whose index rises 408×10⁻⁶/K, −1.16 from the housing, and almost nothing from the ZnSe. That is 5.6 depths of focus at −40 °C and 4.0 at 60 °C.
-- Canceling it with the housing alone would take an expansion coefficient near −136×10⁻⁶/K, which no metal has. Such a lens is refocused, or its materials are changed; `atherm map --band lwir` shows which ones offset germanium.
+- Canceling it with the housing alone would take an expansion coefficient near −136×10⁻⁶/K, which no metal has. Such a lens is refocused, or its materials are changed, as the next part shows.
 - In [`fischer-image.txt`](../examples/fischer-image.txt), the MTF at 10 cycles/mm stays above 0.5 at the fixed image plane only from 5.2 to 21.7 °C. Refocused, it stays above 0.5 from −60 to 100 °C, with the RMS near 0.06 waves.
 - `--use GERMANIUM=JPCRD:GE --use ZNSE=JPCRD:ZNSE` runs it on Li's evaluated data instead of the catalog's fits: −7.96 µm/K, 1.4% more.
 
 Neither source gives the image plane at the design temperature at the least RMS, so at the nominal temperature `atherm image` still moves the plane a little: 7 µm for the Cassegrain, −33 µm for the doublet.
+
+**Searching for materials: an athermal triplet for 8-12 µm.** Swapping the doublet's materials doesn't fix it. `atherm select` tries ZnSe, ZnS and four of SCHOTT's IRG glasses for the second element, in four housings:
+
+```
+atherm select examples/fischer-ge-znse.zmx --glass 3:ZNSE,JPCRD:ZNS,SCHOTT_IRG:IRG22,SCHOTT_IRG:IRG25,SCHOTT_IRG:IRG26,SCHOTT_IRG:IRG27 --housing-candidates aluminum-6061-t6,stainless-303,ti-6al-4v,invar-36 --keep 6
+```
+
+In [`fischer-select.txt`](../examples/fischer-select.txt) the best of the 24 combinations, ZnS in an Invar housing, still drifts −6.77 µm/K. `select` keeps the design's shapes, and the germanium element carries nearly all the power, so nearly all the drift stays. The powers have to change, which is what `atherm solve` does with thin lenses:
+
+```
+atherm solve GERMANIUM --partners --catalog SCHOTT_IRG --band lwir --housing aluminum-6061-t6 --focal 50.8 --top 4
+atherm solve GERMANIUM SCHOTT_IRG:IRG26 SCHOTT_IRG:IRG27 --band lwir --housing aluminum-6061-t6 --focal 50.8
+```
+
+In [`solve-lwir-triplet.txt`](../examples/solve-lwir-triplet.txt):
+- **No germanium doublet works.** Every achromat of germanium and an IRG glass still drifts −8.3 to −9.5 µm/K in aluminum. Two materials can correct the color or the drift, not both, unless their points and the housing's lie on one line on the map, and none of these do.
+- **Three materials do.** Germanium, IRG26 and IRG27 make an athermal achromatic triplet of 50.8 mm: germanium −205 mm, IRG26 29.0 mm and IRG27 −100 mm. Germanium becomes a weak negative corrector. IRG26, whose index barely changes with temperature (γ −1.9×10⁻⁶/K), carries the power.
+- **It holds in the full model.** Built as three thin lenses in contact and run through the full model, the triplet has no axial color from 8 to 12 µm, and its focus drift rounds to 0.0000 µm/K, against −7.85 for Fischer's doublet (`AthermalTests`).
+- **It is a starting point.** The powers are for thin lenses in contact. Give the elements thickness and spacing, and optimize the lens for its aberrations; then run `atherm focus` on it to see how far it has moved from athermal.
 
 ### Choosing materials
 
 - **The map.** `atherm map N-PK51 N-BK7 N-SF6 --housing aluminum-6061-t6 --svg map.svg`, or `--catalog SCHOTT` for every glass of a catalog with thermal data. `--band mwir` or `lwir` takes 3, 4 and 5 µm or 8, 10 and 12 µm, or give three wavelengths. A doublet is athermal and achromatic when its two points and the housing's point lie on one line. [`map-visible.txt`](../examples/map-visible.txt) and [`map-visible.svg`](../examples/map-visible.svg) are twelve glasses and an aluminum housing; [`map-lwir.txt`](../examples/map-lwir.txt) and [`map-lwir.svg`](../examples/map-lwir.svg) are germanium, ZnSe, ZnS and SCHOTT's IRG glasses over 8-12 µm.
 - **Solving.**
   - `atherm solve N-BK7 N-SF6 --housing aluminum-6061-t6 --focal 122` gives the achromat's powers, and how far it is from athermal.
-  - Three materials give the athermal achromatic triplet: [`solve-triplet.txt`](../examples/solve-triplet.txt) is N-PK51, N-KZFS5 and N-LAK7.
+  - Three materials give the athermal achromatic triplet: [`solve-triplet.txt`](../examples/solve-triplet.txt) is N-PK51, N-KZFS5 and N-LAK7.  [`solve-lwir-triplet.txt`](../examples/solve-lwir-triplet.txt) is germanium, IRG26 and IRG27 over 8-12 µm, above.
   - `--partners --catalog SCHOTT` lists the glasses that make the most nearly athermal achromat with one.
 - **Searching.** `atherm select lens.zmx --housing aluminum-6061-t6 --near 2:0.08:6 --catalog SCHOTT --housing-candidates aluminum-6061-t6,stainless-303,ti-6al-4v` tries each SCHOTT glass within 0.08 in n_d and 6 in ν_d of the glass after surface 2, in each housing.
   - `--glass 2:N-SF6,SF6,N-SF57` gives a list, and `--part-candidates 0:aluminum-6061-t6,invar-36` the candidates for a mount part.

@@ -1,0 +1,14 @@
+Thin achromatic doublets of MISC:GERMANIUM and a SCHOTT_IRG glass, f = 50.8 mm over 8-12 µm, in a housing of α_h = 23.6×10⁻⁶/K,
+the image plane held at the focal distance; most nearly athermal first, the stronger element at most 4× the doublet's power:
+  partner                        ν       f_a mm     f_b mm   focus µm/K   R_th/φ (10⁻⁶/K)
+  SCHOTT_IRG:IRG27               47.55     47.721   -787.301      -8.3083        163.550
+  SCHOTT_IRG:IRG22              110.77     43.627   -308.995      -8.6077        169.444
+  SCHOTT_IRG:IRG25              108.83     43.753   -315.426      -8.6591        170.455
+  SCHOTT_IRG:IRG26              159.95     40.443   -198.363      -9.5212        187.426
+
+Thin, in contact, f = 50.8 mm over 8-12 µm at 20 °C, in a housing of α_h = 23.6×10⁻⁶/K that holds the image plane at the focal distance:
+  MISC:GERMANIUM               ν   784.54   γ   130.039×10⁻⁶/K
+  SCHOTT_IRG:IRG26             ν   159.95   γ    -1.890×10⁻⁶/K
+  SCHOTT_IRG:IRG27             ν    47.55   γ   -23.557×10⁻⁶/K
+Athermal achromatic triplet: f = -205.052, 28.958 and -100.294 mm.
+The strongest element has 1.75× the triplet's power; weaker is easier to correct.

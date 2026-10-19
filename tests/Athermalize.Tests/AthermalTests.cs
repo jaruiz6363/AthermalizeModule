@@ -186,4 +186,35 @@ public class AthermalTests
         Assert.InRange(color, -1e-5, 1e-5);
         Assert.InRange(report.DefocusPerK / r.DefocusPerK - 1.0, -2e-3, 2e-3);
     }
+
+    /// <summary>
+    /// The user guide's infrared triplet: germanium, IRG26 and IRG27 over 8-12 µm, f = 50.8 mm in aluminum, built as
+    /// three thin lenses in contact. In the full model it has no axial color and almost no focus drift, where
+    /// germanium alone at that focal length drifts about −6.6 µm/K.
+    /// </summary>
+    [Fact]
+    public void The_infrared_triplet_from_the_solver_is_athermal_in_the_full_model()
+    {
+        string[] names = { "MISC:GERMANIUM", "SCHOTT_IRG:IRG26", "SCHOTT_IRG:IRG27" };
+        var constants = names.Select(n => MaterialConstants.Of(Catalogs.Find(n), Band.Lwir)).ToArray();
+        const double housing = 23.6e-6, f = 50.8;
+        var powers = Athermal.Triplet(constants[0], constants[1], constants[2], 1.0 / f, housing)!;
+        var lenses = Lenses.AtInfinity(4, 10.0, 8.0, 12.0);
+        for (int i = 0; i < 3; i++)
+        {
+            double r = 2.0 * (constants[i].Index - 1.0) / powers[i];
+            lenses.Surface(r, 1e-4, names[i], stop: i == 0).Surface(-r, i == 2 ? f : 0.0);
+        }
+        var system = lenses.Image();
+        system.Fields.RemoveAt(1);
+        var lens = new ThermalModel(system, Catalogs.Library, new Mount(MountMaterial.OfCte(housing))).At(20.0);
+        double Focus(int w) => AberrationCalculator.Core.RayTrace.ParaxialTrace.Trace(lens.System, lens.Indices[w], 0).ParaxialFocusDistance;
+        double color = Focus(1) - Focus(2);
+        system.Surfaces[6].Thickness = Focus(0);
+        var report = FocusReport.Compute(new ThermalModel(system, Catalogs.Library, new Mount(MountMaterial.OfCte(housing))), new[] { 20.0 });
+        _out.WriteLine($"f {string.Join(", ", powers.Select(p => (1.0 / p).ToString("F3")))} mm; 8 − 12 µm focus {color * 1e3:F4} µm; rate {report.DefocusPerK * 1e3:F4} µm/K");
+        Assert.InRange(1.0 / powers[0], -206.0, -204.0);
+        Assert.InRange(color, -1e-4, 1e-4);
+        Assert.InRange(report.DefocusPerK * 1e3, -0.05, 0.05);
+    }
 }
