@@ -28,7 +28,7 @@ atherm focus lens.zmx --housing aluminum-6061-t6
 - `--spacer 3:titanium:9` puts a spacer in the air space after surface 3, touching both surfaces 9 mm off the axis.
 - `--part 1-5:invar-36` holds surface 1 to surface 5 with a part of Invar; the last air space inside it takes up the rest. `--part 6-9:stainless-303` with surface 9 the image holds the image plane from surface 6.
 - `--mirror 4:23` gives the mirror at surface 4 a substrate of α = 23×10⁻⁶/K.
-- A material is a name from `atherm lens --mount-materials`, or a number, α in 10⁻⁶/K.
+- A material is a name from `atherm lens --mount-materials`, or a number, α in 10⁻⁶/K. The `-cryo` materials (`aluminum-6061-t6-cryo`, `stainless-304-cryo`, `ti-6al-4v-cryo`, `invar-36-cryo`) carry their length from 4 to 300 K, from NIST's cryogenic fits, for a lens that works cold.
 
 `--use CAF2=CHARMS:CAF2` uses another material in place of one the file names, and `--cte N-BK7=7.1` another expansion coefficient. The design's temperature is `--nominal` (20 °C), and the air pressure `--pressure` (1 atm; 0 is vacuum). The index conventions are the options of `atherm materials`.
 

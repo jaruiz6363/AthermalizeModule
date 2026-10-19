@@ -64,9 +64,17 @@ public sealed record ThermalData(
 /// <param name="DPgF">ΔPgF, the deviation of the relative partial dispersion from the normal line.</param>
 /// <param name="IgnoreExpansion">The catalog's flag that the glass is not to be expanded with temperature.</param>
 /// <param name="State">Whether the catalog gave the line, and in full.</param>
+/// <param name="Curve">
+/// The length over temperature, for a material whose source gives it; <paramref name="Cte"/> is then its coefficient
+/// at 20 °C. Null when there is only the one coefficient.
+/// </param>
 public sealed record ExpansionData(
-    double Cte, double CteHigh, double Density, double DPgF, bool IgnoreExpansion, DataState State)
+    double Cte, double CteHigh, double Density, double DPgF, bool IgnoreExpansion, DataState State,
+    ExpansionCurve? Curve = null)
 {
+    /// <summary>The curve the material grows by: its own, or its one coefficient at every temperature.</summary>
+    public ExpansionCurve Growth => Curve ?? new ConstantExpansion(Cte);
+
     public static ExpansionData None(DataState state = DataState.Missing) => new(0, 0, 0, 0, false, state);
 
     /// <summary>Reads the fields after <c>ED</c>. The catalog gives the expansion coefficients in 10⁻⁶/K.</summary>

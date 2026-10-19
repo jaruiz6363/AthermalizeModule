@@ -52,7 +52,7 @@ public readonly record struct ThermalPart(ThermalPartKind Kind, int Index)
 /// <summary>What set a surface's size and the thickness after it, at one temperature.</summary>
 /// <param name="Index">The surface.</param>
 /// <param name="ShapeSetBy">What the surface's radius, aspheric terms and apertures grew with.</param>
-/// <param name="ShapeScale">The factor its lengths grew by, 1 + αΔT.</param>
+/// <param name="ShapeScale">The factor its lengths grew by: 1 + αΔT for one coefficient, the ratio of lengths for a curve.</param>
 /// <param name="ThicknessSetBy">What set the thickness after the surface.</param>
 /// <param name="NominalThickness">The thickness after it in the nominal design.</param>
 /// <param name="Thickness">The thickness after it at the temperature.</param>
@@ -125,6 +125,7 @@ public sealed class ThermalModel
 {
     private readonly Material?[] _after;
     private readonly double[] _cte;
+    private readonly ExpansionCurve[] _growth;
     private readonly string[] _cteNote;
 
     /// <param name="nominal">The design, as its file gives it. It is never changed.</param>
@@ -144,6 +145,7 @@ public sealed class ThermalModel
         int count = nominal.Surfaces.Count;
         _after = new Material?[count];
         _cte = new double[count];
+        _growth = new ExpansionCurve[count];
         _cteNote = new string[count];
         var unresolved = new List<string>();
         for (int i = 0; i < count; i++)
@@ -153,13 +155,16 @@ public sealed class ThermalModel
             {
                 _after[i] = i > 0 ? _after[i - 1] : null;
                 _cte[i] = i > 0 ? _cte[i - 1] : 0;
+                _growth[i] = i > 0 ? _growth[i - 1] : new ConstantExpansion(0);
                 _cteNote[i] = i > 0 ? _cteNote[i - 1] : "";
                 continue;
             }
             var m = Options.SurfaceMaterials != null && Options.SurfaceMaterials.TryGetValue(i, out var given) ? given : Resolve(s, library);
             if (m == null && !string.IsNullOrWhiteSpace(s.Material)) unresolved.Add($"surface {i}: {s.Material}");
             _after[i] = m;
-            if (m != null) (_cte[i], _cteNote[i]) = ExpansionOf(m, s.Material);
+            _growth[i] = new ConstantExpansion(0);
+            if (m != null) (_growth[i], _cteNote[i]) = ExpansionOf(m, s.Material);
+            _cte[i] = _growth[i].Alpha(NominalAir.TemperatureC);
         }
         if (unresolved.Count > 0)
             throw new InvalidOperationException("No material found for " + string.Join("; ", unresolved));
@@ -180,8 +185,11 @@ public sealed class ThermalModel
     /// <summary>The material after each surface; null for air. A mirror has the material it sits in.</summary>
     public Material? MaterialAfter(int surface) => _after[surface];
 
-    /// <summary>The expansion coefficient the material after <paramref name="surface"/> grows with, 1/K.</summary>
+    /// <summary>The expansion coefficient the material after <paramref name="surface"/> grows with at the nominal temperature, 1/K.</summary>
     public double CteAfter(int surface) => _cte[surface];
+
+    /// <summary>The length over temperature the material after <paramref name="surface"/> grows by.</summary>
+    public ExpansionCurve GrowthAfter(int surface) => _growth[surface];
 
     /// <summary>The lens at <paramref name="temperatureC"/>, in the nominal air's pressure, humidity and CO₂.</summary>
     public ThermalLens At(double temperatureC) => At(NominalAir with { TemperatureC = temperatureC });
@@ -220,6 +228,8 @@ public sealed class ThermalModel
         ArgumentNullException.ThrowIfNull(air);
         double dT = air.TemperatureC - NominalTemperatureC;
         double DT(ThermalPart p) => changes == null || changes(p) ? dT : 0.0;
+        double Grow(ExpansionCurve c, ThermalPart p) =>
+            DT(p) == 0.0 ? 1.0 : c.Scale(NominalTemperatureC, NominalTemperatureC + DT(p));
         var notes = new List<string>();
         var copy = LensCopy.Of(Nominal);
         var surfaces = copy.Surfaces;
@@ -230,8 +240,8 @@ public sealed class ThermalModel
         var scale = new double[count];
         for (int i = 0; i < count; i++)
         {
-            (shapeBy[i], double alpha, var owner) = ShapeCte(i);
-            scale[i] = 1.0 + alpha * DT(owner);
+            (shapeBy[i], var growth, var owner) = ShapeCte(i);
+            scale[i] = Grow(growth, owner);
             if (i == 0 || i == image || Nominal.Surfaces[i].Type == SurfaceType.Paraxial)
             {
                 scale[i] = 1.0;
@@ -254,19 +264,19 @@ public sealed class ThermalModel
             }
             if (_after[i] != null)
             {
-                surfaces[i].Thickness = t * (1.0 + _cte[i] * DT(GlassPart(i)));
+                surfaces[i].Thickness = t * Grow(_growth[i], GlassPart(i));
                 thicknessBy[i] = _after[i]!.Name;
             }
             else
             {
-                surfaces[i].Thickness = t * (1.0 + Mount.Housing.Cte * DT(ThermalPart.Housing));
+                surfaces[i].Thickness = t * Grow(Mount.Housing.Growth, ThermalPart.Housing);
                 thicknessBy[i] = "housing " + Mount.Housing.Name;
             }
         }
         foreach (var (seg, part) in Mount.Segments.Select((g, j) => (g, j)).OrderBy(p => p.g.To - p.g.From))
         {
             int free = FreeSpace(seg);
-            double s = 1.0 + seg.Material.Cte * DT(new ThermalPart(ThermalPartKind.MountPart, part));
+            double s = Grow(seg.Material.Growth, new ThermalPart(ThermalPartKind.MountPart, part));
             var nFrom = Nominal.Surfaces[seg.From];
             var nTo = Nominal.Surfaces[seg.To];
             double length = 0.0, others = 0.0;
@@ -319,6 +329,7 @@ public sealed class ThermalModel
 
         for (int i = 1; i < image; i++)
             if (_after[i] != null && _cteNote[i] != "" && !notes.Contains(_cteNote[i])) notes.Add(_cteNote[i]);
+        if (dT != 0.0) ExpansionRangeNotes(air.TemperatureC, notes);
         foreach (var (i, _) in Mirrors().Where(m => !Mount.MirrorSubstrates.ContainsKey(m.Index)))
             notes.Add($"Mirror {i} has no substrate given; it is taken to be {Mount.Housing.Name}, the housing's material.");
 
@@ -355,39 +366,58 @@ public sealed class ThermalModel
         return GlassCode.TryParse(name, out double nd, out double vd) ? Tie19Material.Model(nd, vd) : null;
     }
 
-    private (double Cte, string Note) ExpansionOf(Material m, string? surfaceName)
+    private (ExpansionCurve Growth, string Note) ExpansionOf(Material m, string? surfaceName)
     {
         var overrides = Options.CteOverrides;
         if (overrides != null)
         {
-            if (overrides.TryGetValue(m.Name, out double c)) return (c, "");
-            if (overrides.TryGetValue(m.Glass, out c)) return (c, "");
-            if (surfaceName != null && overrides.TryGetValue(surfaceName, out c)) return (c, "");
+            if (overrides.TryGetValue(m.Name, out double c)) return (new ConstantExpansion(c), "");
+            if (overrides.TryGetValue(m.Glass, out c)) return (new ConstantExpansion(c), "");
+            if (surfaceName != null && overrides.TryGetValue(surfaceName, out c)) return (new ConstantExpansion(c), "");
         }
         var e = m.Expansion;
-        if (e.IgnoreExpansion) return (0.0, $"{m.Name}: the catalog says not to expand it; it is held at its nominal size.");
-        if (e.Cte == 0.0) return (0.0, $"{m.Name} has no expansion coefficient; it is held at its nominal size.");
-        return (e.Cte, "");
+        if (e.IgnoreExpansion) return (new ConstantExpansion(0), $"{m.Name}: the catalog says not to expand it; it is held at its nominal size.");
+        if (e.Cte == 0.0 && e.Curve == null) return (new ConstantExpansion(0), $"{m.Name} has no expansion coefficient; it is held at its nominal size.");
+        return (e.Growth, "");
+    }
+
+    /// <summary>A note for each material whose expansion data don't reach the temperature, or the nominal one.</summary>
+    private void ExpansionRangeNotes(double temperatureC, List<string> notes)
+    {
+        var used = new List<(string Name, ExpansionCurve Curve)>();
+        for (int i = 1; i < Nominal.Surfaces.Count - 1; i++)
+            if (_after[i] != null && !Nominal.Surfaces[i].IsMirror) used.Add((_after[i]!.Name, _growth[i]));
+        used.Add((Mount.Housing.Name, Mount.Housing.Growth));
+        used.AddRange(Mount.Segments.Select(g => (g.Material.Name, g.Material.Growth)));
+        used.AddRange(Mirrors().Select(m => Mount.MirrorSubstrates.TryGetValue(m.Index, out var sub) ? sub : Mount.Housing)
+            .Select(sub => (sub.Name, sub.Growth)));
+        foreach (var (name, curve) in used)
+        {
+            if (curve.InRange(temperatureC) && curve.InRange(NominalTemperatureC)) continue;
+            string note = FormattableString.Invariant(
+                $"{name}'s expansion data cover {curve.RangeC.Min:0.#} to {curve.RangeC.Max:0.#} °C; beyond them its length is extrapolated.");
+            if (!notes.Contains(note)) notes.Add(note);
+        }
     }
 
     /// <summary>What a surface's shape grows with: its mirror's substrate, its glass, or the housing; and that part.</summary>
-    private (string By, double Cte, ThermalPart Owner) ShapeCte(int i)
+    private (string By, ExpansionCurve Growth, ThermalPart Owner) ShapeCte(int i)
     {
         var s = Nominal.Surfaces[i];
         if (s.IsMirror)
         {
             var sub = Mount.MirrorSubstrates.TryGetValue(i, out var m) ? m : Mount.Housing;
-            return ("mirror substrate " + sub.Name, sub.Cte, new ThermalPart(ThermalPartKind.Mirror, i));
+            return ("mirror substrate " + sub.Name, sub.Growth, new ThermalPart(ThermalPartKind.Mirror, i));
         }
         int before = i - 1, after = i;
         bool glassBefore = i > 0 && _after[before] != null, glassAfter = _after[after] != null;
         if (glassBefore && glassAfter && !ReferenceEquals(_after[before], _after[after]))
             return Mount.Cemented == CementedSurface.FollowingGlass
-                ? (_after[after]!.Name, _cte[after], GlassPart(after))
-                : (_after[before]!.Name, _cte[before], GlassPart(before));
-        if (glassAfter) return (_after[after]!.Name, _cte[after], GlassPart(after));
-        if (glassBefore) return (_after[before]!.Name, _cte[before], GlassPart(before));
-        return ("housing " + Mount.Housing.Name, Mount.Housing.Cte, ThermalPart.Housing);
+                ? (_after[after]!.Name, _growth[after], GlassPart(after))
+                : (_after[before]!.Name, _growth[before], GlassPart(before));
+        if (glassAfter) return (_after[after]!.Name, _growth[after], GlassPart(after));
+        if (glassBefore) return (_after[before]!.Name, _growth[before], GlassPart(before));
+        return ("housing " + Mount.Housing.Name, Mount.Housing.Growth, ThermalPart.Housing);
     }
 
     /// <summary>The glass part the medium after <paramref name="surface"/> belongs to: the glass itself, or the one a mirror continues.</summary>

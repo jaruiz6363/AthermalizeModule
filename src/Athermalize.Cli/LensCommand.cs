@@ -88,7 +88,7 @@ internal static class LensCommand
             {
                 case "--mount-materials":
                     foreach (var m in MountMaterials.All)
-                        output.WriteLine(FormattableString.Invariant($"{m.Name,-22} α {m.Cte * 1e6,6:0.0##}×10⁻⁶/K  {m.Source}"));
+                        output.WriteLine(FormattableString.Invariant($"{m.Name,-22} α {m.Cte * 1e6,6:0.0##}×10⁻⁶/K{(m.Curve != null ? " at 20 °C" : ""),-9}  {m.Source}"));
                     return 0;
                 case "--catalogs": catalogs = Next(); break;
                 case "--temperatures": temperatures = Program.Numbers(Next(), a); break;

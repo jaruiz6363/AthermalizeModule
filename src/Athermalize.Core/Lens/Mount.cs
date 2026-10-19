@@ -1,11 +1,21 @@
+using Athermalize.Core.Materials;
+
 namespace Athermalize.Core.Lens;
 
 /// <summary>A mount material and its expansion coefficient, 1/K.</summary>
 /// <param name="Name">The material's name, for reports.</param>
-/// <param name="Cte">The mean expansion coefficient, 1/K.</param>
+/// <param name="Cte">The mean expansion coefficient, 1/K; for a material with a curve, its coefficient at 20 °C.</param>
 /// <param name="Source">Where the coefficient comes from.</param>
-public sealed record MountMaterial(string Name, double Cte, string Source = "")
+/// <param name="Curve">The length over temperature, when the source gives it; null for one coefficient at every temperature.</param>
+public sealed record MountMaterial(string Name, double Cte, string Source = "", ExpansionCurve? Curve = null)
 {
+    /// <summary>The curve the material grows by: its own, or its one coefficient at every temperature.</summary>
+    public ExpansionCurve Growth => Curve ?? new ConstantExpansion(Cte);
+
+    /// <summary>A material whose length over temperature is <paramref name="curve"/>; its coefficient is the curve's at 20 °C.</summary>
+    public static MountMaterial OfCurve(string name, ExpansionCurve curve, string source) =>
+        new(name, curve.Alpha(20.0), source, curve);
+
     /// <summary>A material known only by its coefficient, 1/K.</summary>
     public static MountMaterial OfCte(double cte) =>
         new(FormattableString.Invariant($"α {cte * 1e6:G4}×10⁻⁶/K"), cte, "given");

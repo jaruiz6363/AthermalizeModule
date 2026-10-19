@@ -69,7 +69,7 @@ public static class ThermoOptic
         air ??= AirConditions.Standard;
         var n = m.IndexAtVacuumWavelength(lambdaVacuumUm, air with { TemperatureC = temperatureC }, temperatureC, options);
         var (rel, abs) = MeanDnDt(m, lambdaVacuumUm, temperatureC - h, temperatureC + h, air, options);
-        double cte = m.Expansion.Cte;
+        double cte = m.Expansion.Curve?.Alpha(temperatureC) ?? m.Expansion.Cte;
         double xf = cte != 0.0 ? cte - rel / (n.Relative - 1.0) : double.NaN;
         return new ThermalConstants(n.Relative, n.Absolute, rel, abs, cte, xf, n.InRange);
     }

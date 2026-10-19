@@ -142,7 +142,7 @@ public class MeasuredMaterialTests
     [Theory]
     [InlineData("CHARMS:SI", 2.555e-6)]
     [InlineData("CHARMS:GE", 5.67e-6)]
-    [InlineData("CHARMS:CAF2", 18.41e-6)]
+    [InlineData("CHARMS:CAF2", 18.7e-6)]
     [InlineData("CHARMS:INFRASIL_301", 0.51e-6)]
     [InlineData("CHARMS:FS_7980", 0.52e-6)]
     [InlineData("JPCRD:GE", 5.790e-6)]

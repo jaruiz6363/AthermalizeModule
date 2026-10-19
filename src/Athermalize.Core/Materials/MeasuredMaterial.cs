@@ -15,14 +15,14 @@ public sealed class MeasuredMaterial : Material
 
     public MeasuredMaterial(string catalog, string glass, string description, string source,
         double[][] s, double[][] lambda, (double Min, double Max) temperatureRangeK, (double Min, double Max) wavelengthRangeUm,
-        double cte = 0.0, string cteSource = "")
-        : this(catalog, glass, description, source, new SellmeierModel(s, lambda), temperatureRangeK, wavelengthRangeUm, cte, cteSource)
+        double cte = 0.0, string cteSource = "", ExpansionCurve? expansion = null)
+        : this(catalog, glass, description, source, new SellmeierModel(s, lambda), temperatureRangeK, wavelengthRangeUm, cte, cteSource, expansion)
     {
     }
 
     public MeasuredMaterial(string catalog, string glass, string description, string source, IndexModel model,
         (double Min, double Max) temperatureRangeK, (double Min, double Max) wavelengthRangeUm,
-        double cte = 0.0, string cteSource = "")
+        double cte = 0.0, string cteSource = "", ExpansionCurve? expansion = null)
     {
         Catalog = catalog;
         Glass = glass;
@@ -31,7 +31,7 @@ public sealed class MeasuredMaterial : Material
         _model = model;
         TemperatureRangeC = (temperatureRangeK.Min - 273.15, temperatureRangeK.Max - 273.15);
         WavelengthRangeUm = wavelengthRangeUm;
-        Expansion = cte != 0.0 ? new ExpansionData(cte, 0, 0, 0, false, DataState.Present) : ExpansionData.None();
+        Expansion = cte != 0.0 ? new ExpansionData(cte, 0, 0, 0, false, DataState.Present, expansion) : ExpansionData.None();
         CteSource = cteSource;
     }
 
@@ -82,16 +82,18 @@ public sealed class MeasuredMaterial : Material
 
             double cte = 0.0;
             string cteSource = "";
+            ExpansionCurve? curve = null;
             if (m.TryGetProperty("cte", out var c))
             {
                 cte = c.GetProperty("value").GetDouble();
                 cteSource = c.GetProperty("source").GetString() + "; " + c.GetProperty("range").GetString();
+                if (c.TryGetProperty("curve", out var k)) curve = ExpansionCurve.Read(k);
             }
             list.Add(new MeasuredMaterial(
                 m.GetProperty("catalog").GetString()!, m.GetProperty("name").GetString()!,
                 m.GetProperty("description").GetString()!, m.GetProperty("source").GetString()!,
                 IndexModel.Read(m), Pair(m.GetProperty("temperatureRangeK")), Pair(m.GetProperty("wavelengthRangeUm")),
-                cte, cteSource));
+                cte, cteSource, curve));
         }
         return list;
     }

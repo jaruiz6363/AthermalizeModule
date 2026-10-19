@@ -73,17 +73,33 @@ Each also carries an expansion coefficient from a separate source:
 | Material | α, 10⁻⁶/K | For | Source |
 |---|---|---|---|
 | Silicon | 2.555 | 293 K, instantaneous | Swenson, J. Phys. Chem. Ref. Data 12, 179 (1983), doi:10.1063/1.555681 |
-| Germanium | 5.67 | 293 K, instantaneous | NBS Monograph 29 (1961), from Gibbons, Phys. Rev. 112, 136 (1958) |
-| Calcium fluoride | 18.41 | mean, −30 to +70 °C | Hellma Materials, calcium fluoride data sheet (2012) |
+| Germanium | 5.67 | 293 K, instantaneous | Corruccini and Gniewek, NBS Monograph 29 (1961), from Gibbons, Phys. Rev. 112, 136 (1958) |
+| Calcium fluoride | 18.7 | 20 °C, instantaneous | Feldman, Horowitz, Waxler and Dodge, NBS Technical Note 993 (1979), Table 3 |
 | Infrasil 301 | 0.51 | mean, 0 to 100 °C | Heraeus, "Quartz Glass for Optics: Data and Properties" (2019) |
 | Corning 7980 | 0.52 | mean, 5 to 35 °C | Corning, HPFS fused silica product information (2014) |
 | Germanium (`JPCRD:GE`) | 5.790 | 293 K, instantaneous | The lattice expansion in Li's eq. (28), from Touloukian et al., TPRC Data Series 12 (1975) |
 | CVD ZnS | 6.8 | 20 °C, instantaneous | Feldman, Horowitz, Waxler and Dodge, NBS Technical Note 993 (1979), Table 3 |
 | CVD ZnSe | 7.3 | 20 °C, instantaneous | Same |
 
-The two germanium entries take their coefficients from different sources, each matching its index model; they differ by 2 %.
+The two germanium entries take their coefficients from different sources, each matching its index model; they differ by 2 %. CaF₂'s 18.7 at 20 °C is NBS's; Hellma's data sheet gives a mean of 18.41 from −30 to +70 °C, and NBS's table a mean of 18.6 over the same range.
 
-These are single values. Silicon's coefficient rises from about 2.1×10⁻⁶/K at 250 K to 2.9×10⁻⁶/K at 350 K (Okada and Tokumaru, J. Appl. Phys. 56, 314, 1984), so over a wide range a single value is an approximation, as a glass's mean coefficient is. The NBS table gives ZnS 5.9 and ZnSe 6.7×10⁻⁶/K at −40 °C, and 7.3 and 7.7 at +80 °C.
+### Expansion over temperature
+
+A coefficient changes with temperature, little near room temperature and greatly toward cryogenic ones: silicon's is 2.555×10⁻⁶/K at 20 °C, 2.0 at 240 K, negative from about 17 to 123 K, and zero at 0 K. For six of the measured materials the module carries the length over temperature, and a lens grows by it ([lens-at-temperature.md](lens-at-temperature.md)):
+
+| Material | Range | Data | Source |
+|---|---|---|---|
+| `CHARMS:SI` | 0-850 K | ΔL/L and α | Swenson (1983), Table 2: Lyon et al.'s measurements below 300 K, his smooth relation above |
+| `CHARMS:GE` | 0-300 K | ΔL/L and α | NBS Monograph 29 (1961), Table 2.1, from Gibbons (1958); the 0 K length estimated |
+| `JPCRD:GE` | 100-1200 K | ΔL/L, two cubics | The lattice expansion Li's eq. (28) carries (Li 1980), so the length and the index use the same lattice |
+| `CHARMS:CAF2` | −180 to +200 °C | α | NBS Technical Note 993 (1979), Table 3 |
+| `JPCRD:ZNS` | −180 to +200 °C | α | Same |
+| `JPCRD:ZNSE` | −180 to +200 °C | α | Same |
+
+- **Between the rows.** Where a table gives both the change of length and α, the curve is the cubic that meets both at each row, so it reproduces the table's lengths to their printed precision. Where it gives α alone, α is linear between rows and the length its integral.
+- **Outside the data.** Above a table α is held at its last value; below one it falls in proportion to the absolute temperature to zero at 0 K. CaF₂'s table starts at 93 K and the CHARMS index model at 25 K, so CaF₂ below 93 K is extrapolated, and the output says so.
+- **Which α.** `atherm materials` gives each material's α at each temperature, and x_f with it. The athermal map and the solvers use α at 20 °C.
+- **The rest.** The fused silicas keep one coefficient: their expansion is small, and NBS Monograph 29 notes that it varies from sample to sample by up to 50 % below room temperature. Catalog glasses keep the `ED` line's mean.
 
 ## Glasses from makers' data sheets
 
@@ -107,4 +123,4 @@ Other chalcogenide glasses (Umicore's GASIR, LightPath's BD-2 and BD-6) are publ
 `atherm materials` holds each wavelength's vacuum wavelength fixed, since that is what stays the same when a lens warms, and puts the material and the air at each temperature:
 
 - dn_rel/dT and dn_abs/dT, by a central difference of ±0.5 K;
-- x_f = α − (dn_rel/dT)/(n_rel − 1), the relative change per kelvin of a thin lens's focal length in air at the same temperature (Jamieson, "Thermal effects in optical systems," Opt. Eng. 20, 156-160, 1981). Positive x_f means the focal length grows. α is the `ED` line's expansion coefficient from −30 to +70 °C, or a measured material's.
+- x_f = α − (dn_rel/dT)/(n_rel − 1), the relative change per kelvin of a thin lens's focal length in air at the same temperature (Jamieson, "Thermal effects in optical systems," Opt. Eng. 20, 156-160, 1981). Positive x_f means the focal length grows. α is the `ED` line's expansion coefficient from −30 to +70 °C, or a measured material's at the temperature.

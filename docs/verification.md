@@ -59,6 +59,16 @@ Closed forms and invariances, each on a lens written for the test. (`ThermalLens
 - **An even asphere** grown by s has, at height s·r, s times its nominal sag at r.
 - A mount whose parts overlap, a free space that is glass, two parts on the same surfaces, and a glass not in the catalogs are refused.
 
+Expansion over temperature. (`ExpansionCurveTests`)
+
+- **The tables.** The silicon and germanium curves give back the printed rows of Swenson's Table 2 and NBS Monograph 29's Table 2.1, the change of length to 0.05×10⁻⁶ and α exactly. The tables of α alone (NBS Technical Note 993) integrate to the trapezoid rule's length: ZnS grows 810×10⁻⁶ from −40 to +80 °C.
+- **Between the rows.** Silicon's α follows Swenson's smooth relation, his eq. (1) with his Table 1, to 3×10⁻⁸/K at seven temperatures from 95 to 775 K, none of them a row. The rest is the rounding of the printed lengths, which set the slope between rows.
+- **One lattice.** `JPCRD:GE` grows by the lattice expansion its index model carries, to 10⁻¹⁵, with α 5.790×10⁻⁶/K at 293 K.
+- **NIST's fits.** Cryogenic 6061-T6 has the length at 293 K there, shrinks 0.389 % by 77 K and 0.415 % by 4 K, and has α = 22.6×10⁻⁶/K at 293 K. The other three fits also give zero change at 293 K, which checks their coefficients' transcription.
+- **Each curve against its single value.** At 20 °C each material's curve gives its tabulated coefficient to 0.5 %.
+- **A cold lens.** A silicon singlet in a cryogenic aluminum housing, cooled from 20 °C to 77 K, shrinks between Swenson's 75 and 80 K rows, by 230×10⁻⁶ where α·ΔT would give 552×10⁻⁶. Its housing shrinks by NIST's 0.389 %. At +60 °C, above NIST's data, the output says the housing's length is extrapolated.
+- **One coefficient** still grows a length by exactly 1 + αΔT, so every result above for catalog glasses is unchanged.
+
 ## 6. Worked examples from the literature
 
 Each reproduced end to end, from the lens to the published number. (`WorkedExampleTests`)

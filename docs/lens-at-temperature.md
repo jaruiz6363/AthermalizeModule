@@ -8,10 +8,11 @@ The lens at a temperature is always built afresh from the nominal design, and th
 
 With ΔT the temperature less the design's (20 °C by default, `--nominal`), and α a coefficient of thermal expansion:
 
-- **Surfaces.** A surface's radius, its Zernike terms and their radius, and its semi-diameter and other apertures grow by s = 1 + αΔT. An even-asphere coefficient of r^(2p) is divided by s^(2p−1), so the surface keeps its shape at the larger size: its sag at height s·r is s times the nominal sag at r. The conic constant does not change.
+- **Surfaces.** A surface's radius, its Zernike terms and their radius, and its semi-diameter and other apertures grow by s = 1 + αΔT, or, for a material whose length over temperature is known, by the ratio of its lengths at the two temperatures (see below). An even-asphere coefficient of r^(2p) is divided by s^(2p−1), so the surface keeps its shape at the larger size: its sag at height s·r is s times the nominal sag at r. The conic constant does not change.
 - **Which α.** A surface between glass and air grows with its glass. A surface between two glasses grows with the glass after it, the element whose front face it is; `CementedSurface.PrecedingGlass` (`--cemented preceding`) takes the glass before it instead. A mirror grows with its substrate, which the mount names; a mirror whose substrate isn't named is taken to be of the housing's material, and the output says so. A surface with air on both sides, such as a stop in the barrel, grows with the housing.
 - **Glass thicknesses** grow with their glass.
 - **Expansion coefficients** are the catalog's `ED` line (its mean from −30 to +70 °C), or the measured material's, or one given (`--cte NAME=α`). A material without one is held at its nominal size, and the output says so; so is a glass whose catalog flags it not to be expanded.
+- **Expansion over temperature.** For the crystals with measured lengths over temperature (see [materials.md](materials.md#expansion-over-temperature)) and the `-cryo` mount metals, a part grows by L(T)/L(T₀), the integral of its coefficient over the change, not α·ΔT with one α. That matters for a lens that works cold: from 20 °C to 77 K, silicon shrinks 230×10⁻⁶, where its coefficient at 20 °C would give 552×10⁻⁶, and 6061 aluminum 0.39 %, where its mean near room temperature would give 0.51 %. Outside a material's data its length is extrapolated, and the output says so.
 - **The object distance** does not change unless a mount part holds it. An ideal (paraxial) surface keeps its focal length.
 
 ## Air spaces: the mount

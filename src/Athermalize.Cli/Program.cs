@@ -174,7 +174,10 @@ public static class Program
             MeasuredMaterial mm => $"{m.Name}: {mm.Description}, {mm.Model.Reference} from a model fitted to measurements; {mm.Source}",
             _ => m.Name,
         };
-        text += m.Expansion.Cte != 0.0
+        var curve = m.Expansion.Curve;
+        text += curve != null
+            ? FormattableString.Invariant($"; α {m.Expansion.Cte * 1e6:0.###}×10⁻⁶/K at 20 °C, from a curve over {curve.RangeC.Min:0.#} to {curve.RangeC.Max:0.#} °C, at each temperature below")
+            : m.Expansion.Cte != 0.0
             ? FormattableString.Invariant($"; α {m.Expansion.Cte * 1e6:0.###}×10⁻⁶/K")
             : "; no expansion coefficient";
         return text;
