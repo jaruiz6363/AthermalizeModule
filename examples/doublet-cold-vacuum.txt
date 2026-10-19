@@ -1,0 +1,16 @@
+Cemented doublet, f = 122 mm, f/8 (doublet.zmx), 5 surfaces
+Designed for 20 °C in air at 1 atm; used in vacuum, every part of the lens at each temperature.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+  after surface  2  SCHOTT:N-SF6             α 9.03×10⁻⁶/K
+
+Paraxial, at 0.587562 µm (0.587722 µm in vacuum):
+    T °C        EFL mm        BFL mm   focus − image plane µm   change from 20 °C µm
+   -40.0    121.864141    117.795204                 179.984                  34.043
+
+Wrote the lens at -40 °C in vacuum to doublet-cold-vacuum.zmx, and its glasses to doublet-cold-vacuum.agf:
+  N-BK7_M40C_VAC               0.4376-0.7221 µm, Schott formula, fitted within 2.6E-9
+  N-SF6_M40C_VAC               0.4376-0.7221 µm, Extended2 formula, fitted within 1.3E-8
+Open it at the program's reference conditions, 20 °C and 1 atm, with no thermal or environment changes:
+its geometry, its indices and its wavelengths are already those at these conditions (docs/other-programs.md).

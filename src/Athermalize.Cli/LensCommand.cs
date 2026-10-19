@@ -45,6 +45,10 @@ internal static class LensCommand
         "         --detail                        lens: at the design's conditions and at each temperature, the\n" +
         "                                         air's absolute index, each material's relative and absolute\n" +
         "                                         index, and the radii, thicknesses and indices surface by surface\n" +
+        "         --write <file>                  lens, at one temperature: write the lens at it, frozen (.zmx,\n" +
+        "                                         .lhlt or .json), with a glass catalog of its materials at those\n" +
+        "                                         conditions (.agf beside it), to open in another program at 20 °C\n" +
+        "                                         and 1 atm, unchanged\n" +
         "         --frequencies <c/mm,...>        image: the MTF's frequencies (10,30)\n" +
         "         --mtf-limit <m>                 image: the temperatures over which the lowest MTF at the first\n" +
         "                                         frequency stays above m, searched over --range (-60,100)\n" +
@@ -96,7 +100,7 @@ internal static class LensCommand
         bool detail = false, monochromatic = false;
         var mtfKind = MtfKind.Diffraction;
         int grid = 64, plotPoints = 13;
-        string? svg = null;
+        string? svg = null, write = null;
         var o = IndexOptions.Default;
 
         for (int i = 0; i < args.Length; i++)
@@ -148,6 +152,7 @@ internal static class LensCommand
                 case "--grid": grid = (int)Program.Numbers(Next(), a)[0]; break;
                 case "--obscuration": obscuration = Program.Numbers(Next(), a)[0]; break;
                 case "--svg": svg = Next(); break;
+                case "--write": write = Next(); break;
                 case "--plot-points": plotPoints = (int)Program.Numbers(Next(), a)[0]; break;
                 case "--glass":
                 {
@@ -185,6 +190,8 @@ internal static class LensCommand
         if (file == null) throw new ArgumentException("name a lens file");
 
         if (svg != null && mode is not ("focus" or "image")) throw new ArgumentException("--svg: only focus and image plot");
+        if (write != null && mode != "lens") throw new ArgumentException("--write: only lens writes the lens at a temperature");
+        if (write != null && temperatures.Length != 1) throw new ArgumentException("--write: give one temperature, the one to write the lens at");
         if (atPressure != null && mode == "select") throw new ArgumentException("--at-pressure: select scores the lens in the design's air");
         if (atPressure < 0) throw new ArgumentException("--at-pressure: give 0 atm or more");
         if (plotPoints < 2) throw new ArgumentException("--plot-points: give at least 2");
@@ -299,6 +306,8 @@ internal static class LensCommand
 
         if (saveMount) Save(mount);
 
+        if (write != null) Write(model, used with { TemperatureC = temperatures[0] }, write, output);
+
         if (detail && mode == "lens")
         {
             // The design first, then each temperature that isn't the design's own conditions.
@@ -307,6 +316,24 @@ internal static class LensCommand
                 if (lens.Air != air) Detail(model, lens, null, output);
         }
         return 0;
+    }
+
+    /// <summary>The lens at <paramref name="air"/>'s conditions, frozen, written to <paramref name="path"/> with its glass catalog.</summary>
+    private static void Write(ThermalModel model, AirConditions air, string path, TextWriter output)
+    {
+        var frozen = FrozenLens.Of(model, air);
+        var (catalogPath, fits, notes) = FrozenFile.Write(frozen, path);
+        output.WriteLine();
+        output.WriteLine(FormattableString.Invariant(
+            $"Wrote the lens at {air.TemperatureC:0.##} °C in {Conditions(air)} to {path}, and its glasses to {catalogPath}:"));
+        foreach (var f in fits)
+            output.WriteLine(FormattableString.Invariant(
+                $"  {f.Glass.Name,-28} {f.Glass.Points.Min(p => p.Um):0.####}-{f.Glass.Points.Max(p => p.Um):0.####} µm, {f.Formula} formula, fitted within {f.MaxError:0.0E+0}"));
+        foreach (var n in notes.Where(n => !string.IsNullOrWhiteSpace(n))) output.WriteLine("  " + n);
+        if (fits.Any(f => f.MaxError > 1e-6))
+            output.WriteLine("Note: a fit is off by more than 10⁻⁶ in the index; the band may be too wide for one formula.");
+        output.WriteLine("Open it at the program's reference conditions, 20 °C and 1 atm, with no thermal or environment changes:");
+        output.WriteLine("its geometry, its indices and its wavelengths are already those at these conditions (docs/other-programs.md).");
     }
 
     /// <summary>"vacuum", or "air at 1 atm".</summary>

@@ -111,6 +111,8 @@ atherm lens <file> --housing <material|α> [--spacer s:material:h] [--part a-b:m
 
 It prints, at each temperature, the paraxial focal length and back focal length at the primary wavelength, the paraxial focus less the distance to the image plane, and that distance's change from the design's temperature. `--nominal` and `--pressure` are the design's temperature and pressure; `--at-pressure` is the pressure at each temperature, when it differs from the design's, as for a lens designed in air and used in vacuum. `--detail` adds, first at the design's conditions and then at each temperature, the air's absolute index, each material's relative and absolute index at each wavelength, and the prescription surface by surface, with what each surface grew with and what set each thickness ([the example above](#in-short); [`doublet-vacuum-detail.txt`](../examples/doublet-vacuum-detail.txt) is the doublet designed in air at 20 °C and used in vacuum at −40 °C). A material is given by name (`atherm lens --mount-materials` lists aluminum 6061-T6, stainless steels 303 and 416, Ti-6Al-4V and Invar 36, each with its source) or by its α in 10⁻⁶/K. Published values for one alloy differ by several percent between sources, and Invar's depends on the stock, so a value measured for the actual stock is better when there is one.
 
+`--write <file>`, with one temperature, writes the lens at it with its glasses frozen into a catalog beside it, for another program to trace at its default conditions; see [other-programs.md](other-programs.md).
+
 ## References
 
 The sources this document draws on; [references.md](references.md) lists every source of the module, its data among them.

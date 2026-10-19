@@ -1,0 +1,17 @@
+CC Cemented doublet, f = 122 mm, f/8 at -40 C in vacuum, frozen
+CC Frozen glasses: each material's index relative to the air at these conditions, fitted with the
+CC Schott or Extended 2 formula. No thermal data: use the lens at the program's reference conditions, unchanged.
+NM N-BK7_M40C_VAC 1 0 1.517161 64.3222 0 0 0
+GC SCHOTT:N-BK7 at -40 °C in vacuum, relative to that air; frozen by atherm
+ED 0 0 0 0 1
+CD 2.272696532592292E+000 -9.945084380879241E-003 1.080140328387236E-002 1.446449812863679E-004 1.700439444823316E-007 1.399517897240600E-007
+TD 0 0 0 0 0 0 20
+OD -1 -1 -1 -1 -1 -1
+LD 0.437640 0.722096
+NM N-SF6_M40C_VAC 12 0 1.805773 25.4477 0 0 0
+GC SCHOTT:N-SF6 at -40 °C in vacuum, relative to that air; frozen by atherm
+ED 0 0 0 0 1
+CD 3.157400173781955E+000 -7.291619482167276E-002 3.063271582252988E-002 4.788890065332658E-003 -3.390744350197746E-004 3.199875979361798E-005 5.482769389315972E-002 -2.112851815058852E-002
+TD 0 0 0 0 0 0 20
+OD -1 -1 -1 -1 -1 -1
+LD 0.437640 0.722096

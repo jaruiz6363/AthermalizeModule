@@ -92,6 +92,12 @@ At -40 °C in vacuum:
 
 `--at-pressure` works with `focus` and `image` too. There, the first-order change at the design's temperature is the step the new air alone makes, −110 µm for this doublet put in vacuum, more than a depth of focus, and the rates are those in the new air: in vacuum the air's own dn/dT drops out.
 
+**Taking it to another program.** `--write <file>` writes the lens at one temperature and air, its geometry grown and its glasses frozen into a catalog beside it, so that another program traces exactly this lens at its default 20 °C and 1 atm, with nothing to set. [other-programs.md](other-programs.md) explains why that is valid and how to use it, and why the relative index is all a ray trace needs:
+
+```
+atherm lens examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40 --at-pressure 0 --write doublet-cold-vacuum.zmx
+```
+
 ### Keeping the mount: the mount file
 
 A lens file says nothing about its housing, so the mount is kept in a file of its own beside the lens: `doublet.mount.json` beside `doublet.zmx`. Lens files are left as they are; only `atherm` reads and writes the mount file.

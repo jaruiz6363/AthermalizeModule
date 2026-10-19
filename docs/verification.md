@@ -142,3 +142,13 @@ Fields separated by doubled spaces or tabs, numbers under German, French and Swe
 - **The same glass.** Every one of the 1,300 database glasses Optiland changes with temperature, from CDGM, Hikari, HOYA, Ohara, SCHOTT and Sumita, goes through the module with Optiland's dispersion and thermal constants and Optiland's conventions (`--prefactor absolute --thermal-wavelength system --lambda-tk-sign ignore`). At up to eight wavelengths from 0.40 to 2.33 µm, from −40 to +100 °C, at one atmosphere and at half of one, the 90,370 indices agree with Optiland's to 2×10⁻¹⁶.
 - **The conventions.** With the module's defaults the index at the d line, taken from 20 °C to −40 or +100 °C, differs from Optiland's by up to 1.1×10⁻⁵, all of it from the sign of a negative λtk: Optiland squares λtk as printed, and the module takes a negative λtk as adding to λ², as AGF catalogs use it. Only glasses with a negative λtk differ that way; the most is Hikari J-KZFH4. The prefactor alone moves the index by up to 9×10⁻⁷, and the E-term wavelength by up to 2×10⁻⁷.
 - **The catalogs.** For 896 glasses the module's catalogs and Optiland's database carry the same thermal constants, and dn/dT at the d line and 20 °C agrees to 1.1×10⁻⁸/K, each with its own conventions. For 244 the constants differ, the catalogs being different editions, by a median of 4×10⁻⁸/K and at most 4×10⁻⁶/K.
+
+## 11. The frozen lens
+
+(`FrozenLensTests`) The doublet designed in air at 20 °C, written with `--write` as it is at −40 °C in vacuum, in `.zmx` and in `.lhlt`, and read back with only its own glass catalog through AberrationCalculator's readers:
+- every radius and thickness, and every wavelength, is the module's;
+- every relative index at every wavelength is the module's to 10⁻⁷;
+- the paraxial back focus at each wavelength is the module's to 1 nm;
+- read by the module itself at 20 °C and 1 atm, the frozen glasses, which carry no thermal data, keep their indices to 10⁻⁷.
+
+Germanium and ZnSe over 8-12 µm, frozen at 60 °C, fit within 10⁻⁷; ZnSe needs the Extended 2 formula, the Schott formula missing it by 4×10⁻⁶. Why a lens traced with relative indices at the wavelengths in its air is the same lens is in [other-programs.md](other-programs.md).
