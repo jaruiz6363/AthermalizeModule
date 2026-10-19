@@ -19,6 +19,18 @@ The focus moves, and the image at the detector blurs. When the focus moves less 
 
 It also gives the data behind the answers: a material's index over temperature (`materials`), and the lens itself at each temperature, surface by surface (`lens`). It can also write that lens out, so another program traces it unchanged.
 
+## Why another thermal analysis
+
+A lens that drifts out of focus over temperature is often found late, in a thermal chamber, when a measurement disagrees with the simulation. Then the question is whether the simulation can be trusted. Answering it means knowing exactly what the model did: which thermal model of the glass it used, whether the index was taken relative to air or to vacuum and at what temperature, how the air spaces grew and with which material, and which expansion coefficient each part got. Published implementations of the same glass model differ in several of these choices ([materials.md](materials.md#conventions)).
+
+This module is written so that nothing about its result is hidden:
+
+- **The model is documented and open.** The code is MIT-licensed, and [lens-at-temperature.md](lens-at-temperature.md) states what changes in the lens and how, with the sources for each step.
+- **Every convention is a named option** with a stated default ([Index conventions](#index-conventions)). You can match another implementation's choices and see how much each one matters.
+- **Every result can be traced.** The focus report splits the drift into each part's contribution ([focus](#focus-how-far-the-focus-moves-and-why)), and `atherm lens --detail` prints every radius, thickness and index the analysis used ([lens](#lens-the-lens-itself-at-each-temperature)).
+- **It is checked against more than itself:** closed-form results, worked examples from the literature, and an independent open-source implementation of the same index model ([verification.md](verification.md)).
+- **Its lens can be checked elsewhere.** It writes the lens as it is at any temperature and pressure, so another program can trace exactly the same lens and compare ([other-programs.md](other-programs.md)).
+
 ## A typical session
 
 The commands follow the order you work in. From the repository's root, with the doublet in [`../examples`](../examples), a cemented N-BK7 and N-SF6 doublet of 122 mm focal length at f/8:
