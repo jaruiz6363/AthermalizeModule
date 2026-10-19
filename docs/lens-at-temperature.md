@@ -48,6 +48,8 @@ It prints, at each temperature, the paraxial focal length and back focal length 
 
 ## References
 
+The sources this document draws on; [references.md](references.md) lists every source of the module, its data among them.
+
 - T. H. Jamieson, "Thermal effects in optical systems," Opt. Eng. 20(2), 156-160 (1981).
 - Y. Liu, B. Li, G. Gu, H. Li and G. Lin, "Multiple lens athermalization and achromatization by the Cartesian-product free combination method based on the thermally-induced defocus model," Opt. Express 33(23), 49404-49422 (2025), doi:10.1364/OE.569582.
 - J. Shi, J. Liu, T. Chen, J. Wang and F. Yu, 12th International Conference on Intelligent Human-Machine Systems and Cybernetics (IHMSC), IEEE, 87-91 (2020), doi:10.1109/IHMSC49165.2020.10098.

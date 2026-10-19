@@ -127,7 +127,7 @@ $ atherm select examples/doublet.zmx --housing aluminum-6061-t6 --near 2:0.08:6 
 A glass swap changes the lens: optimize the best before taking them further.
 ```
 
-The [user guide](docs/user-guide.md) shows the options and the library, and [docs/theory.md](docs/theory.md) the definitions and signs.
+The [user guide](docs/user-guide.md) shows the options and the library, and [docs/theory.md](docs/theory.md) the definitions and signs. [docs/references.md](docs/references.md) lists every source of data, method and check.
 
 How it is checked: [docs/verification.md](docs/verification.md). Besides closed forms, it reproduces worked examples from the literature: Fischer's (1985) germanium soak, Bardazzi's (2008) germanium singlet, and the soak tables of a 1972 Itek study of a Cassegrain for the Jet Propulsion Laboratory. Its index over temperature agrees with Optiland's, an independent implementation of the same model, for the 1,300 glasses Optiland carries thermal data for.
 

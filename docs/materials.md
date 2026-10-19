@@ -1,6 +1,6 @@
 # Materials
 
-How the module computes a material's refractive index at a temperature and pressure.
+How the module computes a material's refractive index at a temperature and pressure. Full citations of every data source are in [references.md](references.md).
 
 ## Glasses: SCHOTT's model
 

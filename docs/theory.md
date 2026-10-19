@@ -82,6 +82,8 @@ A swap changes the design, so the best combinations are starting points to optim
 
 ## References
 
+The sources this document draws on; [references.md](references.md) lists every source of the module, its data among them.
+
 - G. W. Forbes, "Optical system assessment for design: numerical ray tracing in the Gaussian pupil," J. Opt. Soc. Am. A 5(11), 1943-1956 (1988).
 - D. S. Grey, "Athermalization of optical systems," J. Opt. Soc. Am. 38(6), 542-546 (1948).
 - H. H. Hopkins, "Calculation of the aberrations and image assessment for a general optical system," Optica Acta 28(5), 667-714 (1981).
