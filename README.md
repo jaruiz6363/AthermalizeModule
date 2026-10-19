@@ -133,6 +133,8 @@ How it is checked: [docs/verification.md](docs/verification.md). Besides closed 
 
 ## Building
 
+[docs/building.md](docs/building.md) has the details: Visual Studio, the tests, and an `atherm` to use outside the repository.
+
 .NET 8 or later. AberrationCalculator and WavefrontErrorCalculator are carried in `external/` as git subtrees, so a plain clone builds:
 
 ```

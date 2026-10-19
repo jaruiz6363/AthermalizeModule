@@ -2,6 +2,20 @@
 
 AthermalizeModule is a .NET library and a command-line tool, `atherm`, for the thermal analysis of lenses. This guide shows the tool first, then the library.
 
+## Getting started
+
+Build it, or publish an `atherm` to use anywhere, as [building.md](building.md) shows. From the repository, `dotnet run --project src/Athermalize.Cli -- <command>` runs it without publishing; the examples below write `atherm` for either.
+
+Three commands to start with, all from the repository's root:
+
+```
+atherm materials N-BK7 --temperatures -40,20,80
+atherm focus examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80
+atherm map N-BK7 N-SF6 --housing aluminum-6061-t6
+```
+
+The first prints N-BK7's index, dn/dT and x_f at three temperatures; the second, how far a cemented doublet's focus moves in an aluminum housing, and which part moves it; the third, where the two glasses and the housing fall on the athermal map. Temperatures are in °C, lengths in mm, wavelengths in µm, and expansion coefficients in 10⁻⁶/K unless an option says otherwise.
+
 ## The commands
 
 | Command | What it gives |
@@ -15,6 +29,17 @@ AthermalizeModule is a .NET library and a command-line tool, `atherm`, for the t
 | `atherm select <file>` | Every combination of candidate glasses and mount materials, scored on the lens |
 
 `atherm --help` lists every option. A lens file is any format AberrationCalculator reads (.zmx, .seq, .otx, .len, .json, .lhlt), in millimeters, with its glasses in the .AGF catalogs next to `atherm` or in `--catalogs`.
+
+### Materials
+
+A material is named as `CATALOG:NAME` (`SCHOTT:N-BK7`) or by its name alone (`N-BK7`), which finds it in the first catalog that has it. Besides the catalog glasses, the module carries:
+
+- **Measured materials**, fitted to measurements over temperature: `CHARMS:SI`, `CHARMS:GE`, `CHARMS:CAF2`, `CHARMS:INFRASIL_301` and `CHARMS:FS_7980`, from 20-35 K to 300 K, for cold lenses; and `JPCRD:GE`, `JPCRD:ZNS` and `JPCRD:ZNSE`, to about 550-620 K, for the long-wave infrared and warm lenses.
+- **Glasses from makers' data sheets**: SCHOTT's chalcogenides `IRG22`, `IRG25`, `IRG26` and `IRG27`.
+
+`atherm materials --measured` lists them with their ranges and sources; [materials.md](materials.md) says which to use where. A result outside a material's wavelength or temperature range is marked, never silently extrapolated. In a lens, `--use GERMANIUM=JPCRD:GE` takes a measured material in place of the one the file names.
+
+**Conventions.** Where published implementations of SCHOTT's thermal model differ, the choice is an option with a default ([materials.md](materials.md#conventions)): `--prefactor`, `--thermal-wavelength`, `--lambda-tk-sign` and `--air-wavelength`. The defaults follow the makers' data sheets and the common practice with their catalogs. To match another program, set its choices; for Optiland, `--prefactor absolute --thermal-wavelength system --lambda-tk-sign ignore`. `--air ciddor --humidity 50` uses Ciddor's air with humidity instead of TIE-19's dry air.
 
 ### Describing the mount
 
@@ -31,6 +56,21 @@ atherm focus lens.zmx --housing aluminum-6061-t6
 - A material is a name from `atherm lens --mount-materials`, or a number, α in 10⁻⁶/K. The `-cryo` materials (`aluminum-6061-t6-cryo`, `stainless-304-cryo`, `ti-6al-4v-cryo`, `invar-36-cryo`) carry their length from 4 to 300 K, from NIST's cryogenic fits, for a lens that works cold.
 
 `--use CAF2=CHARMS:CAF2` uses another material in place of one the file names, and `--cte N-BK7=7.1` another expansion coefficient. The design's temperature is `--nominal` (20 °C), and the air pressure `--pressure` (1 atm; 0 is vacuum). The index conventions are the options of `atherm materials`.
+
+### Expansion over temperature
+
+Most materials grow by one expansion coefficient: a catalog glass by its `ED` line's mean from −30 to +70 °C, a mount metal by its mean near room temperature. Some carry their length over temperature instead, and grow by it ([lens-at-temperature.md](lens-at-temperature.md)):
+
+- `CHARMS:SI`, `CHARMS:GE`, `JPCRD:GE`, `CHARMS:CAF2`, `JPCRD:ZNS` and `JPCRD:ZNSE`;
+- the `-cryo` mount metals, from 4 to 300 K.
+
+This matters most for a lens that works cold. Cooled from 20 °C to 77 K, silicon shrinks 230×10⁻⁶ where its coefficient at 20 °C would give 552×10⁻⁶, and 6061 aluminum 0.39 % where its room-temperature mean would give 0.51 %. For a lens soaked to 77 K, use the measured crystals and the `-cryo` metals:
+
+```
+atherm focus cold.zmx --use SILICON=CHARMS:SI --housing aluminum-6061-t6-cryo --temperatures 20,-196 --pressure 0
+```
+
+When a temperature is outside a material's expansion data, the output says its length is extrapolated. `--cte` replaces a material's curve with one coefficient.
 
 ### Reading the reports
 
@@ -84,4 +124,12 @@ var image = ImageQuality.Compute(model, new[] { -20.0, 20.0, 60.0 }, frequencies
 - `ThermalModel.At(air, part => ...)` builds it with only some parts warmed; this is how the report finds each part's share.
 - `ImageQuality.Model(hot)` gives WavefrontErrorCalculator's `LensModel` of the lens at the temperature, for any of its analyses.
 - `MaterialConstants.Of(material, Band.Visible)` gives ω, ν, P, γ and x_f; `Athermal.Doublet`, `Athermal.Triplet`, `Athermal.CanAthermalize` and `JiangObjective` work on them; `MaterialSearch.Run` searches a lens.
-- `Material` and its kinds give the index directly: `Tie19Material` for catalog glasses, `MeasuredMaterial` for the CHARMS and JPCRD models, and `LinearMaterial` for a material known by its index, one dn/dT and α.
+- `Material` and its kinds give the index directly: `Tie19Material` for catalog and data-sheet glasses, `MeasuredMaterial` for the CHARMS and JPCRD models, and `LinearMaterial` for a material known by its index, one dn/dT and α. `material.Index(λ, air, t, options)` takes the conventions as an `IndexOptions`, and `ThermoOptic.At(material, λ, t)` gives dn/dT and x_f.
+- `material.Expansion.Growth` is the length over temperature it grows by, an `ExpansionCurve`: `Scale(from, to)` is the factor a length grows by, and `Alpha(t)` the coefficient there. A mount material made with `MountMaterial.OfCurve(name, curve, source)` grows by a curve of your own, such as a `TabulatedExpansion` of a measured table.
+
+```csharp
+var si = library.Find("CHARMS:SI")!;
+double shrink = si.Expansion.Growth.Scale(20.0, -196.0) - 1.0;    // -230e-6, by Swenson's table
+var o = IndexOptions.Default with { Prefactor = Prefactor.Absolute };
+double n = si.Index(4.0, AirConditions.Vacuum(-196.0), -196.0, o).Relative;
+```
