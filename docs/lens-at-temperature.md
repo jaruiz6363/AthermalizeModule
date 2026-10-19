@@ -82,7 +82,7 @@ With ΔT the temperature less the design's (20 °C by default, `--nominal`), and
 
 ## Air spaces: the mount
 
-The air spaces, and the distance to the image plane among them, are set by the mount, `Mount`, which has three parts.
+The air spaces, and the distance to the image plane among them, are set by the mount, `Mount`, which has three parts. [mount.md](mount.md) shows each in a diagram, with the options and the mount file that describe it.
 
 1. **The housing.** Every air space that no other part holds grows with the housing, vertex to vertex, and so does the space after the last surface, so the image plane is held by the housing at the last surface. With nothing else given, this is the usual model of a lens in a barrel with its detector on the same structure (Jamieson 1981).
 2. **Mount parts** (`MountSegment`, `--part a-b:material`). A part holds surface a to surface b a fixed length apart: a barrel section between two lens seats, or the housing from a lens to the image plane (b is then the image surface). The part's length grows with its own α. The glass thicknesses inside it grow with their glasses, the other air spaces inside it by their own rules, and one air space, by default the last one in the part, takes up the rest. A chain of parts, each of its own material, moves each element along the barrel by the sum of the growths of the parts behind it (Liu et al. 2025, eq. 5). Parts may nest, a spacer inside a barrel section say, but not overlap.

@@ -568,9 +568,14 @@ internal static class LensCommand
     {
         var parts = new List<string> { $"housing, {Show(mount.Housing)}" };
         foreach (var g in mount.Segments)
-            parts.Add(g.To == g.From + 1
-                ? FormattableString.Invariant($"spacer after surface {g.From}, {Show(g.Material)}{(g.FromHeight != 0 ? $", touching at {g.FromHeight:0.###} mm" : "")}")
-                : FormattableString.Invariant($"part from surface {g.From} to {g.To}, {Show(g.Material)}"));
+        {
+            string heights = g.FromHeight == g.ToHeight
+                ? (g.FromHeight != 0 ? FormattableString.Invariant($", touching at {g.FromHeight:0.###} mm") : "")
+                : FormattableString.Invariant($", touching surface {g.From} at {g.FromHeight:0.###} mm and surface {g.To} at {g.ToHeight:0.###} mm");
+            parts.Add(g.To == g.From + 1 && g.FromHeight == g.ToHeight
+                ? FormattableString.Invariant($"spacer after surface {g.From}, {Show(g.Material)}{heights}")
+                : FormattableString.Invariant($"part from surface {g.From} to {g.To}, {Show(g.Material)}{heights}"));
+        }
         foreach (var (s, m) in mount.MirrorSubstrates) parts.Add($"mirror {s} substrate, {Show(m)}");
         return "Mount: " + string.Join("; ", parts) + ".";
     }

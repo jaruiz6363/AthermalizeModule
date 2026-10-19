@@ -264,6 +264,10 @@ A material is named as `CATALOG:NAME` (`SCHOTT:N-BK7`), or by its name alone (`N
 
 ## Describing the mount
 
+A lens file doesn't say what holds the lens, so you describe it. Each air space grows with whatever part holds it. [mount.md](mount.md) explains this with a diagram for each kind of part, shows how to describe your own lens step by step, and covers every field of the mount file.
+
+![Housing only: the housing holds every air space and the image plane](images/mount-housing.svg)
+
 `focus`, `image`, `select` and `lens` need at least the housing:
 
 ```
@@ -272,7 +276,7 @@ atherm focus lens.zmx --housing aluminum-6061-t6
 
 - `--housing` holds every air space and the image plane, vertex to vertex.
 - `--spacer 3:titanium:9` puts a spacer in the air space after surface 3, touching both surfaces 9 mm off the axis.
-- `--part 1-5:invar-36` holds surface 1 to surface 5 with a part of Invar; the last air space inside it takes up the rest. `--part 6-9:stainless-303`, with surface 9 the image, holds the image plane from surface 6.
+- `--part 1-5:invar-36` holds surface 1 to surface 5 with a part of Invar; the last air space inside it takes up the rest. `--part 6-9:stainless-303`, with surface 9 the image, holds the image plane from surface 6. `--part 4-9:invar-36:12:0` touches surface 4 at 12 mm and surface 9 on the axis.
 - `--mirror 4:23` gives the mirror at surface 4 a substrate of α = 23×10⁻⁶/K.
 - `--cemented following|preceding` says which glass a cemented surface grows with.
 - A material is a name from `atherm lens --mount-materials`, which lists each with its source, or a number, α in 10⁻⁶/K.

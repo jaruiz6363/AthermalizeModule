@@ -74,6 +74,26 @@ public class CliTests
         finally { File.Delete(path); }
     }
 
+    /// <summary>A part touching its two surfaces at different heights is not a spacer, and both heights are said.</summary>
+    [Fact]
+    public void The_mount_line_gives_each_parts_contact_heights()
+    {
+        string path = DoubletFile();
+        try
+        {
+            var (code, text) = Run("lens", path, "--housing", "23.6", "--temperatures", "20",
+                "--spacer", "3:9.2:4", "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("spacer after surface 3, α 9.2×10⁻⁶/K, touching at 4 mm.", text);
+
+            (code, text) = Run("lens", path, "--housing", "23.6", "--temperatures", "20",
+                "--part", "3-4:9.2:4:0", "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("part from surface 3 to 4, α 9.2×10⁻⁶/K, touching surface 3 at 4 mm and surface 4 at 0 mm.", text);
+        }
+        finally { File.Delete(path); }
+    }
+
     /// <summary>
     /// --detail gives the design's conditions and each temperature's: the air's absolute index, the materials'
     /// relative and absolute indices, and the prescription; --at-pressure 0 puts the lens in vacuum.
