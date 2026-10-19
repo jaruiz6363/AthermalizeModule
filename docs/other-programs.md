@@ -178,6 +178,22 @@ atherm image itek-cassegrain.zmx --temperatures 35 --monochromatic
 
 Warmed to 35 °C, the telescope is 60 µm out of focus at its image plane, 0.19 waves RMS. Refocused, it is back to 0.02 waves, its design performance.
 
+**4. Plot it in Optiland.** [`optiland_frozen_plot.py`](../examples/optiland_frozen_plot.py) opens frozen lenses the same way and plots, from Optiland's own ray trace, the RMS wavefront error across the field at the image plane, and through focus. Here the design, frozen at its own 7.5 °C in vacuum, is beside the lens at 35 °C:
+
+```
+atherm lens itek-cassegrain.zmx --temperatures 7.5 --write itek-design.optiland.json
+atherm lens itek-cassegrain.zmx --temperatures 35 --write itek-warm.optiland.json
+python optiland_frozen_plot.py itek-frozen.svg itek-design.optiland.json "design, 7.5 °C" itek-warm.optiland.json "35 °C"
+
+design, 7.5 °C: at the image plane 0.0286 waves; best plane +5.9 µm, 0.0201 waves
+35 °C: at the image plane 0.1864 waves; best plane -53.7 µm, 0.0208 waves
+```
+
+![The Cassegrain frozen at its design's 7.5 °C and at 35 °C, in vacuum, analyzed in Optiland: the RMS wavefront error across the field and through focus](../examples/itek-frozen.svg)
+
+- **Across the field (left).** At its design temperature the telescope is near perfect on axis and degrades toward the edge of the field. At 35 °C the defocus dominates: about 0.2 waves at every field.
+- **Through focus (right).** Moving the image plane in Optiland, the best plane is +5.9 µm for the design and −53.7 µm at 35 °C, and the best RMS is 0.020 and 0.021 waves. `atherm image` gives the same: the plane moved by +5.880 and −53.716 µm, and 0.0202 and 0.0207 waves refocused. So the refocused telescope at 35 °C performs as designed, and the module and Optiland agree on how far to refocus.
+
 **The design's own conditions.** To look at the design itself in another program, freeze it at its own conditions: `--temperatures 7.5 --write itek-design.zmx`. Then the other program sees BK7 at 7.5 °C in vacuum, as the designer intended, not the catalog's 20 °C and 1 atm. For this telescope the difference is small, because the mirrors carry the power: the BK7 index differs by 4×10⁻⁴, and the focus moves by 0.001 µm. In a lens whose power is in glass, the same index difference moves the focus by about 110 µm, as the doublet in vacuum shows above.
 
 ## How it is checked

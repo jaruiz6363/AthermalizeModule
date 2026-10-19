@@ -378,6 +378,10 @@ atherm lens examples/itek-cassegrain.zmx --temperatures 35 --detail --write itek
 - Opened in Optiland at its defaults, it has the module's focal length, back focus and focus to 1 nm, and its RMS wavefront error at each field within 0.04 %. The focus is 60 µm before the image plane, at 0.19 waves RMS; refocused, it is back to 0.02 waves.
 - To see the design itself in another program as it was intended, at 7.5 °C in vacuum, freeze it at its own conditions: `--temperatures 7.5`.
 
+Both frozen lenses, the design at 7.5 °C and the lens at 35 °C, plotted from Optiland's own ray trace by [`optiland_frozen_plot.py`](../examples/optiland_frozen_plot.py). Optiland finds the best image plane at +5.9 and −53.7 µm, where `atherm image` refocuses it:
+
+![The Cassegrain frozen at its design's 7.5 °C and at 35 °C, in vacuum, analyzed in Optiland: the RMS wavefront error across the field and through focus](../examples/itek-frozen.svg)
+
 [other-programs.md](other-programs.md#a-design-not-for-20-c-and-1-atm-the-cassegrain-at-35-c) has the whole walk-through, with the Optiland script and its output.
 
 ### A germanium doublet for 8-12 µm
