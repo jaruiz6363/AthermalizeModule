@@ -21,15 +21,15 @@ At each temperature the report gives:
 
 It sets the change against the depth of focus, ±2λN², a quarter wave of defocus. Here N is the working F-number, 1/(2n′|u′|) of the paraxial marginal ray in image space, and λ is the primary wavelength in the image space.
 
-**Each part's share.** The rate of change of the defocus and of the focal length at the design's temperature is found with each part of the lens warmed alone, the rest held as designed. A part is:
+**Each part's contribution.** The rate of change of the defocus and of the focal length at the design's temperature is found with each part of the lens warmed alone, the rest held as designed. A part is:
 - a glass, with its index, its thickness and the surfaces that grow with it;
 - a mirror's substrate;
 - the housing;
 - a mount part.
 
-Each rate is a central difference of ±0.5 K. The shares are exact derivatives of the full paraxial model, not a thin-lens estimate. To first order they add up to the whole lens's rate, which the report prints beside their sum.
+Each rate is a central difference of ±0.5 K. The contributions are exact derivatives of the full paraxial model, not a thin-lens estimate. To first order they add up to the whole lens's rate, which the report prints beside their sum.
 
-For a thin lens the shares reduce to the classical ones: the glass's f·x_f, and the housing's −L·α_h, L being the length of housing between the lens and the image plane. A system of thin lenses gives Grey's sum of the shares weighted by the squared marginal-ray heights.
+For a thin lens the contributions reduce to the classical ones: the glass's f·x_f, and the housing's −L·α_h, L being the length of housing between the lens and the image plane. A system of thin lenses gives Grey's sum of the contributions weighted by the squared marginal-ray heights.
 
 **First order and real rays.** The paraxial focus is not the best focus of an aberrated lens. Liu et al. (2025) found their paraxial model's defocus half the real-ray best focus's on a seven-element lens. The module therefore also gives the best focus by real rays, below, so the two can be compared at every temperature.
 

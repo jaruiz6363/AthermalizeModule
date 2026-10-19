@@ -19,7 +19,7 @@ public sealed record FocusState(double TemperatureC, double Efl, double Bfl, dou
     public double ChangeInDepths => Change / DepthOfFocus;
 }
 
-/// <summary>One part's share of the thermal change, at the nominal temperature.</summary>
+/// <summary>One part's contribution to the thermal change, at the nominal temperature.</summary>
 /// <param name="Part">The part.</param>
 /// <param name="Name">Its name.</param>
 /// <param name="DefocusPerK">d(defocus)/dT with only this part warmed, mm/K.</param>
@@ -28,10 +28,10 @@ public sealed record Contribution(ThermalPart Part, string Name, double DefocusP
 
 /// <summary>
 /// The first-order thermal report: the focal length, back focal length and defocus at each temperature, and each
-/// part's share of their rates at the nominal temperature.
+/// part's contribution to their rates at the nominal temperature.
 ///
-/// <para>A part's share is the rate of change with that part alone warmed: its glass's index and size, a mirror's
-/// substrate, the housing, or a mount part. To first order the shares add up to the whole lens's rate, which the
+/// <para>A part's contribution is the rate of change with that part alone warmed: its glass's index and size, a mirror's
+/// substrate, the housing, or a mount part. To first order the contributions add up to the whole lens's rate, which the
 /// report gives beside them; the difference is second order in the step.</para>
 /// </summary>
 public sealed class FocusReport
@@ -66,9 +66,9 @@ public sealed class FocusReport
 
     /// <summary>
     /// The report at <paramref name="temperatures"/>, °C, the rates by central differences of ±<paramref name="stepK"/>;
-    /// without the parts' shares when <paramref name="shares"/> is false.
+    /// without the parts' contributions when <paramref name="contributions"/> is false.
     /// </summary>
-    public static FocusReport Compute(ThermalModel model, IEnumerable<double> temperatures, double stepK = 0.5, bool shares = true)
+    public static FocusReport Compute(ThermalModel model, IEnumerable<double> temperatures, double stepK = 0.5, bool contributions = true)
     {
         double t0 = model.NominalTemperatureC;
         var air = model.NominalAir;
@@ -80,7 +80,7 @@ public sealed class FocusReport
         }
 
         var (defocusRate, eflRate) = Rate(null);
-        var contributions = (shares ? model.Parts() : Array.Empty<ThermalPart>()).Select(p =>
+        var byPart = (contributions ? model.Parts() : Array.Empty<ThermalPart>()).Select(p =>
         {
             var (d, e) = Rate(q => q == p);
             return new Contribution(p, model.Describe(p), d, e);
@@ -98,7 +98,7 @@ public sealed class FocusReport
         var lens0 = model.At(air);
         var p0 = Paraxial(lens0);
         double lambda0 = lens0.System.Wavelengths[Math.Max(0, lens0.System.PrimaryWavelengthIndex)].Value * 1e-3;
-        return new FocusReport(states, contributions, defocusRate, eflRate) { DepthOfFocus = 2.0 * lambda0 * p0.FNumber * p0.FNumber };
+        return new FocusReport(states, byPart, defocusRate, eflRate) { DepthOfFocus = 2.0 * lambda0 * p0.FNumber * p0.FNumber };
     }
 
     /// <summary>The paraxial focus less the image plane, mm, at the primary wavelength.</summary>

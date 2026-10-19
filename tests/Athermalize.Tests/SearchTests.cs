@@ -43,7 +43,7 @@ public class SearchTests
         double Rate(params MountMaterial[] parts)
         {
             var m = new Mount(Aluminum, mount.Segments.Select((g, k) => g with { Material = parts[k] }));
-            return FocusReport.Compute(new ThermalModel(system, Catalogs.Library, m), Array.Empty<double>(), shares: false).DefocusPerK;
+            return FocusReport.Compute(new ThermalModel(system, Catalogs.Library, m), Array.Empty<double>(), contributions: false).DefocusPerK;
         }
         double least = metals.SelectMany(a => metals.SelectMany(b => metals.Select(c => Math.Abs(Rate(a, b, c))))).Min();
         var top = results[0];

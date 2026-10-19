@@ -83,7 +83,7 @@ public static class MaterialSearch
         var design = new ThermalModel(nominal, library, mount, air, thermal);
         var designLens = design.At(air);
         double efl0 = ParaxialTrace.Trace(designLens.System, designLens.PrimaryIndices, 0.0).Efl;
-        double depth = FocusReport.Compute(design, Array.Empty<double>(), shares: false).DepthOfFocus;
+        double depth = FocusReport.Compute(design, Array.Empty<double>(), contributions: false).DepthOfFocus;
         var (shortest, longest) = Extremes(nominal);
 
         var glassSlots = candidates.Glasses.Where(g => g.Value.Count > 0).OrderBy(g => g.Key).ToList();
@@ -107,7 +107,7 @@ public static class MaterialSearch
             foreach (var (k, m) in glasses) surfaceMaterials[k] = m;
             var model = new ThermalModel(nominal, library, trial, air, thermal with { SurfaceMaterials = surfaceMaterials });
 
-            var report = FocusReport.Compute(model, Array.Empty<double>(), shares: false);
+            var report = FocusReport.Compute(model, Array.Empty<double>(), contributions: false);
             var lens = model.At(air);
             double efl = ParaxialTrace.Trace(lens.System, lens.PrimaryIndices, 0.0).Efl;
             double color = shortest == longest ? 0.0

@@ -6,7 +6,7 @@ Planned:
 
 - **Materials:** the refractive index of glasses and crystals over temperature and pressure, from catalog thermal data, with the air index at the system conditions. *Available now; see below.*
 - **The lens at a temperature:** radii, thicknesses and aspheres that grow with each element's expansion, and air spaces set by the spacers and the housing. *Available now; see below.*
-- **Analysis:** focal length, focus and image quality over a temperature range, at a fixed image plane and with a focus compensator, and each element's share of the focus shift. *Available now; see below.*
+- **Analysis:** focal length, focus and image quality over a temperature range, at a fixed image plane and with a focus compensator, and each element's contribution to the focus shift. *Available now; see below.*
 - **Athermalization:** materials and mounts that hold focus over the range. *Available now; see below.*
 
 The first release covers a lens soaked at one temperature, of glass and crystal elements in metal mounts. Plastics and temperature gradients come later.
@@ -62,7 +62,7 @@ Paraxial, at 0.587562 µm (0.587722 µm in vacuum):
 
 ## Focus and image quality over temperature
 
-`atherm focus` gives the first-order report: the focus against the depth of focus at each temperature, and each part's share of the focus shift, with that part alone warmed:
+`atherm focus` gives the first-order report: the focus against the depth of focus at each temperature, and each part's contribution to the focus shift, with that part alone warmed:
 
 ```
 $ atherm focus examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40,20,80
@@ -73,12 +73,12 @@ First order, at 0.587562 µm. Focus change from 20 °C, positive when the image 
     20.0    121.999778    117.927941       0.000           -0.000    8.13               77.735        0.00
     80.0    121.992352    117.919230    -175.490         -173.432    8.13               77.663       -2.26
 
-Each part's share at 20 °C, that part alone warmed:
+Each part's contribution at 20 °C, that part alone warmed:
   part                                     focus µm/K      EFL µm/K
   SCHOTT:N-BK7 after surface 1                 -0.3314       -0.3261
   SCHOTT:N-SF6 after surface 2                  0.2205        0.2371
   housing (aluminum-6061-t6)                   -2.7797        0.0000
-  sum of the shares                            -2.8905       -0.0891
+  sum of the contributions                     -2.8905       -0.0891
   whole lens                                   -2.8905       -0.0891
 
 Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ = −x_f, ν_T = −1/x_f:
@@ -89,7 +89,7 @@ Glasses at 20 °C and 0.587722 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1),
 
 `--svg focus.svg` plots it:
 
-![The doublet's focus over temperature, and each part's share](examples/doublet-focus.svg)
+![The doublet's focus over temperature, and each part's contribution](examples/doublet-focus.svg)
 
 `atherm image` gives the RMS wavefront error and the diffraction MTF from real rays, through WavefrontErrorCalculator, at the image plane the mount holds and with the focus compensated, and the temperatures over which the MTF stays above a limit. The MTF is the pupil function's autocorrelation, traced exactly off axis and under vignetting, which matters most in the thermal infrared, where the blur is mostly diffraction; `--mtf geometric` gives the geometric MTF instead:
 

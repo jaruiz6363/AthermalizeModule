@@ -107,7 +107,7 @@ public class CliTests
             var (code, text) = Run("focus", path, "--housing", "aluminum-6061-t6", "--temperatures", "0,20,40",
                 "--catalogs", Catalogs.Folder);
             Assert.Equal(0, code);
-            Assert.Contains("Each part's share at 20 °C", text);
+            Assert.Contains("Each part's contribution at 20 °C", text);
             Assert.Contains("housing (aluminum-6061-t6)", text);
             Assert.Contains("whole lens", text);
             Assert.Contains("ν_T (K)", text);
@@ -178,7 +178,7 @@ public class CliTests
         finally { File.Delete(path); }
     }
 
-    /// <summary>focus --svg and image --svg write SVG: the focus curve and the shares, the RMS and the MTF.</summary>
+    /// <summary>focus --svg and image --svg write SVG: the focus curve and the contributions, the RMS and the MTF.</summary>
     [Fact]
     public void Focus_and_image_plot()
     {

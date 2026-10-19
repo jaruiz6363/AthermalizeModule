@@ -22,7 +22,7 @@ The first prints N-BK7's index, dn/dT and x_f at three temperatures; the second,
 |---|---|
 | `atherm materials <name>...` | A material's index, dn/dT and x_f over temperature ([materials.md](materials.md)) |
 | `atherm lens <file>` | The lens at each temperature, paraxially, and with `--detail` its prescription |
-| `atherm focus <file>` | The first-order report: focus against the depth of focus, and each part's share |
+| `atherm focus <file>` | The first-order report: focus against the depth of focus, and each part's contribution |
 | `atherm image <file>` | RMS wavefront error and diffraction MTF, at the fixed image plane and refocused |
 | `atherm map <material>...` | The athermal map: each material's ν, ω, γ and x_f over a band, the housing's point, and an SVG plot |
 | `atherm solve <a> <b> [<c>]` | The thin athermal achromatic doublet or triplet; `--partners` ranks a glass's best partners |
@@ -114,7 +114,7 @@ The examples in [`../examples`](../examples) are a cemented doublet of 122 mm fo
 - the change of focus, beside the first-order rate times ΔT;
 - the change in depths of focus.
 
-It then gives each part's share of the rates, and the glasses' x_f, γ and ν_T. In [`doublet-focus.txt`](../examples/doublet-focus.txt) the glasses nearly cancel, and the housing's growth, −2.78 µm/K, is most of the −2.89 µm/K total. Over ±60 K that is ±2.2 depths of focus.
+It then gives each part's contribution to the rates, and the glasses' x_f, γ and ν_T. In [`doublet-focus.txt`](../examples/doublet-focus.txt) the glasses nearly cancel, and the housing's growth, −2.78 µm/K, is most of the −2.89 µm/K total. Over ±60 K that is ±2.2 depths of focus.
 
 `atherm image` gives the RMS wavefront error at the fixed image plane and refocused, and how far the plane must move. It gives the diffraction MTF at `--frequencies` both ways, and with `--mtf-limit` the temperatures over which the lowest MTF stays above the limit. In [`doublet-image.txt`](../examples/doublet-image.txt):
 - refocusing holds the RMS at 0.078 waves from −40 to +80 °C;
@@ -123,10 +123,10 @@ It then gives each part's share of the rates, and the glasses' x_f, γ and ν_T.
 `--mtf geometric` gives the geometric MTF instead: 0.924 on axis at 30 cycles/mm for this lens, against the diffraction MTF's 0.769. `--grid` sets the diffraction MTF's pupil grid (64). A range search over two fields and three wavelengths takes about a minute; `--monochromatic` or fewer fields make it quicker.
 
 **Plots.** `--svg <file>` adds a plot to `focus` and `image`, an SVG file that a browser opens and a document takes as an image:
-- `focus` plots the focus change against temperature, finely sampled, beside the first-order line and the ±depth of focus band. Below it, each part's share of the drift is a bar.
+- `focus` plots the focus change against temperature, finely sampled, beside the first-order line and the ±depth of focus band. Below it, each part's contribution to the drift is a bar.
 - `image` plots the RMS wavefront error, and the lowest MTF at each frequency over the fields and both azimuths, against temperature, at the fixed image plane (solid) and refocused (dashed), with the `--mtf-limit` line. It computes the image at `--plot-points` temperatures (13) evenly over the span of `--temperatures`, so it takes about that many times as long as one temperature. The report's own temperatures are among them.
 
-![The doublet's focus over temperature, and each part's share](../examples/doublet-focus.svg)
+![The doublet's focus over temperature, and each part's contribution](../examples/doublet-focus.svg)
 
 [`doublet-image.svg`](../examples/doublet-image.svg) is the doublet's image plot.
 
@@ -145,7 +145,7 @@ atherm image examples/itek-cassegrain.zmx --temperatures -20,7.5,35 --obscuratio
 - Warmed by 27.5 °C, the focus moves −60.2 µm, 2.9 depths of focus. The report gives −0.0023 in, −58 µm; [verification.md](verification.md) §6 compares its other cases.
 - In [`itek-image.txt`](../examples/itek-image.txt), with the 0.52 central obstruction, refocusing holds the RMS wavefront error near 0.02 waves from −20 to 35 °C. At the fixed image plane the MTF at 50 cycles/mm stays above 0.8 only from 5.2 to 17.6 °C.
 
-![The Cassegrain's focus over temperature, and each part's share](../examples/itek-focus.svg)
+![The Cassegrain's focus over temperature, and each part's contribution](../examples/itek-focus.svg)
 
 ![The Cassegrain's RMS wavefront error and MTF over temperature](../examples/itek-image.svg)
 
@@ -161,7 +161,7 @@ atherm image examples/fischer-ge-znse.zmx --temperatures -40,20,60 --frequencies
 - In [`fischer-image.txt`](../examples/fischer-image.txt), the MTF at 10 cycles/mm stays above 0.5 at the fixed image plane only from 5.2 to 21.7 °C. Refocused, it stays above 0.5 from −60 to 100 °C, with the RMS near 0.06 waves.
 - `--use GERMANIUM=JPCRD:GE --use ZNSE=JPCRD:ZNSE` runs it on Li's evaluated data instead of the catalog's fits: −7.96 µm/K, 1.4% more.
 
-![The germanium doublet's focus over temperature, and each part's share](../examples/fischer-focus.svg)
+![The germanium doublet's focus over temperature, and each part's contribution](../examples/fischer-focus.svg)
 
 ![The germanium doublet's RMS wavefront error and MTF over temperature](../examples/fischer-image.svg)
 
@@ -218,7 +218,7 @@ var image = ImageQuality.Compute(model, new[] { -20.0, 20.0, 60.0 }, frequencies
 ```
 
 - `ThermalModel.At(t)` builds the lens at a temperature. It is a copy of AberrationCalculator's `OpticalSystem` with `Indices[w]`, the index after each surface at each wavelength, so any AberrationCalculator analysis runs on it: `ParaxialTrace.Trace(hot.System, hot.PrimaryIndices, field)`.
-- `ThermalModel.At(air, part => ...)` builds it with only some parts warmed; this is how the report finds each part's share.
+- `ThermalModel.At(air, part => ...)` builds it with only some parts warmed; this is how the report finds each part's contribution.
 - `MountFile.Read(MountFile.PathFor("doublet.zmx")).ToMount()` gives the mount kept beside a lens, and `MountFile.From(mount, nominal, pressure).Write(path)` keeps one.
 - `ImageQuality.Model(hot)` gives WavefrontErrorCalculator's `LensModel` of the lens at the temperature, for any of its analyses.
 - `MaterialConstants.Of(material, Band.Visible)` gives ω, ν, P, γ and x_f; `Athermal.Doublet`, `Athermal.Triplet`, `Athermal.CanAthermalize` and `JiangObjective` work on them; `MaterialSearch.Run` searches a lens.

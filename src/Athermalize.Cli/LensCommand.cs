@@ -18,7 +18,7 @@ internal static class LensCommand
     public const string Usage =
         "       atherm lens <file> --housing <material|α> [options]    the lens at each temperature, paraxially\n" +
         "       atherm focus <file> --housing <material|α> [options]   the first-order report: focus against the\n" +
-        "                                         depth of focus, and each part's share of the focus shift\n" +
+        "                                         depth of focus, and each part's contribution to the focus shift\n" +
         "       atherm image <file> --housing <material|α> [options]   RMS wavefront error and MTF,\n" +
         "                                         at the fixed image plane and refocused\n" +
         "         --housing <material|α>          the housing, which holds every air space and the image plane;\n" +
@@ -49,8 +49,9 @@ internal static class LensCommand
         "         --monochromatic                 image: the primary wavelength only\n" +
         "         --obscuration <ε>               image: a central obstruction, a fraction of the pupil radius\n" +
         "         --svg <file>                    focus: plot the focus change against temperature, with the depth\n" +
-        "                                         of focus, and each part's share; image: plot the RMS and the lowest\n" +
-        "                                         MTF at each frequency against temperature, fixed and refocused\n" +
+        "                                         of focus, and each part's contribution; image: plot the RMS\n" +
+        "                                         and the lowest MTF at each frequency against temperature,\n" +
+        "                                         fixed and refocused\n" +
         "         --plot-points <n>               image: the plot's temperatures, evenly over --temperatures (13)\n" +
         "       atherm select <file> --housing <material|α> [options]  every combination of candidate glasses\n" +
         "                                         and mount materials, scored on the lens at its shapes\n" +
@@ -336,12 +337,12 @@ internal static class LensCommand
                 $"  {s.TemperatureC,6:0.0}  {s.Efl,12:0.000000}  {s.Bfl,12:0.000000}  {s.Change * 1e3,10:0.000}  {s.Linear * 1e3,15:0.000}  {s.FNumber,6:0.00}  {s.DepthOfFocus * 1e3,19:0.000}  {s.ChangeInDepths,10:0.00}"));
 
         output.WriteLine();
-        output.WriteLine(FormattableString.Invariant($"Each part's share at {t0:0.##} °C, that part alone warmed:"));
+        output.WriteLine(FormattableString.Invariant($"Each part's contribution at {t0:0.##} °C, that part alone warmed:"));
         output.WriteLine("  part                                     focus µm/K      EFL µm/K");
         foreach (var c in report.Contributions)
             output.WriteLine(FormattableString.Invariant($"  {c.Name,-38} {c.DefocusPerK * 1e3,13:0.0000} {c.EflPerK * 1e3,13:0.0000}"));
         output.WriteLine(FormattableString.Invariant(
-            $"  {"sum of the shares",-38} {report.Contributions.Sum(c => c.DefocusPerK) * 1e3,13:0.0000} {report.Contributions.Sum(c => c.EflPerK) * 1e3,13:0.0000}"));
+            $"  {"sum of the contributions",-38} {report.Contributions.Sum(c => c.DefocusPerK) * 1e3,13:0.0000} {report.Contributions.Sum(c => c.EflPerK) * 1e3,13:0.0000}"));
         output.WriteLine(FormattableString.Invariant(
             $"  {"whole lens",-38} {report.DefocusPerK * 1e3,13:0.0000} {report.EflPerK * 1e3,13:0.0000}"));
 
@@ -361,7 +362,7 @@ internal static class LensCommand
         if (svg == null) return;
         // The focus over the whole span, paraxially, which is quick: 60 steps.
         double lo = temperatures.Append(t0).Min(), hi = temperatures.Append(t0).Max();
-        var curve = FocusReport.Compute(model, Enumerable.Range(0, 61).Select(i => lo + (hi - lo) * i / 60.0), shares: false).States;
+        var curve = FocusReport.Compute(model, Enumerable.Range(0, 61).Select(i => lo + (hi - lo) * i / 60.0), contributions: false).States;
         var focus = new SvgChart
         {
             Title = FormattableString.Invariant($"{Name(system)}: focus change from {t0:0.##} °C"),
@@ -372,17 +373,17 @@ internal static class LensCommand
         focus.Lines.Add(new SvgChart.Line("first order", curve.Select(s => (s.TemperatureC, s.Linear * 1e3)).ToList(), SvgChart.Gray, Dashed: true));
         focus.Lines.Add(new SvgChart.Line("focus change", curve.Select(s => (s.TemperatureC, s.Change * 1e3)).ToList(), SvgChart.Blue));
         focus.Lines.Add(new SvgChart.Line("", report.States.Select(s => (s.TemperatureC, s.Change * 1e3)).ToList(), SvgChart.Blue, Markers: true));
-        var shares = new SvgChart { Title = FormattableString.Invariant($"Each part's share of the focus drift at {t0:0.##} °C"), XLabel = "µm/K" };
+        var contributions = new SvgChart { Title = FormattableString.Invariant($"Each part's contribution to the focus drift at {t0:0.##} °C"), XLabel = "µm/K" };
         foreach (var c in report.Contributions)
-            shares.Bars.Add((c.Name, c.DefocusPerK * 1e3, c.Part.Kind switch
+            contributions.Bars.Add((c.Name, c.DefocusPerK * 1e3, c.Part.Kind switch
             {
                 ThermalPartKind.Glass => SvgChart.Blue,
                 ThermalPartKind.Mirror => SvgChart.Purple,
                 ThermalPartKind.Housing => SvgChart.Red,
                 _ => SvgChart.Orange,
             }));
-        shares.Bars.Add(("whole lens", report.DefocusPerK * 1e3, "#333333"));
-        File.WriteAllText(svg, SvgChart.Document(focus, shares));
+        contributions.Bars.Add(("whole lens", report.DefocusPerK * 1e3, "#333333"));
+        File.WriteAllText(svg, SvgChart.Document(focus, contributions));
         output.WriteLine();
         output.WriteLine($"Plot written to {svg}.");
     }

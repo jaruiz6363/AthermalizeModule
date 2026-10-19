@@ -37,11 +37,11 @@ public class AnalysisTests
     }
 
     /// <summary>
-    /// The parts' shares add up to the whole lens's rate, and the rate times ΔT gives the change to 3 % over 60 K
+    /// The parts' contributions add up to the whole lens's rate, and the rate times ΔT gives the change to 3 % over 60 K
     /// (2.6 % warm, 0.4 % cold), the rest being the rise of the glasses' dn/dT with temperature.
     /// </summary>
     [Fact]
-    public void The_parts_shares_add_up_to_the_whole_lens()
+    public void The_parts_contributions_add_up_to_the_whole_lens()
     {
         var (system, mount) = Triplet();
         var model = new ThermalModel(system, Catalogs.Library, mount);
@@ -56,9 +56,9 @@ public class AnalysisTests
             Assert.InRange(s.Change - s.Linear, -3e-2 * Math.Abs(s.Linear) - 1e-12, 3e-2 * Math.Abs(s.Linear) + 1e-12);
     }
 
-    /// <summary>A thin singlet's shares: the glass's f·x_f, the housing's −BFL·α_h (Jamieson 1981).</summary>
+    /// <summary>A thin singlet's contributions: the glass's f·x_f, the housing's −BFL·α_h (Jamieson 1981).</summary>
     [Fact]
-    public void A_thin_singlets_shares_are_its_glass_and_its_housing()
+    public void A_thin_singlets_contributions_are_its_glass_and_its_housing()
     {
         var m = Catalogs.Find("SCHOTT:N-BK7");
         double nd = m.Index(0.5875618, AirConditions.Standard).Relative, r = 2.0 * 100.0 * (nd - 1.0);

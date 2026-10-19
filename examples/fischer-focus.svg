@@ -53,7 +53,7 @@
 <text x="433.2" y="368" dominant-baseline="middle">focus change</text>
 </g>
 <g transform="translate(0 400)">
-<text x="380" y="24" text-anchor="middle" font-size="14">Each part's share of the focus drift at 20 °C</text>
+<text x="380" y="24" text-anchor="middle" font-size="14">Each part's contribution to the focus drift at 20 °C</text>
 <line x1="290.0" y1="54" x2="290.0" y2="174" stroke="#e4e4e4"/>
 <text x="290.0" y="192" text-anchor="middle">−10</text>
 <line x1="356.7" y1="54" x2="356.7" y2="174" stroke="#e4e4e4"/>

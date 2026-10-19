@@ -12,12 +12,12 @@ First order, at 10 µm. Focus change from 20 °C, positive when the image falls 
     20.0     50.781657     46.296092       0.000           -0.000    2.00               79.942        0.00
     60.0     50.507006     46.019820    -319.940         -314.062    1.99               79.046       -4.05
 
-Each part's share at 20 °C, that part alone warmed:
+Each part's contribution at 20 °C, that part alone warmed:
   part                                     focus µm/K      EFL µm/K
   MISC:GERMANIUM after surface 1               -6.7160       -6.6922
   MISC:ZNSE after surface 3                     0.0260       -0.0278
   housing (aluminum-6061-t6)                   -1.1616        0.0004
-  sum of the shares                            -7.8515       -6.7196
+  sum of the contributions                     -7.8515       -6.7196
   whole lens                                   -7.8515       -6.7196
 
 Glasses at 20 °C and 10.00268 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ = −x_f, ν_T = −1/x_f:
