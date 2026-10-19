@@ -7,7 +7,7 @@
   <rect x="128" y="64" width="174" height="166" fill="#ffffff"/>
 
   <text x="131" y="71" font-size="4" font-weight="bold" fill="#222">2. A spacer, touching the glass at height h</text>
-  <text x="131" y="77.5" font-family="Consolas, Menlo, monospace" font-size="3.2" fill="#222">--spacer 2:ti-6al-4v:12   (after surface 2, titanium, h = 12 mm)</text>
+  <text x="131" y="77.5" font-family="Consolas, Menlo, monospace" font-size="3.2" fill="#222">--spacer 2:ti-6al-4v:12    (the last number, 12, is h in mm)</text>
 
   <!-- housing wall -->
   <rect x="128" y="92" width="174" height="10" fill="#b8bec6" stroke="#6b7480" stroke-width="0.3"/>
@@ -40,7 +40,7 @@
   <g stroke="#999" stroke-width="0.25" stroke-dasharray="1 1">
     <line x1="180" y1="200" x2="180" y2="134"/><line x1="230" y1="200" x2="230" y2="134"/>
     <line x1="185.48" y1="130" x2="185.48" y2="156"/><line x1="218.57" y1="130" x2="218.57" y2="156"/>
-    <line x1="218.57" y1="130" x2="292" y2="130"/>
+    <line x1="218.57" y1="130" x2="270" y2="130"/>
   </g>
 
   <!-- dimensions -->
@@ -49,13 +49,17 @@
     <line x1="180" y1="152" x2="185.48" y2="152" stroke="#222" marker-start="url(#aK)" marker-end="url(#aK)"/>
     <line x1="218.57" y1="152" x2="230" y2="152" stroke="#222" marker-start="url(#aK)" marker-end="url(#aK)"/>
     <line x1="180" y1="190" x2="230" y2="190" stroke="#222" marker-start="url(#aK)" marker-end="url(#aK)"/>
-    <line x1="288" y1="200" x2="288" y2="130" stroke="#222" marker-start="url(#aK)" marker-end="url(#aK)"/>
+    <line x1="266" y1="200" x2="266" y2="130" stroke="#222" marker-start="url(#aK)" marker-end="url(#aK)"/>
   </g>
   <text x="202" y="140" text-anchor="middle" fill="#2f5f9e" font-weight="bold">L</text>
   <text x="178.5" y="153.2" text-anchor="end" fill="#222">sag₂(h)</text>
   <text x="231.5" y="153.2" fill="#222">sag₃(h)</text>
   <text x="205" y="187.5" text-anchor="middle" fill="#222">d₂, vertex to vertex</text>
-  <text x="290.5" y="166" fill="#222" font-weight="bold">h</text>
+  <text x="268.5" y="150" fill="#c0392b" font-weight="bold" font-size="3.8">h = 12 mm</text>
+  <text x="268.5" y="156" fill="#222" font-size="3">the height of the</text>
+  <text x="268.5" y="160" fill="#222" font-size="3">contacts, measured</text>
+  <text x="268.5" y="164" fill="#222" font-size="3">from the axis, across</text>
+  <text x="268.5" y="168" fill="#222" font-size="3">the lens (not along it)</text>
 
   <!-- what it means -->
   <text x="131" y="209" fill="#222"><tspan font-weight="bold" fill="#2f5f9e">L = d₂ + sag₃(h) − sag₂(h)</tspan>, the spacer's length between its contacts.</text>

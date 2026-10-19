@@ -43,7 +43,12 @@ The housing's material is any name from `atherm lens --mount-materials`, or a nu
 atherm focus examples/fischer-ge-znse.zmx --housing aluminum-6061-t6 --spacer 2:ti-6al-4v:12
 ```
 
-A spacer fills one air space: `--spacer 2:...` is the ring in the air space after surface 2, between surfaces 2 and 3. It touches both surfaces at the height you give, 12 mm here, and sets the distance between those two contact points. Leave out the height, or give 0, and it holds the vertex distance.
+A spacer fills one air space. `--spacer 2:ti-6al-4v:12` has three fields:
+- `2`: the surface it follows. The ring sits in the air space after surface 2, between surfaces 2 and 3.
+- `ti-6al-4v`: its material.
+- `12`: **h, the height in mm at which the ring touches the glass**, measured from the optical axis outward, across the lens, not along the axis. It is the radius of the circle where the ring meets each surface: half the ring's contact diameter. A ring that touches the lenses on a 24 mm diameter has h = 12.
+
+The spacer sets the axial distance between its two contact points, L in the diagram. Leave out the height, or give 0, and it holds the vertex distance on the axis instead.
 
 The height matters because the air space on the axis, d₂, is not the spacer's length L. The two differ by the surfaces' sags at the contact, L = d₂ + sag₃(h) − sag₂(h). At a temperature, the spacer grows, and so do the lenses and their sags, so d₂ changes by both. Give the real contact height for a spacer that touches steep surfaces near their edge.
 
@@ -57,7 +62,7 @@ Every other air space still grows with the housing: here d₄, to the image.
 atherm focus examples/fischer-ge-znse.zmx --housing aluminum-6061-t6 --spacer 2:ti-6al-4v:12 --part 4-5:invar-36:12:0
 ```
 
-`--part a-b:material:ha:hb` is a part that holds surface a to surface b: it touches surface a at height ha and surface b at height hb. Here it is an Invar tube that seats on the back of lens 2 at 12 mm and carries the detector, surface 5, at the axis (0). A part can end at the image surface, which is how a detector mount that is not the housing is given.
+`--part a-b:material:ha:hb` is a part that holds surface a to surface b: it touches surface a at height ha and surface b at height hb, both measured from the axis, as for a spacer. Here it is an Invar tube that seats on the back of lens 2, 12 mm from the axis, and carries the detector, surface 5, on the axis (0). A part can end at the image surface, which is how a detector mount that is not the housing is given.
 
 A part that holds only the air space after one surface, touching both surfaces at the same height, is a spacer. `--part 2-3:ti-6al-4v:12:12` is the same as `--spacer 2:ti-6al-4v:12`.
 
