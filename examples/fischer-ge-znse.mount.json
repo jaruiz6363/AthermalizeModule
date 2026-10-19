@@ -1,0 +1,8 @@
+{
+  "format": "athermalize-mount",
+  "version": 1,
+  "nominalTemperatureC": 20,
+  "pressureAtm": 1,
+  "housing": "aluminum-6061-t6",
+  "cemented": "following"
+}

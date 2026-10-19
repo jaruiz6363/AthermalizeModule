@@ -1,0 +1,27 @@
+Ge/ZnSe doublet, 50.8 mm f/2, 8-12 um (Fischer 1985) (fischer-ge-znse.zmx), 6 surfaces
+Designed for 20 °C in air at 1 atm; every part of the lens and the air at each temperature, the pressure held.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  MISC:GERMANIUM           α 5.74×10⁻⁶/K
+  after surface  3  MISC:ZNSE                α 7.1×10⁻⁶/K
+
+First order, at 10 µm. Focus change from 20 °C, positive when the image falls beyond the image plane:
+    T °C        EFL mm        BFL mm   change µm   first order µm   F/#    depth of focus ±µm   in depths
+   -40.0     51.170386     46.687208     456.619          471.093    2.02               81.221        5.62
+    20.0     50.781657     46.296092       0.000           -0.000    2.00               79.942        0.00
+    60.0     50.507006     46.019820    -319.940         -314.062    1.99               79.046       -4.05
+
+Each part's share at 20 °C, that part alone warmed:
+  part                                     focus µm/K      EFL µm/K
+  MISC:GERMANIUM after surface 1               -6.7160       -6.6922
+  MISC:ZNSE after surface 3                     0.0260       -0.0278
+  housing (aluminum-6061-t6)                   -1.1616        0.0004
+  sum of the shares                            -7.8515       -6.7196
+  whole lens                                   -7.8515       -6.7196
+
+Glasses at 20 °C and 10.00268 µm (vacuum); x_f = α − (dn_rel/dT)/(n − 1), γ = −x_f, ν_T = −1/x_f:
+  part                                       n_rel   dn_rel/dT      α        x_f        γ  (10⁻⁶/K)      ν_T (K)
+  MISC:GERMANIUM after surface 1          4.004312     407.923     5.74   -130.039  130.039                 7690
+  MISC:ZNSE after surface 3               2.406533      63.165     7.10    -37.808   37.808                26449
+
+Saved the mount to fischer-ge-znse.mount.json.

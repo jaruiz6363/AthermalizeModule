@@ -25,5 +25,6 @@
   <ItemGroup>
     <None Include="$(AberrationCalculatorDir)catalogs/**/*" CopyToOutputDirectory="PreserveNewest" LinkBase="catalogs" />
     <None Include="python/*.py" CopyToOutputDirectory="PreserveNewest" LinkBase="python" />
+    <None Include="../../examples/*.zmx;../../examples/*.mount.json" CopyToOutputDirectory="PreserveNewest" LinkBase="examples" />
   </ItemGroup>
 </Project>

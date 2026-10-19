@@ -122,6 +122,35 @@ It then gives each part's share of the rates, and the glasses' x_f, γ and ν_T.
 
 `--mtf geometric` gives the geometric MTF instead: 0.924 on axis at 30 cycles/mm for this lens, against the diffraction MTF's 0.769. `--grid` sets the diffraction MTF's pupil grid (64). A range search over two fields and three wavelengths takes about a minute; `--monochromatic` or fewer fields make it quicker.
 
+### Two lenses from the literature
+
+Two published designs are in [`../examples`](../examples), each with its mount file, so each runs with no mount options. Both lens files match their sources' first-order data (`ExampleLensTests`).
+
+**A visible Cassegrain in space.** [`itek-cassegrain.zmx`](../examples/itek-cassegrain.zmx) is the B4 Cassegrain of Itek Corporation's 1972 study for the Jet Propulsion Laboratory: 1000 mm at f/4.4, two aspheric mirrors and two BK7 correctors, at 0.55 µm. Its mount file, [`itek-cassegrain.mount.json`](../examples/itek-cassegrain.mount.json), is one of the report's cases: a structure of 1.5×10⁻⁶/K, ULE mirrors of 0.03×10⁻⁶/K, designed for 7.5 °C in vacuum. It was written by the first run:
+
+```
+atherm focus examples/itek-cassegrain.zmx --housing 1.5 --mirror 3:0.03 --mirror 4:0.03 --nominal 7.5 --pressure 0 --temperatures -20,7.5,35 --save-mount
+atherm image examples/itek-cassegrain.zmx --temperatures -20,7.5,35 --obscuration 0.52 --monochromatic --frequencies 50 --mtf-limit 0.8 --range -20,35
+```
+
+- In [`itek-focus.txt`](../examples/itek-focus.txt) the focus moves −2.19 µm/K, nearly all of it the structure's growth. The two correctors nearly cancel, and the mirrors barely move it.
+- Warmed by 27.5 °C, the focus moves −60.2 µm, 2.9 depths of focus. The report gives −0.0023 in, −58 µm; [verification.md](verification.md) §6 compares its other cases.
+- In [`itek-image.txt`](../examples/itek-image.txt), with the 0.52 central obstruction, refocusing holds the RMS wavefront error near 0.02 waves from −20 to 35 °C. At the fixed image plane the MTF at 50 cycles/mm stays above 0.8 only from 5.2 to 17.6 °C.
+
+**A germanium doublet for 8-12 µm.** [`fischer-ge-znse.zmx`](../examples/fischer-ge-znse.zmx) is one of the infrared doublets Fischer (1985) gives: germanium then ZnSe, 50.8 mm at f/2, ±2.5°, at 8, 10 and 12 µm. Its mount file holds an aluminum housing:
+
+```
+atherm focus examples/fischer-ge-znse.zmx --housing aluminum-6061-t6 --temperatures -40,20,60 --save-mount
+atherm image examples/fischer-ge-znse.zmx --temperatures -40,20,60 --frequencies 10 --mtf-limit 0.5 --range -60,100
+```
+
+- In [`fischer-focus.txt`](../examples/fischer-focus.txt) the focus moves −7.85 µm/K: −6.72 from the germanium, whose index rises 408×10⁻⁶/K, −1.16 from the housing, and almost nothing from the ZnSe. That is 5.6 depths of focus at −40 °C and 4.0 at 60 °C.
+- Canceling it with the housing alone would take an expansion coefficient near −136×10⁻⁶/K, which no metal has. Such a lens is refocused, or its materials are changed; `atherm map --band lwir` shows which ones offset germanium.
+- In [`fischer-image.txt`](../examples/fischer-image.txt), the MTF at 10 cycles/mm stays above 0.5 at the fixed image plane only from 5.2 to 21.7 °C. Refocused, it stays above 0.5 from −60 to 100 °C, with the RMS near 0.06 waves.
+- `--use GERMANIUM=JPCRD:GE --use ZNSE=JPCRD:ZNSE` runs it on Li's evaluated data instead of the catalog's fits: −7.96 µm/K, 1.4% more.
+
+Neither source gives the image plane at the design temperature at the least RMS, so at the nominal temperature `atherm image` still moves the plane a little: 7 µm for the Cassegrain, −33 µm for the doublet.
+
 ### Choosing materials
 
 - **The map.** `atherm map N-PK51 N-BK7 N-SF6 --housing aluminum-6061-t6 --svg map.svg`, or `--catalog SCHOTT` for every glass of a catalog with thermal data. `--band mwir` or `lwir` takes 3, 4 and 5 µm or 8, 10 and 12 µm, or give three wavelengths. A doublet is athermal and achromatic when its two points and the housing's point lie on one line. [`map-visible.txt`](../examples/map-visible.txt) and [`map-visible.svg`](../examples/map-visible.svg) are twelve glasses and an aluminum housing; [`map-lwir.txt`](../examples/map-lwir.txt) and [`map-lwir.svg`](../examples/map-lwir.svg) are germanium, ZnSe, ZnS and SCHOTT's IRG glasses over 8-12 µm.

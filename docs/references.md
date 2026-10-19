@@ -82,9 +82,9 @@ AberrationCalculator's `MISC` catalog fits its materials' thermal constants to t
 
 ## Worked examples and checks
 
-- R. E. Fischer, "Optical design for the infrared," Proc. SPIE 531, 82-120 (1985). A germanium soak.
+- R. E. Fischer, "Optical design for the infrared," Proc. SPIE 531, 82-120 (1985). A germanium soak, and the Ge/ZnSe doublet of the examples.
 - R. Bardazzi, "Designing a 1.7-5.3 µm athermalized lens," Proc. SPIE 7113, 71130W (2008), doi:10.1117/12.799917. A germanium singlet.
-- Itek Corporation, "Outer Planets Mission Television Subsystem Optics Study," Final Report 72-9320-1 for the Jet Propulsion Laboratory, NASA NAS7-100 (July 28, 1972), NASA N72-33381. The B4 Cassegrain's soak tables.
+- Itek Corporation, "Outer Planets Mission Television Subsystem Optics Study," Final Report 72-9320-1 for the Jet Propulsion Laboratory, NASA NAS7-100 (July 28, 1972), NASA N72-33381. The B4 Cassegrain of the examples, and its soak tables.
 - S. Xu, X. Peng, G. Tie, C. Guan, H. Hu and Y. Xiong, "Athermalization of an optical system based on lens shape and assembly method," Curr. Opt. Photon. 3, 429-437 (2019), doi:10.3807/COPP.2019.3.5.429. An aluminum telescope.
 - SCHOTT optical glass data sheets, "Temperature Coefficients of the Refractive Index," for N-FK51A, N-BK7, N-LASF9, N-SF6 and SF57, https://www.schott.com/en-us/products/optical-glass-p1000267/downloads.
 - HOYA, NBFD27 data sheet (HOYA20250701M), https://www.hoya-opticalworld.com/common/pdf2021/NBFD27.pdf.

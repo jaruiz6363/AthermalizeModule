@@ -1,0 +1,12 @@
+{
+  "format": "athermalize-mount",
+  "version": 1,
+  "nominalTemperatureC": 7.5,
+  "pressureAtm": 0,
+  "housing": 1.5,
+  "mirrors": {
+    "3": 0.03,
+    "4": 0.03
+  },
+  "cemented": "following"
+}
