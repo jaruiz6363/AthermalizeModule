@@ -4,6 +4,47 @@ How the module builds a lens at a temperature from its nominal design, its mater
 
 The lens at a temperature is always built afresh from the nominal design, and the nominal design is never changed. The result is a copy of AberrationCalculator's lens model with an index table for each wavelength, so every analysis AberrationCalculator has runs on it unchanged.
 
+## In short
+
+Each glass element grows as a whole, as if its drawing were enlarged by s = 1 + αΔT with its own α: its radii, its center thickness and its diameter all grow by s, and its shape stays the same. The air spaces are set by the mount, not the glass.
+
+| Quantity | At the temperature | Grows with |
+|---|---|---|
+| Radius of curvature | × s | the element's glass; a cemented surface, the glass after it; a mirror, its substrate |
+| Center thickness of a glass | × s | its glass |
+| Semi-diameter and apertures | × s | as the radius |
+| Conic constant | unchanged | (a conic enlarged is the same conic) |
+| Even-asphere coefficient of r^(2p) | ÷ s^(2p−1) | as the radius, so the sag at s·r is s times the sag at r |
+| Zernike terms and their radius | × s | as the radius |
+| Air space | the mount's length | the housing, or the spacer or mount part that holds it |
+| Distance to the image plane | the mount's length | the housing, unless a mount part holds the image plane |
+| Object distance | unchanged | unless a mount part holds it |
+| Index | the material's at the temperature | relative to the air at the temperature |
+
+For example, the doublet in `examples` in an aluminum housing, from `atherm lens --detail`, at the design's 20 °C and at 120 °C:
+
+```
+atherm lens examples/doublet.zmx --housing aluminum-6061-t6 --temperatures 20,120 --detail
+
+At 20 °C:
+  surf        radius mm     thickness mm   n_rel        shape grows with / thickness set by
+     1        72.129000         6.000000   1.5168000   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     2       -79.369000         2.500000   1.8051802   SCHOTT:N-SF6 / SCHOTT:N-SF6
+     3      -170.598000       117.782000   1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
+     4         infinity         0.000000   1.0000000   image
+
+At 120 °C:
+  surf        radius mm     thickness mm   n_rel        shape grows with / thickness set by
+     1        72.180212         6.004260   1.5171026   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     2       -79.440670         2.502258   1.8052986   SCHOTT:N-SF6 / SCHOTT:N-SF6
+     3      -170.752050       118.059966   1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
+     4         infinity         0.000000   1.0000000   image
+```
+
+- **Surface 1** grows with N-BK7, α 7.1×10⁻⁶/K: 72.129 × (1 + 7.1×10⁻⁶ × 100) = 72.180 mm. The N-BK7 thickness grows the same way, 6.000 to 6.004 mm.
+- **Surface 2** is cemented, so it grows with the glass after it, N-SF6, α 9.03×10⁻⁶/K: −79.369 to −79.441 mm. So does surface 3, the back of the N-SF6 element.
+- **The air space to the image** grows with the aluminum housing, α 23.6×10⁻⁶/K: 117.782 to 118.060 mm.
+
 ## What grows
 
 With ΔT the temperature less the design's (20 °C by default, `--nominal`), and α a coefficient of thermal expansion:

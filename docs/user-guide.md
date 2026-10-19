@@ -43,6 +43,8 @@ A material is named as `CATALOG:NAME` (`SCHOTT:N-BK7`) or by its name alone (`N-
 
 ### Describing the mount
 
+At a temperature, each glass element grows as a whole by 1 + αΔT with its own α: its radii, its center thickness and its diameter, with its conic unchanged. The air spaces are set by the mount. [lens-at-temperature.md](lens-at-temperature.md#in-short) has a table of what changes and an example; `atherm lens --detail` prints the prescription at each temperature.
+
 Every lens command needs at least the housing:
 
 ```
