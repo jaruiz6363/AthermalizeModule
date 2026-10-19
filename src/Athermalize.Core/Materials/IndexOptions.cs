@@ -20,6 +20,9 @@ public enum ThermalWavelength
 
     /// <summary>The vacuum wavelength, as TIE-19 defines λ.</summary>
     Vacuum,
+
+    /// <summary>The wavelength as given, in the system's air: Optiland's choice.</summary>
+    SystemAir,
 }
 
 /// <summary>How the sign of λtk enters the denominator λ² − λtk² of TIE-19 eq. (3).</summary>

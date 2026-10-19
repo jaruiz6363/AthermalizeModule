@@ -18,7 +18,7 @@ public static class Program
         "         --humidity <%>                  relative humidity, ciddor only (0)\n" +
         "         --co2 <ppm>                     CO₂ content, ciddor only (450)\n" +
         "         --prefactor relative|absolute   the index in TIE-19's (n²−1)/2n (relative)\n" +
-        "         --thermal-wavelength reference|vacuum   the wavelength in TIE-19's E term (reference)\n" +
+        "         --thermal-wavelength reference|vacuum|system   the wavelength in TIE-19's E term (reference)\n" +
         "         --lambda-tk-sign agf|ignore     a negative λtk adds to λ² (agf)\n" +
         "         --air-wavelength input|vacuum   the wavelength the air formulas take (input)\n" +
         "       atherm materials --measured        list the measured and data-sheet materials carried, with sources\n" +
@@ -141,7 +141,7 @@ public static class Program
     {
         "--air" => o with { AirModel = Choose(value, option, ("tie19", AirModel.Tie19), ("ciddor", AirModel.Ciddor1996)) },
         "--prefactor" => o with { Prefactor = Choose(value, option, ("relative", Prefactor.Relative), ("absolute", Prefactor.Absolute)) },
-        "--thermal-wavelength" => o with { ThermalWavelength = Choose(value, option, ("reference", ThermalWavelength.ReferenceAir), ("vacuum", ThermalWavelength.Vacuum)) },
+        "--thermal-wavelength" => o with { ThermalWavelength = Choose(value, option, ("reference", ThermalWavelength.ReferenceAir), ("vacuum", ThermalWavelength.Vacuum), ("system", ThermalWavelength.SystemAir)) },
         "--lambda-tk-sign" => o with { LambdaTkSign = Choose(value, option, ("agf", LambdaTkSign.Agf), ("ignore", LambdaTkSign.Ignore)) },
         "--air-wavelength" => o with { AirWavelength = Choose(value, option, ("input", AirWavelength.Input), ("vacuum", AirWavelength.Vacuum)) },
         _ => throw new ArgumentException($"unknown option '{option}'"),
@@ -160,7 +160,7 @@ public static class Program
         s.Append("; material and air at each temperature. Wavelengths ");
         s.Append(vacuum ? "in vacuum." : "in standard air (20 °C, 1 atm); each is held at its vacuum wavelength.");
         s.Append(FormattableString.Invariant(
-            $"\nPrefactor {o.Prefactor.ToString().ToLowerInvariant()}; E-term wavelength {(o.ThermalWavelength == ThermalWavelength.ReferenceAir ? "in reference air" : "vacuum")}; λtk sign {o.LambdaTkSign.ToString().ToLowerInvariant()}; air formulas at the {(o.AirWavelength == AirWavelength.Input ? "input" : "vacuum")} wavelength."));
+            $"\nPrefactor {o.Prefactor.ToString().ToLowerInvariant()}; E-term wavelength {o.ThermalWavelength switch { ThermalWavelength.ReferenceAir => "in reference air", ThermalWavelength.Vacuum => "vacuum", _ => "in system air" }}; λtk sign {o.LambdaTkSign.ToString().ToLowerInvariant()}; air formulas at the {(o.AirWavelength == AirWavelength.Input ? "input" : "vacuum")} wavelength."));
         s.Append("\nx_f = α − (dn_rel/dT)/(n_rel − 1), the relative change of a thin lens's focal length per kelvin.");
         return s.ToString();
     }

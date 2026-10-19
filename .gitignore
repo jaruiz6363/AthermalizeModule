@@ -72,3 +72,6 @@ publish/
 # Python
 __pycache__/
 *.pyc
+
+# Embedded Python for the Optiland cross-check (tools/setup-python.ps1)
+python-embed/

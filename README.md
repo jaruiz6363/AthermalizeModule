@@ -129,7 +129,7 @@ A glass swap changes the lens: optimize the best before taking them further.
 
 The [user guide](docs/user-guide.md) shows the options and the library, and [docs/theory.md](docs/theory.md) the definitions and signs.
 
-How it is checked: [docs/verification.md](docs/verification.md). Besides closed forms, it reproduces worked examples from the literature: Fischer's (1985) germanium soak, Bardazzi's (2008) germanium singlet, and the soak tables of a 1972 Itek study of a Cassegrain for the Jet Propulsion Laboratory.
+How it is checked: [docs/verification.md](docs/verification.md). Besides closed forms, it reproduces worked examples from the literature: Fischer's (1985) germanium soak, Bardazzi's (2008) germanium singlet, and the soak tables of a 1972 Itek study of a Cassegrain for the Jet Propulsion Laboratory. Its index over temperature agrees with Optiland's, an independent implementation of the same model, for the 1,300 glasses Optiland carries thermal data for.
 
 ## Building
 
@@ -140,6 +140,8 @@ dotnet build
 dotnet test
 dotnet run --project src/Athermalize.Cli -- materials N-BK7
 ```
+
+The cross-check against Optiland needs an embedded Python with Optiland: `.\tools\setup-python.ps1` installs one into `python-embed\` (ignored by git). Without it those tests are reported as skipped.
 
 On Windows, the subtrees nest deep enough that a clone into a folder with a long path can pass the 260-character limit: clone to a short path, such as `C:\src`, or set `git config --global core.longpaths true` first.
 

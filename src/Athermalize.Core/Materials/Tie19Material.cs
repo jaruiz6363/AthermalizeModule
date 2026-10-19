@@ -82,19 +82,25 @@ public sealed class Tie19Material : Material
 
         double nRel0 = _referenceIndex(lambdaRef);
         double nAbs0 = nRel0 * nRef;
-        double nAbs = nAbs0 + DeltaAbsolute(nRel0, nAbs0, lambdaRef, lambdaVac, temperatureC - tRef, o);
+        double nAbs = nAbs0 + DeltaAbsolute(nRel0, nAbs0, lambdaRef, lambdaVac, lambdaUm, temperatureC - tRef, o);
 
         return new MaterialIndex(nAbs / nSys, nAbs, nSys, lambdaVac, InRange(lambdaRef, temperatureC));
     }
 
     /// <summary>TIE-19 eq. (3).</summary>
-    private double DeltaAbsolute(double nRel0, double nAbs0, double lambdaRef, double lambdaVac, double dT, IndexOptions o)
+    private double DeltaAbsolute(double nRel0, double nAbs0, double lambdaRef, double lambdaVac, double lambdaSystem,
+        double dT, IndexOptions o)
     {
         var t = Thermal;
         if (!t.HasCoefficients || dT == 0.0) return 0.0;
 
         double n = o.Prefactor == Prefactor.Relative ? nRel0 : nAbs0;
-        double l = o.ThermalWavelength == ThermalWavelength.ReferenceAir ? lambdaRef : lambdaVac;
+        double l = o.ThermalWavelength switch
+        {
+            ThermalWavelength.ReferenceAir => lambdaRef,
+            ThermalWavelength.Vacuum => lambdaVac,
+            _ => lambdaSystem,
+        };
         double sign = o.LambdaTkSign == LambdaTkSign.Agf && t.LambdaTkUm < 0 ? -1.0 : 1.0;
         double denominator = l * l - sign * t.LambdaTkUm * t.LambdaTkUm;
 

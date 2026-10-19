@@ -1,6 +1,6 @@
 # Verification
 
-How the module's results are checked, against independent references first. Every check here is a test in `tests/Athermalize.Tests` and runs with `dotnet test`.
+How the module's results are checked, against independent references first. Every check here is a test in `tests/Athermalize.Tests` and runs with `dotnet test`. The checks against Optiland (section 10) need its embedded Python (`tools/setup-python.ps1`); without it they are reported as skipped.
 
 ## 1. The index model against its published definition
 
@@ -134,3 +134,11 @@ The γ the module computes for Jiang and Liu's SCHOTT glasses, at the d line and
 ## 9. Catalog reading
 
 Fields separated by doubled spaces or tabs, numbers under German, French and Swedish number settings, UTF-16 files, and missing, empty and short `TD` lines all read as intended, and the shipped catalogs' glasses with missing, empty or all-zero thermal lines are recognized. (`ThermalCatalogTests`)
+
+## 10. Optiland
+
+[Optiland](https://github.com/HarrisonKramer/optiland), an open-source optical design package in Python (MIT license), has its own implementation of SCHOTT's model for the glasses of the refractiveindex.info database it ships with. The tests run it in process, through AberrationCalculator's embedding of Python, with Optiland 0.6.3 unmodified. Optiland changes a glass's index with temperature but does not model a lens over temperature, so the comparison is of the index. (`OptilandTests`)
+
+- **The same glass.** Every one of the 1,300 database glasses Optiland changes with temperature, from CDGM, Hikari, HOYA, Ohara, SCHOTT and Sumita, goes through the module with Optiland's dispersion and thermal constants and Optiland's conventions (`--prefactor absolute --thermal-wavelength system --lambda-tk-sign ignore`). At up to eight wavelengths from 0.40 to 2.33 µm, from −40 to +100 °C, at one atmosphere and at half of one, the 90,370 indices agree with Optiland's to 2×10⁻¹⁶.
+- **The conventions.** With the module's defaults the index at the d line, taken from 20 °C to −40 or +100 °C, differs from Optiland's by up to 1.1×10⁻⁵, all of it from the sign of a negative λtk: Optiland squares λtk as printed, and the module takes a negative λtk as adding to λ², as AGF catalogs use it. Only glasses with a negative λtk differ that way; the most is Hikari J-KZFH4. The prefactor alone moves the index by up to 9×10⁻⁷, and the E-term wavelength by up to 2×10⁻⁷.
+- **The catalogs.** For 896 glasses the module's catalogs and Optiland's database carry the same thermal constants, and dn/dT at the d line and 20 °C agrees to 1.1×10⁻⁸/K, each with its own conventions. For 244 the constants differ, the catalogs being different editions, by a median of 4×10⁻⁸/K and at most 4×10⁻⁶/K.

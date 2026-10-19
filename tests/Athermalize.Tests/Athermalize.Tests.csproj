@@ -18,9 +18,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Athermalize.Core\Athermalize.Core.csproj" />
     <ProjectReference Include="..\..\src\Athermalize.Cli\Athermalize.Cli.csproj" />
+    <!-- The cross-check against Optiland, through AberrationCalculator's embedding of Python (tools/setup-python.ps1). -->
+    <ProjectReference Include="$(AberrationCalculatorDir)src\AberrationCalculator.Optiland\AberrationCalculator.Optiland.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="$(AberrationCalculatorDir)catalogs/**/*" CopyToOutputDirectory="PreserveNewest" LinkBase="catalogs" />
+    <None Include="python/*.py" CopyToOutputDirectory="PreserveNewest" LinkBase="python" />
   </ItemGroup>
 </Project>

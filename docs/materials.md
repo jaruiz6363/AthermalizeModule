@@ -28,7 +28,7 @@ Published methods differ in a few places. Each is an option, with a stated defau
 | Option | Default | Alternative | Size of the difference |
 |---|---|---|---|
 | The index in the prefactor (n² − 1)/(2n) | `relative`: the catalog index, which TIE-19 says may be used, and which the makers' data-sheet tables agree with more often | `absolute`: n_abs0 | Up to about 10⁻⁵ for high-index materials far from Tref; about 10⁻⁷ for a typical glass from −40 to +80 °C |
-| The wavelength in the E term | `reference`: λ_ref, the common practice with AGF catalogs | `vacuum`: as TIE-19 defines λ | Up to about 10⁻⁶ in the blue at −40 °C; more near λtk |
+| The wavelength in the E term | `reference`: λ_ref, the common practice with AGF catalogs | `vacuum`: as TIE-19 defines λ; `system`: the wavelength in the system's air, as Optiland takes it | Up to about 10⁻⁶ in the blue at −40 °C; more near λtk |
 | The sign of λtk | `agf`: a negative λtk adds λtk² to λ², as AGF catalogs use it | `ignore`: λ² − λtk² as printed in TIE-19 | Only glasses with a negative λtk |
 | The wavelength in the air formulas | `input`: λ as given, the common practice with AGF catalogs | `vacuum`: as TIE-19 and Ciddor define λ | Under 10⁻⁸ up to one atmosphere; about 5×10⁻⁸ at two |
 | The air model | `tie19`: TIE-19's dry air, which the makers fit their coefficients with | `ciddor`: Ciddor (1996), with humidity and CO₂ | About 4×10⁻⁷ in the air index at 50 % humidity |
