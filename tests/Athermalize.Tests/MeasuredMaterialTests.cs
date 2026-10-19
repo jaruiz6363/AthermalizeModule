@@ -155,4 +155,32 @@ public class MeasuredMaterialTests
         Assert.NotEmpty(m.CteSource);
         Assert.False(double.IsNaN(ThermoOptic.At(m, 2.0, 20.0).OptothermalExpansion));
     }
+
+    /// <summary>
+    /// AberrationCalculator's MISC catalog fits its crystals' thermal constants to published measurements (NBS TN
+    /// 993, Li 1980, CHARMS), so its dn/dT agrees with the measured models here, which come from other sources or the
+    /// same: within 5 % at 20 °C, where each is measured.
+    /// </summary>
+    [Theory]
+    [InlineData("MISC:CAF2", "CHARMS:CAF2", 0.6328)]
+    [InlineData("MISC:CAF2", "CHARMS:CAF2", 2.0)]
+    [InlineData("MISC:SILICON", "CHARMS:SI", 2.0)]
+    [InlineData("MISC:GERMANIUM", "JPCRD:GE", 10.0)]
+    [InlineData("MISC:INFRASIL", "CHARMS:INFRASIL_301", 1.0)]
+    [InlineData("MISC:ZNSE", "JPCRD:ZNSE", 10.0)]
+    public void Catalog_crystals_agree_with_measurement(string catalog, string measured, double lambdaUm)
+    {
+        double a = ThermoOptic.At(Catalogs.Find(catalog), lambdaUm, 20.0).DnDtAbsolute;
+        double b = ThermoOptic.At(Catalogs.Find(measured), lambdaUm, 20.0).DnDtAbsolute;
+        _out.WriteLine($"{catalog} {lambdaUm} µm: {a * 1e6:F3} against {measured} {b * 1e6:F3} ×10⁻⁶/K");
+        Assert.InRange(a / b, 0.95, 1.05);
+    }
+
+    /// <summary>The MISC catalog carries silicon's and germanium's mean expansion from −30 to +70 °C.</summary>
+    [Fact]
+    public void Catalog_crystals_carry_their_expansion()
+    {
+        Assert.Equal(2.53e-6, Catalogs.Find("MISC:SILICON").Expansion.Cte, 12);   // Swenson (1983)
+        Assert.Equal(5.74e-6, Catalogs.Find("MISC:GERMANIUM").Expansion.Cte, 12); // Li (1980), the lattice
+    }
 }

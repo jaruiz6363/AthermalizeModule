@@ -43,6 +43,8 @@ Li's reviews print index tables, to four decimals, and dn/dT tables computed fro
 
 Li's germanium against the CHARMS measurement, an independent one, at 295 K: from 2.5 to 5.5 µm the indices agree to within 8×10⁻⁴ and dn/dT to within 2.4×10⁻⁵/K, inside Li's stated uncertainties of 2×10⁻³ and 0.5×10⁻⁴/K. At 2 µm, near the absorption edge, Li's index is 6.8×10⁻³ low, beyond its uncertainty; [materials.md](materials.md) says which model to use where.
 
+The crystals of AberrationCalculator's MISC catalog carry TIE-19 constants fitted to published measurements: NBS Technical Note 993 for CaF₂, sapphire, MgF₂ and ZnSe, Li's reviews for silicon and germanium, and CHARMS for Infrasil. At 20 °C their dn/dT agrees with the measured models here to within 5 %: CaF₂ and Infrasil against CHARMS, silicon against CHARMS, germanium and ZnSe against Li.
+
 ## 5. The lens at a temperature
 
 Closed forms and invariances, each on a lens written for the test. (`ThermalLensTests`)
