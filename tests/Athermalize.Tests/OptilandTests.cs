@@ -197,28 +197,52 @@ public class OptilandTests
     /// The frozen lens in Optiland. The doublet designed in air at 20 °C, written with --write as Optiland .json at
     /// −40 °C in vacuum and loaded by Optiland's own reader at its defaults, with only the glass catalogs written
     /// beside it, is the module's lens: the focal length, the back focus and the paraxial focus from the image plane
-    /// to 1 nm, every index to 10⁻⁷, and the RMS wavefront error at the primary wavelength on axis and at full field
-    /// to 0.5 %, on a pupil grid of 512 rays across.
+    /// to 1 nm, every index to 10⁻⁷, and the RMS wavefront error at the primary wavelength at each field to 0.5 %, on
+    /// a pupil grid of 512 rays across.
     /// </summary>
     [OptilandFact]
     public void A_frozen_lens_in_Optiland_is_the_modules_lens()
+    {
+        string lensFile = Path.Combine(AppContext.BaseDirectory, "examples", "doublet.zmx");
+        var model = new Athermalize.Core.Lens.ThermalModel(
+            AberrationCalculator.Core.IO.LensFile.Read(lensFile, Catalogs.Library.Glasses), Catalogs.Library,
+            new Athermalize.Core.Lens.Mount(Athermalize.Core.Lens.MountMaterials.Find("aluminum-6061-t6")!));
+        FrozenInOptiland(lensFile, new[] { "--housing", "aluminum-6061-t6", "--temperatures", "-40", "--at-pressure", "0" },
+            model, AirConditions.Vacuum(-40.0));
+    }
+
+    /// <summary>
+    /// A design that is not for 20 °C and 1 atm: the Cassegrain is designed for 7.5 °C in vacuum, which its mount file
+    /// says. Frozen at 35 °C in vacuum and opened in Optiland at its defaults, it is the module's lens, as the doublet
+    /// is, at all three of its fields; its mirrors and its glass at 35 °C, not at Optiland's 20 °C.
+    /// </summary>
+    [OptilandFact]
+    public void A_frozen_lens_designed_for_other_conditions_in_Optiland_is_the_modules_lens()
+    {
+        string lensFile = Path.Combine(AppContext.BaseDirectory, "examples", "itek-cassegrain.zmx");
+        var mountFile = Athermalize.Core.Lens.MountFile.Read(Athermalize.Core.Lens.MountFile.PathFor(lensFile));
+        Assert.Equal(7.5, mountFile.NominalTemperatureC);
+        Assert.Equal(0.0, mountFile.PressureAtm);
+        var model = new Athermalize.Core.Lens.ThermalModel(
+            AberrationCalculator.Core.IO.LensFile.Read(lensFile, Catalogs.Library.Glasses), Catalogs.Library,
+            mountFile.ToMount()!, AirConditions.Vacuum(7.5));
+        FrozenInOptiland(lensFile, new[] { "--temperatures", "35" }, model, AirConditions.Vacuum(35.0));
+    }
+
+    private void FrozenInOptiland(string lensFile, string[] options, Athermalize.Core.Lens.ThermalModel model, AirConditions at)
     {
         string dir = Path.Combine(Path.GetTempPath(), $"atherm-optiland-{Guid.NewGuid():N}");
         Directory.CreateDirectory(dir);
         try
         {
             // A name of its own: Optiland keeps a catalog loaded for the session, by name.
-            string path = Path.Combine(dir, $"cold{Guid.NewGuid():N}"[..12] + ".optiland.json");
-            string lensFile = Path.Combine(AppContext.BaseDirectory, "examples", "doublet.zmx");
+            string path = Path.Combine(dir, $"frozen{Guid.NewGuid():N}"[..14] + ".optiland.json");
             var w = new StringWriter();
-            Assert.Equal(0, Athermalize.Cli.Program.Run(new[] { "lens", lensFile, "--housing", "aluminum-6061-t6",
-                "--temperatures", "-40", "--at-pressure", "0", "--write", path, "--catalogs", Catalogs.Folder }, w));
+            Assert.Equal(0, Athermalize.Cli.Program.Run(new[] { "lens", lensFile }
+                .Concat(options).Concat(new[] { "--write", path, "--catalogs", Catalogs.Folder }).ToArray(), w));
 
             var theirs = PythonSession.WithGil(() => JsonDocument.Parse(Helper().frozen_lens(path).ToString()).RootElement.Clone());
-            var system = AberrationCalculator.Core.IO.LensFile.Read(lensFile, Catalogs.Library.Glasses);
-            var model = new Athermalize.Core.Lens.ThermalModel(system, Catalogs.Library,
-                new Athermalize.Core.Lens.Mount(Athermalize.Core.Lens.MountMaterials.Find("aluminum-6061-t6")!));
-            var lens = model.At(AirConditions.Vacuum(-40.0));
+            var lens = model.At(at);
             var p = AberrationCalculator.Core.RayTrace.ParaxialTrace.Trace(lens.System, lens.PrimaryIndices, 0.0);
             double defocus = Athermalize.Core.Analysis.FocusReport.Defocus(lens);
 
@@ -227,15 +251,19 @@ public class OptilandTests
             Assert.InRange(theirs.GetProperty("efl").GetDouble() - p.Efl, -1e-6, 1e-6);
             Assert.InRange(theirs.GetProperty("bfl").GetDouble() - p.Bfl, -1e-6, 1e-6);
             Assert.InRange(theirs.GetProperty("focus").GetDouble() - defocus, -1e-6, 1e-6);
+
+            // The index after each surface; a mirror's sign is a convention of the trace, so sizes are compared.
             var indices = theirs.GetProperty("indices");
-            for (int i = 0; i < 2; i++)
+            Assert.Equal(lens.System.Surfaces.Count - 2, indices.GetArrayLength());
+            for (int i = 0; i < indices.GetArrayLength(); i++)
                 for (int k = 0; k < lens.System.Wavelengths.Count; k++)
-                    Assert.InRange(indices[i][k].GetDouble() - lens.Indices[k][i + 1], -1e-7, 1e-7);
+                    Assert.InRange(Math.Abs(indices[i][k].GetDouble()) - Math.Abs(lens.Indices[k][i + 1]), -1e-7, 1e-7);
 
             var rms = theirs.GetProperty("rms");
-            for (int f = 0; f < 2; f++)
+            Assert.Equal(lens.System.Fields.Count, rms.GetArrayLength());
+            for (int f = 0; f < rms.GetArrayLength(); f++)
             {
-                var one = model.At(AirConditions.Vacuum(-40.0));
+                var one = model.At(at);
                 var field = one.System.Fields[f];
                 one.System.Fields.Clear();
                 one.System.Fields.Add(field);

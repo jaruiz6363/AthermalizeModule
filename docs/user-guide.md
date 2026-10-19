@@ -243,6 +243,12 @@ At -40 °C in vacuum:
 atherm lens examples/doublet.zmx --housing aluminum-6061-t6 --temperatures -40 --at-pressure 0 --write doublet-cold-vacuum.zmx
 ```
 
+The design doesn't have to be for 20 °C and 1 atm. Give its own conditions to the module, with `--nominal` and `--pressure` or in its mount file, and the frozen lens still opens in the other program at that program's defaults. [other-programs.md](other-programs.md#a-design-not-for-20-c-and-1-atm-the-cassegrain-at-35-c) works through the Cassegrain, designed for 7.5 °C in vacuum and analyzed at 35 °C:
+
+```
+atherm lens examples/itek-cassegrain.zmx --temperatures 35 --write itek-warm.zmx      # 7.5 °C and vacuum from its mount file
+```
+
 ### materials: a material's data
 
 **Use it to look up a material,** to check the data behind a result, or to compare sources for one material.

@@ -42,11 +42,12 @@ for i, s in enumerate(optic.surfaces.surfaces[1:-1], start=1):
     if name:
         print(f"surface {i} {name}:", " ".join(f"{scalar(s.material_post.n(w)):.7f}" for w in waves))
 
-# The RMS wavefront error at the primary wavelength, at the image plane the mount holds, on a
-# uniform pupil grid fine enough to have converged.
-fields = [(0.0, 0.0), (0.0, 1.0)]
+# The RMS wavefront error at the primary wavelength at each of the lens's fields, at the image
+# plane the mount holds, on a uniform pupil grid fine enough to have converged.
+top = max(abs(f.y) for f in optic.fields.fields) or 1.0
+fields = [(0.0, f.y / top) for f in optic.fields.fields]   # normalized, as Optiland takes them
 primary = optic.primary_wavelength
 wavefront = Wavefront(optic, fields=fields, wavelengths=[primary], num_rays=512, distribution="uniform")
 for f in fields:
     opd = np.ravel(wavefront.get_data(f, primary).opd)
-    print(f"field {f[1]:.1f}: RMS wavefront error {np.sqrt(np.mean((opd - opd.mean()) ** 2)):.5f} waves")
+    print(f"field {f[1] * top:g}: RMS wavefront error {np.sqrt(np.mean((opd - opd.mean()) ** 2)):.5f} waves")

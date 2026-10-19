@@ -84,8 +84,8 @@ def frozen_lens(path: str, rays: int = 512) -> str:
 
     Its glass catalogs, in the .optiland_glass folder beside it, are loaded into this session
     first; nothing is installed. Returns the focal length, the paraxial focus from the image
-    plane, the back focal distance, each glass surface's index at each wavelength, and the RMS
-    wavefront error at the primary wavelength at each field, on a uniform pupil grid.
+    plane, the back focal distance, the index after each surface at each wavelength, and the RMS
+    wavefront error at the primary wavelength at each of the lens's fields, on a uniform pupil grid.
     """
     from pathlib import Path
 
@@ -104,7 +104,8 @@ def frozen_lens(path: str, rays: int = 512) -> str:
     focus = float(np.ravel(optic.paraxial.F2())[0])   # from the image surface
     waves = [w.value for w in optic.wavelengths.wavelengths]
     indices = [[float(np.ravel(s.material_post.n(w))[0]) for w in waves] for s in surfaces[1:-1]]
-    fields = [(0.0, 0.0), (0.0, 1.0)]
+    top = max(abs(f.y) for f in optic.fields.fields) or 1.0
+    fields = [(0.0, f.y / top) for f in optic.fields.fields]   # normalized, as Optiland takes them
     wl = optic.primary_wavelength
     wf = Wavefront(optic, fields=fields, wavelengths=[wl], num_rays=rays, distribution="uniform")
     rms = []

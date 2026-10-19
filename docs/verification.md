@@ -153,4 +153,6 @@ Fields separated by doubled spaces or tabs, numbers under German, French and Swe
 
 In Optiland (`OptilandTests`), the same lens written as `.optiland.json` and loaded by Optiland's reader at its defaults has the module's focal length, back focus and focus from the image plane to 1 nm, its indices to 10⁻⁷, and its RMS wavefront error at the primary wavelength on axis and at full field to 0.5 % (0.05570 and 0.08251 against 0.05569 and 0.08261 waves, on a pupil grid of 512 rays). [other-programs.md](other-programs.md#an-example-the-doublet-at-40-c-in-vacuum-in-optiland) walks through it.
 
+A design for conditions other than 20 °C and 1 atm passes the same check: the Cassegrain, designed for 7.5 °C in vacuum and frozen at 35 °C in vacuum, has in Optiland the module's focal length, back focus and focus to 1 nm, its indices to 10⁻⁷, and its RMS at each of its three fields within 0.04 % (0.20305, 0.18656 and 0.16794 against 0.20312, 0.18662 and 0.16799 waves). [other-programs.md](other-programs.md#a-design-not-for-20-c-and-1-atm-the-cassegrain-at-35-c) walks through it.
+
 Germanium and ZnSe over 8-12 µm, frozen at 60 °C, fit within 10⁻⁷; ZnSe needs the Extended 2 formula, the Schott formula missing it by 4×10⁻⁶. Why a lens traced with relative indices at the wavelengths in its air is the same lens is in [other-programs.md](other-programs.md).

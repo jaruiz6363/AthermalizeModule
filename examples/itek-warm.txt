@@ -1,0 +1,56 @@
+Itek B4 Cassegrain, 1000 mm f/4.4 (Itek 1972, Table 2-7) (itek-cassegrain.zmx), 12 surfaces
+Designed for 7.5 °C in vacuum; every part of the lens and the air at each temperature, the pressure held.
+Mount file: itek-cassegrain.mount.json.
+Mount: housing, α 1.5×10⁻⁶/K; mirror 3 substrate, α 0.03×10⁻⁶/K; mirror 4 substrate, α 0.03×10⁻⁶/K.
+Materials:
+  after surface  5  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+  after surface  7  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+
+Paraxial, at 0.55 µm (0.55 µm in vacuum):
+    T °C        EFL mm        BFL mm   focus − image plane µm   change from 7.5 °C µm
+    35.0    998.290624    148.580230                 -60.331                 -60.212
+
+Wrote the lens at 35 °C in vacuum to itek-warm.zmx, and its glasses to itek-warm.agf:
+  N-BK7_35C_VAC                0.315-0.77 µm, Schott formula, fitted within 3.3E-8
+Open it at the program's reference conditions, 20 °C and 1 atm, with no thermal or environment changes:
+its geometry, its indices and its wavelengths are already those at these conditions (docs/other-programs.md).
+
+At 7.5 °C in vacuum (the design):
+  wavelength in this air, µm             0.550000     0.350000     0.450000     0.650000     0.700000
+  wavelength in vacuum, µm               0.550000     0.350000     0.450000     0.650000     0.700000
+  air, absolute index                  1.00000000   1.00000000   1.00000000   1.00000000   1.00000000
+  SCHOTT:N-BK7, relative                1.5189271    1.5395848    1.5257289    1.5149224    1.5134653
+  SCHOTT:N-BK7, absolute                1.5189271    1.5395848    1.5257289    1.5149224    1.5134653
+
+  surf        radius mm     thickness mm  n_rel 0.5500  n_rel 0.3500  n_rel 0.4500  n_rel 0.6500  n_rel 0.7000   shape grows with / thickness set by
+     1         infinity       247.650000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     2         infinity         6.350000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     3     -1048.415480      -274.320000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   mirror substrate α 0.03×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     4     -1048.415480       314.960000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   mirror substrate α 0.03×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     5       276.534880         5.080000     1.5189271     1.5395848     1.5257289     1.5149224     1.5134653   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     6       958.212460         5.080000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   SCHOTT:N-BK7 / housing α 1.5×10⁻⁶/K
+     7      -216.646760         5.080000     1.5189271     1.5395848     1.5257289     1.5149224     1.5134653   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     8      -522.554200         0.000000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   SCHOTT:N-BK7 / housing α 1.5×10⁻⁶/K
+     9         infinity         0.000000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+    10         infinity       148.634430     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+    11         infinity         0.000000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   image
+
+At 35 °C in vacuum:
+  wavelength in this air, µm             0.550000     0.350000     0.450000     0.650000     0.700000
+  wavelength in vacuum, µm               0.550000     0.350000     0.450000     0.650000     0.700000
+  air, absolute index                  1.00000000   1.00000000   1.00000000   1.00000000   1.00000000
+  SCHOTT:N-BK7, relative                1.5189683    1.5396648    1.5257815    1.5149577    1.5134985
+  SCHOTT:N-BK7, absolute                1.5189683    1.5396648    1.5257815    1.5149577    1.5134985
+
+  surf        radius mm     thickness mm  n_rel 0.5500  n_rel 0.3500  n_rel 0.4500  n_rel 0.6500  n_rel 0.7000   shape grows with / thickness set by
+     1         infinity       247.660216     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     2         infinity         6.350262     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     3     -1048.416345      -274.331316     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   mirror substrate α 0.03×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     4     -1048.416345       314.972992     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   mirror substrate α 0.03×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+     5       276.588873         5.080992     1.5189683     1.5396648     1.5257815     1.5149577     1.5134985   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     6       958.399551         5.080210     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   SCHOTT:N-BK7 / housing α 1.5×10⁻⁶/K
+     7      -216.689060         5.080992     1.5189683     1.5396648     1.5257815     1.5149577     1.5134985   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     8      -522.656229         0.000000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   SCHOTT:N-BK7 / housing α 1.5×10⁻⁶/K
+     9         infinity         0.000000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+    10         infinity       148.640561     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   housing α 1.5×10⁻⁶/K / housing α 1.5×10⁻⁶/K
+    11         infinity         0.000000     1.0000000     1.0000000     1.0000000     1.0000000     1.0000000   image

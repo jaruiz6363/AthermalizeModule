@@ -1,0 +1,10 @@
+CC Itek B4 Cassegrain, 1000 mm f/4.4 (Itek 1972, Table 2-7) at 35 C in vacuum, frozen
+CC Frozen glasses: each material's index relative to the air at these conditions, fitted with the
+CC Schott or Extended 2 formula. No thermal data: use the lens at the program's reference conditions, unchanged.
+NM N-BK7_35C_VAC 1 0 1.517242 64.0797 0 0 0
+GC SCHOTT:N-BK7 at 35 °C in vacuum, relative to that air; frozen by atherm
+ED 0 0 0 0 1
+CD 2.272782239018438E+000 -9.927701207297803E-003 1.086142244353836E-002 1.398890397619674E-004 1.121776600894239E-006 9.114486471636346E-008
+TD 0 0 0 0 0 0 20
+OD -1 -1 -1 -1 -1 -1
+LD 0.315000 0.770000
