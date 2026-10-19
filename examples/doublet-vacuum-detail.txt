@@ -1,0 +1,40 @@
+Cemented doublet, f = 122 mm, f/8 (doublet.zmx), 5 surfaces
+Designed for 20 °C in air at 1 atm; used in vacuum, every part of the lens at each temperature.
+Mount: housing, aluminum-6061-t6 (α 23.6×10⁻⁶/K).
+Materials:
+  after surface  1  SCHOTT:N-BK7             α 7.1×10⁻⁶/K
+  after surface  2  SCHOTT:N-SF6             α 9.03×10⁻⁶/K
+
+Paraxial, at 0.587562 µm (0.587722 µm in vacuum):
+    T °C        EFL mm        BFL mm   focus − image plane µm   change from 20 °C µm
+   -40.0    121.864141    117.795204                 179.984                  34.043
+
+At 20 °C in air at 1 atm (the design):
+  wavelength in this air, µm             0.587562     0.486133     0.656273
+  wavelength in vacuum, µm               0.587722     0.486266     0.656451
+  air, absolute index                  1.00027242   1.00027457   1.00027152
+  SCHOTT:N-BK7, relative                1.5168000    1.5223763    1.5143223
+  SCHOTT:N-BK7, absolute                1.5172132    1.5227943    1.5147335
+  SCHOTT:N-SF6, relative                1.8051802    1.8278292    1.7960789
+  SCHOTT:N-SF6, absolute                1.8056720    1.8283311    1.7965665
+
+  surf        radius mm     thickness mm  n_rel 0.5876  n_rel 0.4861  n_rel 0.6563   shape grows with / thickness set by
+     1        72.129000         6.000000     1.5168000     1.5223763     1.5143223   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     2       -79.369000         2.500000     1.8051802     1.8278292     1.7960789   SCHOTT:N-SF6 / SCHOTT:N-SF6
+     3      -170.598000       117.782000     1.0000000     1.0000000     1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
+     4         infinity         0.000000     1.0000000     1.0000000     1.0000000   image
+
+At -40 °C in vacuum:
+  wavelength in this air, µm             0.587722     0.486266     0.656451
+  wavelength in vacuum, µm               0.587722     0.486266     0.656451
+  air, absolute index                  1.00000000   1.00000000   1.00000000
+  SCHOTT:N-BK7, relative                1.5171546    1.5227181    1.5146820
+  SCHOTT:N-BK7, absolute                1.5171546    1.5227181    1.5146820
+  SCHOTT:N-SF6, relative                1.8057479    1.8283149    1.7966730
+  SCHOTT:N-SF6, absolute                1.8057479    1.8283149    1.7966730
+
+  surf        radius mm     thickness mm  n_rel 0.5877  n_rel 0.4863  n_rel 0.6565   shape grows with / thickness set by
+     1        72.098273         5.997444     1.5171546     1.5227181     1.5146820   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     2       -79.325998         2.498646     1.8057479     1.8283149     1.7966730   SCHOTT:N-SF6 / SCHOTT:N-SF6
+     3      -170.505570       117.615221     1.0000000     1.0000000     1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
+     4         infinity         0.000000     1.0000000     1.0000000     1.0000000   image

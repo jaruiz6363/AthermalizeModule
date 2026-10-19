@@ -66,12 +66,40 @@ public class CliTests
             Assert.Contains("Test doublet", text);
             Assert.Contains("Mount: housing, α 23.6×10⁻⁶/K; spacer after surface 3, α 9.2×10⁻⁶/K.", text);
             Assert.Contains("SCHOTT:N-BK7", text);
-            Assert.Contains("At 60 °C:", text);
+            Assert.Contains("At 60 °C in air at 1 atm:", text);
             Assert.Contains("mount part 3-4", text);
             var rows = text.Split('\n').Where(l => l.TrimStart().StartsWith("20.0 ")).ToList();
             Assert.Single(rows);
         }
         finally { File.Delete(path); }
+    }
+
+    /// <summary>
+    /// --detail gives the design's conditions and each temperature's: the air's absolute index, the materials'
+    /// relative and absolute indices, and the prescription; --at-pressure 0 puts the lens in vacuum.
+    /// </summary>
+    [Fact]
+    public void Lens_detail_gives_the_indices_and_the_prescription()
+    {
+        string path = DoubletFile();
+        try
+        {
+            var (code, text) = Run("lens", path, "--housing", "aluminum-6061-t6", "--temperatures", "-40", "--at-pressure", "0",
+                "--detail", "--catalogs", Catalogs.Folder);
+            Assert.Equal(0, code);
+            Assert.Contains("Designed for 20 °C in air at 1 atm; used in vacuum, every part of the lens at each temperature.", text);
+            Assert.Contains("At 20 °C in air at 1 atm (the design):", text);
+            Assert.Contains("At -40 °C in vacuum:", text);
+            var air = text.Split('\n').Where(l => l.TrimStart().StartsWith("air, absolute index")).ToList();
+            Assert.Equal(2, air.Count);
+            Assert.Contains("1.0002724", air[0]);   // TIE-19 air at 0.5876 µm, 20 °C, 1 atm
+            Assert.Contains("1.00000000", air[1]);
+            Assert.Contains("SCHOTT:N-BK7, relative", text);
+            Assert.Contains("SCHOTT:N-BK7, absolute", text);
+            Assert.Contains("   1.5168000 ", text);   // the catalog's n_d, relative, at the design's conditions
+        }
+        finally { File.Delete(path); }
+        Assert.Equal(1, Run("select", "x.zmx", "--housing", "1", "--at-pressure", "0").Code);
     }
 
     [Fact]

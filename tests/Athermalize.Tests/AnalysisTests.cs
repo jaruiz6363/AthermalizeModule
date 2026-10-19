@@ -56,6 +56,48 @@ public class AnalysisTests
             Assert.InRange(s.Change - s.Linear, -3e-2 * Math.Abs(s.Linear) - 1e-12, 3e-2 * Math.Abs(s.Linear) + 1e-12);
     }
 
+    /// <summary>
+    /// A lens designed in air and used in vacuum. At the design's temperature only the air changes: the glasses'
+    /// relative indices rise to their absolute ones, the geometry holds, and the focus moves by the air alone, which
+    /// the first-order change carries as its step. Away from it, the rate is the one in vacuum, where the air's own
+    /// dn/dT drops out, and over ±60 K it is the secant's.
+    /// </summary>
+    [Fact]
+    public void A_lens_designed_in_air_and_used_in_vacuum()
+    {
+        var (system, mount) = Triplet();
+        var model = new ThermalModel(system, Catalogs.Library, mount);
+        var vacuum = AirConditions.Vacuum(20.0);
+        var inAir = model.At(20.0);
+        var inVacuum = model.At(vacuum);
+
+        // The indices: relative in vacuum is absolute, the relative index in air times the air's.
+        for (int w = 0; w < system.Wavelengths.Count; w++)
+        {
+            Assert.Equal(1.0, model.AirIndexAt(w, vacuum));
+            double air = model.AirIndexAt(w, AirConditions.Standard);
+            Assert.InRange(air - 1.0, 2.6e-4, 2.8e-4);
+            Assert.InRange(inAir.Indices[w][1] * air - inVacuum.Indices[w][1], -1e-8, 1e-8);
+        }
+        for (int i = 1; i < system.Surfaces.Count; i++)
+        {
+            Assert.Equal(inAir.System.Surfaces[i].Curvature, inVacuum.System.Surfaces[i].Curvature);
+            Assert.Equal(inAir.System.Surfaces[i].Thickness, inVacuum.System.Surfaces[i].Thickness);
+        }
+
+        var report = FocusReport.Compute(model, new[] { -40.0, 20.0, 80.0 }, at: vacuum);
+        double step = FocusReport.Defocus(inVacuum) - FocusReport.Defocus(inAir);
+        _out.WriteLine($"focus moved by the vacuum alone {step * 1e3:F3} µm");
+        Assert.True(Math.Abs(step) > 1e-3);   // more than a micrometer
+        Assert.Equal(step, report.States[1].Change, 12);
+        Assert.Equal(step, report.States[1].Linear, 12);
+        foreach (var s in report.States) _out.WriteLine($"{s.TemperatureC} °C: change {s.Change * 1e3:F3} µm, first order {s.Linear * 1e3:F3} µm");
+        // In vacuum the glasses' dn/dT, which itself rises with temperature, isn't offset by the air's, so the change
+        // bends away from the line by about 4 µm both ways over 60 K; the rate is the secant's to 1 %.
+        double secant = (report.States[2].Change - report.States[0].Change) / 120.0;
+        Assert.InRange(secant / report.DefocusPerK - 1.0, -1e-2, 1e-2);
+    }
+
     /// <summary>A thin singlet's contributions: the glass's f·x_f, the housing's −BFL·α_h (Jamieson 1981).</summary>
     [Fact]
     public void A_thin_singlets_contributions_are_its_glass_and_its_housing()

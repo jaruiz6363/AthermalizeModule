@@ -1,4 +1,5 @@
 using AberrationCalculator.Core.RayTrace;
+using Athermalize.Core.Air;
 using Athermalize.Core.Lens;
 
 namespace Athermalize.Core.Analysis;
@@ -9,7 +10,8 @@ namespace Athermalize.Core.Analysis;
 /// <param name="Bfl">The back focal length, from the last surface.</param>
 /// <param name="Defocus">The paraxial focus less the image plane, along the axis: positive when the image falls beyond the plane.</param>
 /// <param name="Change">The defocus less the nominal temperature's.</param>
-/// <param name="Linear">The change the first-order coefficient predicts, its rate at the nominal temperature times ΔT.</param>
+/// <param name="Linear">The change the first-order coefficient predicts, its rate at the nominal temperature times ΔT, plus the change
+/// a different air alone makes at the nominal temperature.</param>
 /// <param name="FNumber">The working F-number, 1/(2n′|u′|) of the marginal ray in image space.</param>
 /// <param name="DepthOfFocus">The quarter-wave depth of focus, ±2λN², λ in the image space.</param>
 public sealed record FocusState(double TemperatureC, double Efl, double Bfl, double Defocus, double Change, double Linear,
@@ -66,16 +68,22 @@ public sealed class FocusReport
 
     /// <summary>
     /// The report at <paramref name="temperatures"/>, °C, the rates by central differences of ±<paramref name="stepK"/>;
-    /// without the parts' contributions when <paramref name="contributions"/> is false.
+    /// without the parts' contributions when <paramref name="contributions"/> is false. At each temperature the air is
+    /// <paramref name="at"/>'s, its pressure, humidity and CO₂, or the design's when it is null; the first-order
+    /// change then adds the change the new air alone makes at the design's temperature to the rate times ΔT, and the
+    /// rates and the parts' contributions are those in the new air.
     /// </summary>
-    public static FocusReport Compute(ThermalModel model, IEnumerable<double> temperatures, double stepK = 0.5, bool contributions = true)
+    public static FocusReport Compute(ThermalModel model, IEnumerable<double> temperatures, double stepK = 0.5,
+        bool contributions = true, AirConditions? at = null)
     {
         double t0 = model.NominalTemperatureC;
         var air = model.NominalAir;
+        // The rates are those in the air the lens is used in: in vacuum the air's own dn/dT drops out.
+        var used = (at ?? air) with { TemperatureC = t0 };
         (double Defocus, double Efl) Rate(Func<ThermalPart, bool>? only)
         {
-            var hot = Paraxial(model.At(air with { TemperatureC = t0 + stepK }, only));
-            var cold = Paraxial(model.At(air with { TemperatureC = t0 - stepK }, only));
+            var hot = Paraxial(model.At(used with { TemperatureC = t0 + stepK }, only));
+            var cold = Paraxial(model.At(used with { TemperatureC = t0 - stepK }, only));
             return ((hot.Defocus - cold.Defocus) / (2 * stepK), (hot.Efl - cold.Efl) / (2 * stepK));
         }
 
@@ -87,12 +95,13 @@ public sealed class FocusReport
         }).ToList();
 
         var nominal = Paraxial(model.At(air));
+        double airStep = at == null ? 0.0 : Paraxial(model.At(used)).Defocus - nominal.Defocus;
         var states = temperatures.Select(t =>
         {
-            var lens = model.At(air with { TemperatureC = t });
+            var lens = model.At(used with { TemperatureC = t });
             var p = Paraxial(lens);
             double lambdaMm = lens.System.Wavelengths[Math.Max(0, lens.System.PrimaryWavelengthIndex)].Value * 1e-3;
-            return new FocusState(t, p.Efl, p.Bfl, p.Defocus, p.Defocus - nominal.Defocus, defocusRate * (t - t0),
+            return new FocusState(t, p.Efl, p.Bfl, p.Defocus, p.Defocus - nominal.Defocus, airStep + defocusRate * (t - t0),
                 p.FNumber, 2.0 * lambdaMm * p.FNumber * p.FNumber);
         }).ToList();
         var lens0 = model.At(air);

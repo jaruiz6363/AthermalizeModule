@@ -59,6 +59,39 @@ atherm focus lens.zmx --housing aluminum-6061-t6
 
 `--use CAF2=CHARMS:CAF2` uses another material in place of one the file names, and `--cte N-BK7=7.1` another expansion coefficient. The design's temperature is `--nominal` (20 °C), and the air pressure `--pressure` (1 atm; 0 is vacuum). The index conventions are the options of `atherm materials`.
 
+### The lens at new conditions: indices and prescription
+
+`--nominal` and `--pressure` give the conditions the design is for: 20 °C and 1 atm unless the mount file or the options say otherwise. The temperatures to analyze are `--temperatures`, and `--at-pressure` the pressure there when it differs, 0 for vacuum. `atherm lens --detail` then lists, first at the design's conditions and then at each temperature:
+- the wavelengths, in that air and in vacuum;
+- the air's absolute index at each wavelength;
+- each material's index relative to that air, and its absolute index;
+- surface by surface, the radius, the thickness and the relative index at each wavelength.
+
+A lens designed in air at 20 °C and used in vacuum at −40 °C:
+
+```
+atherm lens examples/doublet.zmx --housing aluminum-6061-t6 --nominal 20 --pressure 1 --temperatures -40 --at-pressure 0 --detail
+...
+At -40 °C in vacuum:
+  wavelength in this air, µm             0.587722     0.486266     0.656451
+  wavelength in vacuum, µm               0.587722     0.486266     0.656451
+  air, absolute index                  1.00000000   1.00000000   1.00000000
+  SCHOTT:N-BK7, relative                1.5171546    1.5227181    1.5146820
+  SCHOTT:N-BK7, absolute                1.5171546    1.5227181    1.5146820
+  SCHOTT:N-SF6, relative                1.8057479    1.8283149    1.7966730
+  SCHOTT:N-SF6, absolute                1.8057479    1.8283149    1.7966730
+
+  surf        radius mm     thickness mm  n_rel 0.5877  n_rel 0.4863  n_rel 0.6565   shape grows with / thickness set by
+     1        72.098273         5.997444     1.5171546     1.5227181     1.5146820   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     2       -79.325998         2.498646     1.8057479     1.8283149     1.7966730   SCHOTT:N-SF6 / SCHOTT:N-SF6
+     3      -170.505570       117.615221     1.0000000     1.0000000     1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
+     4         infinity         0.000000     1.0000000     1.0000000     1.0000000   image
+```
+
+[`doublet-vacuum-detail.txt`](../examples/doublet-vacuum-detail.txt) has the whole output, the design's block at 20 °C and 1 atm first, where the air's absolute index is 1.00027242 at 0.5876 µm. In vacuum each relative index is the absolute one, and the wavelengths in "air" are the vacuum ones.
+
+`--at-pressure` works with `focus` and `image` too. There, the first-order change at the design's temperature is the step the new air alone makes, −110 µm for this doublet put in vacuum, more than a depth of focus, and the rates are those in the new air: in vacuum the air's own dn/dT drops out.
+
 ### Keeping the mount: the mount file
 
 A lens file says nothing about its housing, so the mount is kept in a file of its own beside the lens: `doublet.mount.json` beside `doublet.zmx`. Lens files are left as they are; only `atherm` reads and writes the mount file.

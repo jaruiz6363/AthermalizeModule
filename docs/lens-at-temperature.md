@@ -26,20 +26,44 @@ For example, the doublet in `examples` in an aluminum housing, from `atherm lens
 ```
 atherm lens examples/doublet.zmx --housing aluminum-6061-t6 --temperatures 20,120 --detail
 
-At 20 °C:
-  surf        radius mm     thickness mm   n_rel        shape grows with / thickness set by
-     1        72.129000         6.000000   1.5168000   SCHOTT:N-BK7 / SCHOTT:N-BK7
-     2       -79.369000         2.500000   1.8051802   SCHOTT:N-SF6 / SCHOTT:N-SF6
-     3      -170.598000       117.782000   1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
-     4         infinity         0.000000   1.0000000   image
+At 20 °C in air at 1 atm (the design):
+  wavelength in this air, µm             0.587562     0.486133     0.656273
+  wavelength in vacuum, µm               0.587722     0.486266     0.656451
+  air, absolute index                  1.00027242   1.00027457   1.00027152
+  SCHOTT:N-BK7, relative                1.5168000    1.5223763    1.5143223
+  SCHOTT:N-BK7, absolute                1.5172132    1.5227943    1.5147335
+  SCHOTT:N-SF6, relative                1.8051802    1.8278292    1.7960789
+  SCHOTT:N-SF6, absolute                1.8056720    1.8283311    1.7965665
 
-At 120 °C:
-  surf        radius mm     thickness mm   n_rel        shape grows with / thickness set by
-     1        72.180212         6.004260   1.5171026   SCHOTT:N-BK7 / SCHOTT:N-BK7
-     2       -79.440670         2.502258   1.8052986   SCHOTT:N-SF6 / SCHOTT:N-SF6
-     3      -170.752050       118.059966   1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
-     4         infinity         0.000000   1.0000000   image
+  surf        radius mm     thickness mm  n_rel 0.5876  n_rel 0.4861  n_rel 0.6563   shape grows with / thickness set by
+     1        72.129000         6.000000     1.5168000     1.5223763     1.5143223   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     2       -79.369000         2.500000     1.8051802     1.8278292     1.7960789   SCHOTT:N-SF6 / SCHOTT:N-SF6
+     3      -170.598000       117.782000     1.0000000     1.0000000     1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
+     4         infinity         0.000000     1.0000000     1.0000000     1.0000000   image
+
+At 120 °C in air at 1 atm:
+  wavelength in this air, µm             0.587603     0.486167     0.656318
+  wavelength in vacuum, µm               0.587722     0.486266     0.656451
+  air, absolute index                  1.00020301   1.00020461   1.00020234
+  SCHOTT:N-BK7, relative                1.5171026    1.5227176    1.5146093
+  SCHOTT:N-BK7, absolute                1.5174106    1.5230292    1.5149158
+  SCHOTT:N-SF6, relative                1.8052986    1.8281496    1.7961297
+  SCHOTT:N-SF6, absolute                1.8056651    1.8285237    1.7964931
+
+  surf        radius mm     thickness mm  n_rel 0.5876  n_rel 0.4862  n_rel 0.6563   shape grows with / thickness set by
+     1        72.180212         6.004260     1.5171026     1.5227176     1.5146093   SCHOTT:N-BK7 / SCHOTT:N-BK7
+     2       -79.440670         2.502258     1.8052986     1.8281496     1.7961297   SCHOTT:N-SF6 / SCHOTT:N-SF6
+     3      -170.752050       118.059966     1.0000000     1.0000000     1.0000000   SCHOTT:N-SF6 / housing aluminum-6061-t6
+     4         infinity         0.000000     1.0000000     1.0000000     1.0000000   image
 ```
+
+Each block gives, at its conditions:
+- the wavelengths, as measured in that air and in vacuum: the light is the same, so its vacuum wavelengths never change;
+- the air's absolute index at each wavelength;
+- each material's index relative to that air, as a lens file and the ray trace use it, and its absolute index, the relative times the air's;
+- the prescription, surface by surface: radius, thickness, and the relative index after the surface at each wavelength.
+
+The design's own conditions come first, so each temperature can be read against them.
 
 - **Surface 1** grows with N-BK7, α 7.1×10⁻⁶/K: 72.129 × (1 + 7.1×10⁻⁶ × 100) = 72.180 mm. The N-BK7 thickness grows the same way, 6.000 to 6.004 mm.
 - **Surface 2** is cemented, so it grows with the glass after it, N-SF6, α 9.03×10⁻⁶/K: −79.369 to −79.441 mm. So does surface 3, the back of the N-SF6 element.
@@ -68,7 +92,7 @@ Air spaces are computed from the full surface shapes, not linearized, so a space
 
 ## The indices and the wavelengths
 
-The index after each surface is the material's at the temperature, relative to the air at the temperature and the design's pressure (`--pressure`), from the models in [materials.md](materials.md). The light is held at the vacuum wavelengths of the design's wavelengths, which are taken to be in the design's air. The lens at the temperature carries the same light's wavelengths in the air at the temperature, so a result in waves is in waves of the light the lens actually sees.
+The index after each surface is the material's at the temperature, relative to the air at the temperature and pressure: the design's pressure (`--pressure`), or the one given for use (`--at-pressure`, 0 for vacuum), from the models in [materials.md](materials.md). The light is held at the vacuum wavelengths of the design's wavelengths, which are taken to be in the design's air. The lens at the temperature carries the same light's wavelengths in the air at the temperature, so a result in waves is in waves of the light the lens actually sees.
 
 ## The aperture
 
@@ -82,10 +106,10 @@ A thickness solve in the file is not re-solved at the temperature: refocusing is
 
 ```
 atherm lens <file> --housing <material|α> [--spacer s:material:h] [--part a-b:material] [--mirror s:material]
-                   [--temperatures -20,20,60] [--detail]
+                   [--temperatures -20,20,60] [--nominal °C] [--pressure atm] [--at-pressure atm] [--detail]
 ```
 
-It prints, at each temperature, the paraxial focal length and back focal length at the primary wavelength, the paraxial focus less the distance to the image plane, and that distance's change from the design's temperature. `--detail` adds the prescription at each temperature, with what each surface grew with and what set each thickness. A material is given by name (`atherm lens --mount-materials` lists aluminum 6061-T6, stainless steels 303 and 416, Ti-6Al-4V and Invar 36, each with its source) or by its α in 10⁻⁶/K. Published values for one alloy differ by several percent between sources, and Invar's depends on the stock, so a value measured for the actual stock is better when there is one.
+It prints, at each temperature, the paraxial focal length and back focal length at the primary wavelength, the paraxial focus less the distance to the image plane, and that distance's change from the design's temperature. `--nominal` and `--pressure` are the design's temperature and pressure; `--at-pressure` is the pressure at each temperature, when it differs from the design's, as for a lens designed in air and used in vacuum. `--detail` adds, first at the design's conditions and then at each temperature, the air's absolute index, each material's relative and absolute index at each wavelength, and the prescription surface by surface, with what each surface grew with and what set each thickness ([the example above](#in-short); [`doublet-vacuum-detail.txt`](../examples/doublet-vacuum-detail.txt) is the doublet designed in air at 20 °C and used in vacuum at −40 °C). A material is given by name (`atherm lens --mount-materials` lists aluminum 6061-T6, stainless steels 303 and 416, Ti-6Al-4V and Invar 36, each with its source) or by its α in 10⁻⁶/K. Published values for one alloy differ by several percent between sources, and Invar's depends on the stock, so a value measured for the actual stock is better when there is one.
 
 ## References
 

@@ -191,6 +191,21 @@ public sealed class ThermalModel
     /// <summary>The length over temperature the material after <paramref name="surface"/> grows by.</summary>
     public ExpansionCurve GrowthAfter(int surface) => _growth[surface];
 
+    /// <summary>
+    /// The absolute index of <paramref name="air"/> for the lens's wavelength <paramref name="wavelength"/>, by the
+    /// model's air formula and conventions; 1 in vacuum. A relative index times it is the absolute index.
+    /// </summary>
+    public double AirIndexAt(int wavelength, AirConditions air)
+    {
+        if (air.IsVacuum) return 1.0;
+        double vacuum = VacuumWavelengthsUm[wavelength];
+        var o = IndexOptions;
+        return AirIndex.Of(o.AirModel, o.AirWavelength == AirWavelength.Vacuum ? vacuum : WavelengthInAir(vacuum, air), air);
+    }
+
+    /// <summary>The lens's wavelength <paramref name="wavelength"/> as measured in <paramref name="air"/>, µm.</summary>
+    public double WavelengthIn(int wavelength, AirConditions air) => WavelengthInAir(VacuumWavelengthsUm[wavelength], air);
+
     /// <summary>The lens at <paramref name="temperatureC"/>, in the nominal air's pressure, humidity and CO₂.</summary>
     public ThermalLens At(double temperatureC) => At(NominalAir with { TemperatureC = temperatureC });
 

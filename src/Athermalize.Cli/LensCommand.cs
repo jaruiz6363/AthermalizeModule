@@ -38,9 +38,13 @@ internal static class LensCommand
         "         --save-mount                    write the mount and the design conditions to the mount file\n" +
         "                                         (select: the best combination's housing and mount parts)\n" +
         "         --no-mount                      ignore the mount file\n" +
-        "         --pressure <atm>                the air pressure, the design's and at each temperature (1)\n" +
+        "         --pressure <atm>                the air pressure the design is for (1); 0 is vacuum\n" +
+        "         --at-pressure <atm>             lens, focus, image: the air pressure at each temperature (the\n" +
+        "                                         design's), for a lens designed in air and used in vacuum, say\n" +
         "         --catalogs, --air, --prefactor, ... as for materials\n" +
-        "         --detail                        lens: the prescription at each temperature\n" +
+        "         --detail                        lens: at the design's conditions and at each temperature, the\n" +
+        "                                         air's absolute index, each material's relative and absolute\n" +
+        "                                         index, and the radii, thicknesses and indices surface by surface\n" +
         "         --frequencies <c/mm,...>        image: the MTF's frequencies (10,30)\n" +
         "         --mtf-limit <m>                 image: the temperatures over which the lowest MTF at the first\n" +
         "                                         frequency stays above m, searched over --range (-60,100)\n" +
@@ -72,7 +76,7 @@ internal static class LensCommand
         double[] frequencies = { 10, 30 };
         double[] range = { -60, 100 };
         double obscuration = 0.0;
-        double? nominalGiven = null, atmospheresGiven = null;
+        double? nominalGiven = null, atmospheresGiven = null, atPressure = null;
         string? mountPath = null;
         bool noMount = false, saveMount = false;
         double? mtfLimit = null;
@@ -109,6 +113,7 @@ internal static class LensCommand
                 case "--temperatures": temperatures = Program.Numbers(Next(), a); break;
                 case "--nominal": nominalGiven = Program.Numbers(Next(), a)[0]; break;
                 case "--pressure": atmospheresGiven = Program.Numbers(Next(), a)[0]; break;
+                case "--at-pressure": atPressure = Program.Numbers(Next(), a)[0]; break;
                 case "--mount": mountPath = Next(); break;
                 case "--no-mount": noMount = true; break;
                 case "--save-mount": saveMount = true; break;
@@ -180,6 +185,8 @@ internal static class LensCommand
         if (file == null) throw new ArgumentException("name a lens file");
 
         if (svg != null && mode is not ("focus" or "image")) throw new ArgumentException("--svg: only focus and image plot");
+        if (atPressure != null && mode == "select") throw new ArgumentException("--at-pressure: select scores the lens in the design's air");
+        if (atPressure < 0) throw new ArgumentException("--at-pressure: give 0 atm or more");
         if (plotPoints < 2) throw new ArgumentException("--plot-points: give at least 2");
         bool overrides = housing != null || segments.Count > 0 || mirrors.Count > 0 || uses.Count > 0 || ctes.Count > 0
                          || nominalGiven != null || atmospheresGiven != null || cementedGiven != null;
@@ -224,11 +231,17 @@ internal static class LensCommand
         var mount = new Mount(housing, segments, mirrors, cemented);
         var air = new AirConditions(nominal, atmospheres * AirConditions.StandardPressurePa);
         var model = new ThermalModel(system, library, mount, air, new ThermalOptions(o, substitutions, ctes));
+        // The air at each temperature: the design's pressure, or the one given.
+        AirConditions? at = atPressure is double ap ? air with { PressurePa = ap * AirConditions.StandardPressurePa } : null;
+        var used = at ?? air;
 
         int p = Math.Max(0, system.PrimaryWavelengthIndex);
         output.WriteLine($"{(string.IsNullOrWhiteSpace(system.Title) ? Path.GetFileName(file) : system.Title)} ({Path.GetFileName(file)}), {system.Surfaces.Count} surfaces");
         output.WriteLine(FormattableString.Invariant(
-            $"Designed for {nominal:0.##} °C in {(air.IsVacuum ? "vacuum" : $"air at {atmospheres:0.####} atm")}; every part of the lens and the air at each temperature, the pressure held."));
+            $"Designed for {nominal:0.##} °C in {Conditions(air)}; ") +
+            (at == null ? "every part of the lens and the air at each temperature, the pressure held."
+                : at.IsVacuum ? "used in vacuum, every part of the lens at each temperature."
+                : $"used in {Conditions(at)}, every part of the lens and the air at each temperature."));
         if (saved != null) output.WriteLine($"Mount file: {mountFile}{(HasOverrides() ? ", with the options given here over it" : "")}.");
         output.WriteLine(Describe(mount));
         output.WriteLine("Materials:");
@@ -240,7 +253,7 @@ internal static class LensCommand
                 $"  after surface {i,2}  {m.Name,-24} α {model.CteAfter(i) * 1e6:0.###}×10⁻⁶/K"));
         }
 
-        var lenses = temperatures.Select(t => model.At(air with { TemperatureC = t })).ToList();
+        var lenses = temperatures.Select(t => model.At(used with { TemperatureC = t })).ToList();
         if (mode == "select")
         {
             var glasses = new Dictionary<int, IReadOnlyList<Material>>();
@@ -268,11 +281,11 @@ internal static class LensCommand
             }
             return 0;
         }
-        if (mode == "focus") Focus(model, temperatures, p, svg, output);
+        if (mode == "focus") Focus(model, temperatures, p, at, svg, output);
         else if (mode == "image")
             Image(model, temperatures, frequencies, mtfLimit, range,
                 new QualityOptions { Polychromatic = !monochromatic, Obscuration = obscuration, MtfKind = mtfKind, DiffractionGrid = grid },
-                svg, plotPoints, output);
+                at, svg, plotPoints, output);
         else Paraxial(model, lenses, p, nominal, output);
 
         var notes = new List<string>();
@@ -287,22 +300,61 @@ internal static class LensCommand
         if (saveMount) Save(mount);
 
         if (detail && mode == "lens")
+        {
+            // The design first, then each temperature that isn't the design's own conditions.
+            Detail(model, model.At(air), "the design", output);
             foreach (var lens in lenses)
-            {
-                output.WriteLine();
-                output.WriteLine(FormattableString.Invariant($"At {lens.TemperatureC:0.##} °C:"));
-                output.WriteLine("  surf        radius mm     thickness mm   n_rel        shape grows with / thickness set by");
-                var n = lens.PrimaryIndices;
-                for (int i = 1; i < lens.System.Surfaces.Count; i++)
-                {
-                    var s = lens.System.Surfaces[i];
-                    var st = lens.Surfaces[i];
-                    string radius = s.Curvature == 0.0 ? "infinity" : (1.0 / s.Curvature).ToString("0.000000", CultureInfo.InvariantCulture);
-                    output.WriteLine(FormattableString.Invariant(
-                        $"  {i,4}  {radius,15}  {s.Thickness,15:0.000000}  {n[i],10:0.0000000}   {st.ShapeSetBy}{(st.ThicknessSetBy != "" ? " / " + st.ThicknessSetBy : "")}"));
-                }
-            }
+                if (lens.Air != air) Detail(model, lens, null, output);
+        }
         return 0;
+    }
+
+    /// <summary>"vacuum", or "air at 1 atm".</summary>
+    private static string Conditions(AirConditions air) =>
+        air.IsVacuum ? "vacuum" : FormattableString.Invariant($"air at {air.Atmospheres:0.####} atm");
+
+    /// <summary>
+    /// The lens at one set of conditions: the wavelengths, the air's absolute index, each material's relative and
+    /// absolute index, then the prescription surface by surface with the relative index at each wavelength.
+    /// </summary>
+    private static void Detail(ThermalModel model, ThermalLens lens, string? label, TextWriter output)
+    {
+        var system = lens.System;
+        int count = system.Wavelengths.Count;
+        string Row(string name, Func<int, string> cell) =>
+            $"  {name,-34}" + string.Concat(Enumerable.Range(0, count).Select(w => $" {cell(w),12}"));
+        string N(double v, string format) => v.ToString(format, CultureInfo.InvariantCulture);
+
+        output.WriteLine();
+        output.WriteLine(FormattableString.Invariant($"At {lens.TemperatureC:0.##} °C in {Conditions(lens.Air)}") +
+                         (label != null ? $" ({label}):" : ":"));
+        output.WriteLine(Row("wavelength in this air, µm", w => N(model.WavelengthIn(w, lens.Air), "0.000000")));
+        output.WriteLine(Row("wavelength in vacuum, µm", w => N(lens.VacuumWavelengthsUm[w], "0.000000")));
+        output.WriteLine(Row("air, absolute index", w => N(model.AirIndexAt(w, lens.Air), "0.00000000")));
+
+        // Each material once, at the first surface it follows.
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 1; i < system.Surfaces.Count - 1; i++)
+        {
+            var m = model.MaterialAfter(i);
+            if (m == null || system.Surfaces[i].IsMirror || !seen.Add(m.Name)) continue;
+            output.WriteLine(Row(m.Name + ", relative", w => N(lens.Indices[w][i], "0.0000000")));
+            output.WriteLine(Row(m.Name + ", absolute", w => N(lens.Indices[w][i] * model.AirIndexAt(w, lens.Air), "0.0000000")));
+        }
+
+        output.WriteLine();
+        output.WriteLine("  surf        radius mm     thickness mm" +
+                         string.Concat(Enumerable.Range(0, count).Select(w => $"  {"n_rel " + N(system.Wavelengths[w].Value, "0.0000"),12}")) +
+                         "   shape grows with / thickness set by");
+        for (int i = 1; i < system.Surfaces.Count; i++)
+        {
+            var s = system.Surfaces[i];
+            var st = lens.Surfaces[i];
+            string radius = s.Curvature == 0.0 ? "infinity" : N(1.0 / s.Curvature, "0.000000");
+            output.WriteLine(FormattableString.Invariant($"  {i,4}  {radius,15}  {s.Thickness,15:0.000000}") +
+                             string.Concat(Enumerable.Range(0, count).Select(w => $"  {N(lens.Indices[w][i], "0.0000000"),12}")) +
+                             $"   {st.ShapeSetBy}{(st.ThicknessSetBy != "" ? " / " + st.ThicknessSetBy : "")}");
+        }
     }
 
     private static void Paraxial(ThermalModel model, List<ThermalLens> lenses, int p, double nominal, TextWriter output)
@@ -323,10 +375,10 @@ internal static class LensCommand
         }
     }
 
-    private static void Focus(ThermalModel model, double[] temperatures, int p, string? svg, TextWriter output)
+    private static void Focus(ThermalModel model, double[] temperatures, int p, AirConditions? at, string? svg, TextWriter output)
     {
         var system = model.Nominal;
-        var report = FocusReport.Compute(model, temperatures);
+        var report = FocusReport.Compute(model, temperatures, at: at);
         double t0 = model.NominalTemperatureC;
         output.WriteLine();
         output.WriteLine(FormattableString.Invariant(
@@ -362,7 +414,7 @@ internal static class LensCommand
         if (svg == null) return;
         // The focus over the whole span, paraxially, which is quick: 60 steps.
         double lo = temperatures.Append(t0).Min(), hi = temperatures.Append(t0).Max();
-        var curve = FocusReport.Compute(model, Enumerable.Range(0, 61).Select(i => lo + (hi - lo) * i / 60.0), contributions: false).States;
+        var curve = FocusReport.Compute(model, Enumerable.Range(0, 61).Select(i => lo + (hi - lo) * i / 60.0), contributions: false, at: at).States;
         var focus = new SvgChart
         {
             Title = FormattableString.Invariant($"{Name(system)}: focus change from {t0:0.##} °C"),
@@ -439,10 +491,10 @@ internal static class LensCommand
     }
 
     private static void Image(ThermalModel model, double[] temperatures, double[] frequencies, double? mtfLimit,
-        double[] range, QualityOptions options, string? svg, int plotPoints, TextWriter output)
+        double[] range, QualityOptions options, AirConditions? at, string? svg, int plotPoints, TextWriter output)
     {
         // With a plot, the report's temperatures are among the plotted ones, computed once.
-        var sampled = ImageQuality.Compute(model, svg != null ? PlotTemperatures(model, temperatures, plotPoints) : temperatures, frequencies, options);
+        var sampled = ImageQuality.Compute(model, svg != null ? PlotTemperatures(model, temperatures, plotPoints) : temperatures, frequencies, options, at);
         var states = temperatures.Select(t => sampled.First(s => s.TemperatureC == t)).ToList();
         output.WriteLine();
         output.WriteLine($"Image quality, {(options.Polychromatic ? "every wavelength, by its weight" : "the primary wavelength")}" +
@@ -471,7 +523,7 @@ internal static class LensCommand
             output.WriteLine();
             foreach (bool refocused in new[] { false, true })
             {
-                var r = ImageQuality.Range(model, frequencies[0], limit, range[0], range[1], 5.0, refocused, options);
+                var r = ImageQuality.Range(model, frequencies[0], limit, range[0], range[1], 5.0, refocused, options, at);
                 output.WriteLine(FormattableString.Invariant(
                     $"The lowest {(options.MtfKind == MtfKind.Diffraction ? "diffraction" : "geometric")} MTF at {frequencies[0]:0.#} c/mm stays at or above {limit:0.###} {(refocused ? "refocused" : "at the fixed plane")}: ") +
                     (r is { } v ? FormattableString.Invariant($"{v.Low:0.0} to {v.High:0.0} °C (searched {range[0]:0} to {range[1]:0} °C)") : "not even at the nominal temperature"));

@@ -1,4 +1,5 @@
 using AberrationCalculator.Core.Glass;
+using Athermalize.Core.Air;
 using Athermalize.Core.Lens;
 using WavefrontErrorCalculator.Core;
 
@@ -256,17 +257,20 @@ public static class ImageQuality
             .ToArray();
     }
 
-    /// <summary>The image at each temperature: the RMS wavefront error and the MTF, at the fixed image plane and refocused.</summary>
+    /// <summary>
+    /// The image at each temperature: the RMS wavefront error and the MTF, at the fixed image plane and refocused; in
+    /// <paramref name="at"/>'s air (its pressure, humidity and CO₂) at each temperature, or the design's when it is null.
+    /// </summary>
     public static IReadOnlyList<QualityState> Compute(ThermalModel model, IEnumerable<double> temperatures,
-        IReadOnlyList<double>? frequencies = null, QualityOptions? options = null)
+        IReadOnlyList<double>? frequencies = null, QualityOptions? options = null, AirConditions? at = null)
     {
         var freqs = frequencies ?? Array.Empty<double>();
         var list = new List<QualityState>();
         foreach (double t in temperatures)
         {
-            var lens = model.At(model.NominalAir with { TemperatureC = t });
+            var lens = model.At((at ?? model.NominalAir) with { TemperatureC = t });
             var lm = Model(lens);
-            var focus = FocusReport.Compute(model, new[] { t }, 0.5).States[0];
+            var focus = FocusReport.Compute(model, new[] { t }, 0.5, contributions: false, at).States[0];
             double fixedRms = Rms(lm, 0.0, options);
             var (shift, best) = BestFocus(lm, focus.Defocus, focus.DepthOfFocus, options);
             var fixedMtf = freqs.Count > 0 ? Mtf(lm, freqs, 0.0, options) : Array.Empty<GeometricMtf.Modulation[]>();
@@ -281,19 +285,19 @@ public static class ImageQuality
     /// <paramref name="frequency"/> stays at or above <paramref name="limit"/> (Schuster and Franks 2012), searched
     /// from <paramref name="min"/> to <paramref name="max"/> °C in steps of <paramref name="step"/> K, the ends found
     /// by interpolation. At the fixed image plane, or refocused at each temperature. Null when the nominal lens
-    /// itself falls below the limit.
+    /// itself falls below the limit. In <paramref name="at"/>'s air at each temperature, or the design's when it is null.
     /// </summary>
     public static (double Low, double High)? Range(ThermalModel model, double frequency, double limit, double min,
-        double max, double step = 5.0, bool refocused = false, QualityOptions? options = null)
+        double max, double step = 5.0, bool refocused = false, QualityOptions? options = null, AirConditions? at = null)
     {
         double Lowest(double t)
         {
-            var lens = model.At(model.NominalAir with { TemperatureC = t });
+            var lens = model.At((at ?? model.NominalAir) with { TemperatureC = t });
             var lm = Model(lens);
             double shift = 0.0;
             if (refocused)
             {
-                var focus = FocusReport.Compute(model, new[] { t }, 0.5).States[0];
+                var focus = FocusReport.Compute(model, new[] { t }, 0.5, contributions: false, at).States[0];
                 shift = BestFocus(lm, focus.Defocus, focus.DepthOfFocus, options).Shift;
             }
             return Mtf(lm, new[] { frequency }, shift, options)
