@@ -193,6 +193,61 @@ public class OptilandTests
         return map;
     }
 
+    /// <summary>
+    /// The frozen lens in Optiland. The doublet designed in air at 20 °C, written with --write as Optiland .json at
+    /// −40 °C in vacuum and loaded by Optiland's own reader at its defaults, with only the glass catalogs written
+    /// beside it, is the module's lens: the focal length, the back focus and the paraxial focus from the image plane
+    /// to 1 nm, every index to 10⁻⁷, and the RMS wavefront error at the primary wavelength on axis and at full field
+    /// to 0.5 %, on a pupil grid of 512 rays across.
+    /// </summary>
+    [OptilandFact]
+    public void A_frozen_lens_in_Optiland_is_the_modules_lens()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), $"atherm-optiland-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            // A name of its own: Optiland keeps a catalog loaded for the session, by name.
+            string path = Path.Combine(dir, $"cold{Guid.NewGuid():N}"[..12] + ".optiland.json");
+            string lensFile = Path.Combine(AppContext.BaseDirectory, "examples", "doublet.zmx");
+            var w = new StringWriter();
+            Assert.Equal(0, Athermalize.Cli.Program.Run(new[] { "lens", lensFile, "--housing", "aluminum-6061-t6",
+                "--temperatures", "-40", "--at-pressure", "0", "--write", path, "--catalogs", Catalogs.Folder }, w));
+
+            var theirs = PythonSession.WithGil(() => JsonDocument.Parse(Helper().frozen_lens(path).ToString()).RootElement.Clone());
+            var system = AberrationCalculator.Core.IO.LensFile.Read(lensFile, Catalogs.Library.Glasses);
+            var model = new Athermalize.Core.Lens.ThermalModel(system, Catalogs.Library,
+                new Athermalize.Core.Lens.Mount(Athermalize.Core.Lens.MountMaterials.Find("aluminum-6061-t6")!));
+            var lens = model.At(AirConditions.Vacuum(-40.0));
+            var p = AberrationCalculator.Core.RayTrace.ParaxialTrace.Trace(lens.System, lens.PrimaryIndices, 0.0);
+            double defocus = Athermalize.Core.Analysis.FocusReport.Defocus(lens);
+
+            _out.WriteLine($"EFL {theirs.GetProperty("efl").GetDouble():F6} against {p.Efl:F6}; BFL {theirs.GetProperty("bfl").GetDouble():F6} against {p.Bfl:F6}; " +
+                           $"focus from the image plane {theirs.GetProperty("focus").GetDouble() * 1e3:F3} against {defocus * 1e3:F3} µm");
+            Assert.InRange(theirs.GetProperty("efl").GetDouble() - p.Efl, -1e-6, 1e-6);
+            Assert.InRange(theirs.GetProperty("bfl").GetDouble() - p.Bfl, -1e-6, 1e-6);
+            Assert.InRange(theirs.GetProperty("focus").GetDouble() - defocus, -1e-6, 1e-6);
+            var indices = theirs.GetProperty("indices");
+            for (int i = 0; i < 2; i++)
+                for (int k = 0; k < lens.System.Wavelengths.Count; k++)
+                    Assert.InRange(indices[i][k].GetDouble() - lens.Indices[k][i + 1], -1e-7, 1e-7);
+
+            var rms = theirs.GetProperty("rms");
+            for (int f = 0; f < 2; f++)
+            {
+                var one = model.At(AirConditions.Vacuum(-40.0));
+                var field = one.System.Fields[f];
+                one.System.Fields.Clear();
+                one.System.Fields.Add(field);
+                double ours = Athermalize.Core.Analysis.ImageQuality.Rms(Athermalize.Core.Analysis.ImageQuality.Model(one), 0.0,
+                    new Athermalize.Core.Analysis.QualityOptions { Polychromatic = false });
+                _out.WriteLine($"field {f}: RMS {rms[f].GetDouble():F5} against {ours:F5} waves");
+                Assert.InRange(rms[f].GetDouble() / ours - 1.0, -5e-3, 5e-3);
+            }
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
     private static dynamic Helper()
     {
         string dir = Path.Combine(AppContext.BaseDirectory, "python");

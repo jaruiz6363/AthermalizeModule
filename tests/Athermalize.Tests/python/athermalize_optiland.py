@@ -77,3 +77,44 @@ def catalog_index(path: str, wavelengths_json: str) -> str:
     given, at each wavelength (micrometers)."""
     m = _material(path)
     return json.dumps([_scalar(m.n(w)) for w in json.loads(wavelengths_json)])
+
+
+def frozen_lens(path: str, rays: int = 512) -> str:
+    """A frozen lens written by `atherm lens --write`, loaded by Optiland's own reader.
+
+    Its glass catalogs, in the .optiland_glass folder beside it, are loaded into this session
+    first; nothing is installed. Returns the focal length, the paraxial focus from the image
+    plane, the back focal distance, each glass surface's index at each wavelength, and the RMS
+    wavefront error at the primary wavelength at each field, on a uniform pupil grid.
+    """
+    from pathlib import Path
+
+    import optiland.fileio as fio
+    from optiland.materials.registry import MaterialRegistry
+    from optiland.wavefront import Wavefront
+
+    lens = Path(path)
+    glass = lens.with_name(lens.name.replace(".optiland.json", ".optiland_glass"))
+    for d in glass.iterdir():
+        if d.is_dir():
+            MaterialRegistry.instance().load_catalog(str(d))
+    optic = fio.load_optiland_file(str(lens))
+    surfaces = optic.surfaces.surfaces
+    z = [float(np.ravel(s.geometry.cs.z)[0]) for s in surfaces]
+    focus = float(np.ravel(optic.paraxial.F2())[0])   # from the image surface
+    waves = [w.value for w in optic.wavelengths.wavelengths]
+    indices = [[float(np.ravel(s.material_post.n(w))[0]) for w in waves] for s in surfaces[1:-1]]
+    fields = [(0.0, 0.0), (0.0, 1.0)]
+    wl = optic.primary_wavelength
+    wf = Wavefront(optic, fields=fields, wavelengths=[wl], num_rays=rays, distribution="uniform")
+    rms = []
+    for f in fields:
+        opd = np.ravel(wf.get_data(f, wl).opd)
+        rms.append(float(np.sqrt(np.mean((opd - opd.mean()) ** 2))))
+    return json.dumps({
+        "efl": float(np.ravel(optic.paraxial.f2())[0]),
+        "focus": focus,
+        "bfl": focus + z[-1] - z[-2],
+        "indices": indices,
+        "rms": rms,
+    })
