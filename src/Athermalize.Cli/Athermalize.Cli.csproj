@@ -12,9 +12,11 @@
     <ProjectReference Include="$(AberrationCalculatorDir)src/AberrationCalculator.IO/AberrationCalculator.IO.csproj" />
   </ItemGroup>
 
-  <!-- AberrationCalculator's glass catalogs. -->
+  <!-- AberrationCalculator's glass catalogs, read from beside atherm; kept out of a single-file atherm.exe, which
+       can't read them from inside itself. -->
   <ItemGroup>
-    <None Include="$(AberrationCalculatorDir)catalogs/**/*" CopyToOutputDirectory="PreserveNewest" LinkBase="catalogs" />
+    <None Include="$(AberrationCalculatorDir)catalogs/**/*" CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" LinkBase="catalogs" />
   </ItemGroup>
 
   <ItemGroup>

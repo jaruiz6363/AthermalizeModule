@@ -84,6 +84,14 @@ dotnet publish src/Athermalize.Cli -c Release -r win-x64 --self-contained -o C:\
 
 Use `linux-x64` or `osx-arm64` and so on for other platforms. Add the folder to your `PATH` to run `atherm` from any directory.
 
+To have the program as one file, `atherm.exe`, with only the `catalogs` folder beside it, as in the release downloads:
+
+```
+dotnet publish src/Athermalize.Cli -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o C:\tools\atherm
+```
+
+The catalogs stay out of the single file, since `atherm` reads them from its folder.
+
 **The glass catalogs** are in the folder's `catalogs\Glass`, and `atherm` reads them from beside itself. To use other catalogs, such as a maker's newer edition, give their folder with `--catalogs <dir>`; it reads every `.agf` file there.
 
 ## What the build makes
