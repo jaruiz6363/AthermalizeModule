@@ -39,6 +39,7 @@ The wavefront error is computed by WavefrontErrorCalculator, as Hopkins and Welf
 
 - **The pupil integral** is Gauss quadrature (Forbes 1988): Gauss-Legendre in ρ² on 8 rings of 24 rays by default. It is exact for a wavefront polynomial up to ρ³⁰ and an azimuthal order of 23.
 - **A central obstruction** of ε turns the quadrature onto the annulus ε ≤ ρ ≤ 1. The chief ray is still the ray through the pupil's center. The obstruction applies to the wavefront only; the MTF is of the whole pupil.
+- **An obstruction in the lens file** stops the rays that meet it, in the wavefront and in the MTF alike. The chief ray is the reference, so it is traced past it.
 - **RMS.** For each field and wavelength the RMS is the standard deviation of W over the pupil. They combine as √(Σ w_f w_λ W²_rms / Σ w_f w_λ), with the lens's own field and wavelength weights.
 - **The RMS change** is the RMS of the difference between the wavefronts at the temperature and at the design's temperature, sample by sample. It leaves out the design's own aberrations.
 - **The focus compensator** moves the image plane along the axis to the least RMS. Brent's method finds the minimum in a bracket a few depths of focus wide around the paraxial focus, widening the bracket while the minimum sits on its edge.

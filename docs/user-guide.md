@@ -145,7 +145,8 @@ The lowest diffraction MTF at 30 c/mm stays at or above 0.5 refocused: -60.0 to 
 
 **Options.**
 - The MTF is the diffraction MTF by default, which is what matters in the thermal infrared, where the blur is mostly diffraction. `--mtf geometric` gives the geometric MTF instead: 0.924 on axis at 30 cycles/mm for this lens, against the diffraction MTF's 0.769.
-- `--grid` sets the diffraction MTF's pupil grid (64), and `--obscuration` a central obstruction, as a fraction of the pupil radius.
+- `--grid` sets the diffraction MTF's pupil grid (64).
+- **A central obstruction.** If the lens file holds one, such as a telescope's secondary, it stops its rays in both the wavefront and the MTF, and nothing more is needed. For a file without one, `--obscuration` gives it as a fraction of the pupil radius, and then it applies to the wavefront only.
 - A range search over two fields and three wavelengths takes about a minute. `--monochromatic`, or fewer fields, makes it quicker.
 
 **Plot.** `--svg image.svg` plots the RMS and the lowest MTF at each frequency against temperature, at the fixed image plane (solid) and refocused (dashed), with the `--mtf-limit` line ([`doublet-image.svg`](../examples/doublet-image.svg)). It computes the image at `--plot-points` temperatures (13), evenly over the span of `--temperatures`, so it takes about that many times as long as one temperature.
