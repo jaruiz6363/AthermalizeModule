@@ -262,6 +262,20 @@ The design doesn't have to be for 20 °C and 1 atm. Give its own conditions to t
 atherm lens examples/itek-cassegrain.zmx --temperatures 35 --write itek-warm.zmx      # 7.5 °C and vacuum from its mount file
 ```
 
+**Aspheres in the frozen lens.** An even asphere grows into the same shape at a larger size, so its coefficients in the frozen lens are not the design's.
+- **Why they change.** A surface that grows by s = 1 + αΔT moves the point at height r to height s·r, and its sag there must be s times the old sag at r. The radius is then s times larger, and the coefficient of r^(2p) is divided by s^(2p−1): the r² term by s, the r⁴ term by s³, the r⁶ term by s⁵, and so on.
+- **What follows.** The higher terms change the most. A warmed surface's coefficients get smaller in size, and a cooled one's larger. The conic has no units and stays the same.
+
+The Cassegrain's two mirrors are even aspheres of ULE, at 0.03×10⁻⁶/K. From 7.5 to 35 °C they grow by s = 1 + 0.03×10⁻⁶ × 27.5 = 1 + 8.25×10⁻⁷. The primary in [`itek-cassegrain.zmx`](../examples/itek-cassegrain.zmx) and in [`itek-warm.zmx`](../examples/itek-warm.zmx):
+
+| Term | Design, 7.5 °C | Frozen, 35 °C | Change | ÷ s^(2p−1) |
+|---|---|---|---|---|
+| Curvature | −9.5382033×10⁻⁴ | −9.5381954×10⁻⁴ | −8.25×10⁻⁷ | ÷ s |
+| r⁶ | 2.7720383×10⁻¹⁶ | 2.7720269×10⁻¹⁶ | −4.125×10⁻⁶ | ÷ s⁵ |
+| r⁸ | 2.9075194×10⁻²¹ | 2.9075026×10⁻²¹ | −5.775×10⁻⁶ | ÷ s⁷ |
+
+The conic, −2.141034, is the same in both. ULE hardly expands, so these changes are small. A glass asphere at 7×10⁻⁶/K changes some 230 times as much over the same range. [lens-at-temperature.md](lens-at-temperature.md#in-short) lists every rule.
+
 ### materials: a material's data
 
 **Use it to look up a material,** to check the data behind a result, or to compare sources for one material.
