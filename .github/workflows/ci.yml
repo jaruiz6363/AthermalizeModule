@@ -1,0 +1,24 @@
+name: CI
+
+# On Linux as well as Windows: the module runs on both, and a case-sensitive file system is where
+# a Windows-only habit shows up. The Optiland cross-checks skip themselves here, as there is no
+# embedded Python on the runners.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet build AthermalizeModule.sln -c Release
+      - run: dotnet test AthermalizeModule.sln -c Release --no-build
